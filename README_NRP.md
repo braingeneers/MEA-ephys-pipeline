@@ -4,6 +4,12 @@ The Nextflow driver and processing tasks run as Kubernetes Jobs sharing a
 ReadWriteMany PVC. `pipeline/nextflow_nrp.config` provides CPU and GPU profiles;
 `scripts/nrp/` contains submission, input-inspection and synthetic-test helpers.
 
+Process modules now receive explicit invocation settings; see
+[the portable module interface](docs/MODULAR_PROCESSES.md). Report generation needs
+the [derived report image](containers/analysis/README.md), containing the exact two
+spreadsheet dependencies formerly installed inside each task. Build it locally for
+development; the release record pins its registry digest after publication.
+
 ## Separation from NERSC
 
 NRP is selected explicitly with `-C pipeline/nextflow_nrp.config`. Its Kubernetes

@@ -19,7 +19,7 @@ THREAD_KEYS = ("CO_CPUS", "N_JOBS_EXT", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS
 ROOT = Path(os.environ["TEST_ROOT"])
 SOURCE = Path(os.environ["SOURCE_DIR"])
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("mode", choices=("nrp", "nersc"))
+parser.add_argument("mode", choices=("nrp", "nersc", "local"))
 parser.add_argument("--label", help="Separate evidence directory for repeated compatibility checks")
 args = parser.parse_args()
 label = args.label or args.mode
@@ -28,13 +28,23 @@ folder.mkdir(parents=True, exist_ok=True)
 (ROOT / "validation").mkdir(exist_ok=True)
 workflow = (SOURCE / "pipeline/main_multi_backend.nf").read_text()
 # Exercise the actual shared publication declaration and default, not a copy.
-publish = next(line.strip() for line in workflow.splitlines()
-               if line.strip().startswith('publishDir "${params.results_path}",'))
+publish = "\n    ".join(line.strip() for line in
+               (SOURCE / "pipeline/modules/results_collector.nf").read_text().splitlines()
+               if line.strip().startswith("publishDir "))
 default = next(line for line in workflow.splitlines()
                if line.startswith("params.publish_overwrite = "))
+source_manifest = SOURCE / "source-manifest.json"
+source_identity = (json.loads(source_manifest.read_text()) if source_manifest.exists()
+                   else {"source_directory": str(SOURCE)})
+source_identity["observed_runtime_files"] = {
+    str(path.relative_to(SOURCE)): hashlib.sha256(path.read_bytes()).hexdigest()
+    for directory in ("pipeline", "capsules", "scripts")
+    for path in sorted((SOURCE / directory).rglob("*"))
+    if path.is_file() and path.suffix in {".nf", ".config", ".py", ".json", ".env"}
+    and "__pycache__" not in path.parts
+}
 result = {"mode": args.mode, "nersc_shifter_executed": False,
-          "source": json.loads((SOURCE / "source-manifest.json").read_text()),
-          "checks": {}}
+          "source": source_identity, "checks": {}}
 env = os.environ.copy()
 command_prefix = ["nextflow"]
 
@@ -132,7 +142,7 @@ if args.mode == "nersc":
     overlay = folder / "shell-only.config"
     overlay.write_text("shifter.enabled = false\nprocess.container = null\n")
     test_config = config + "," + str(overlay)
-else:
+elif args.mode == "nrp":
     env["NXF_HOME"] = str(ROOT / "cache" / "compatibility-nrp")
     test_config = str(SOURCE / "pipeline/nextflow_nrp.config")
     run("nextflow-version", [*command_prefix, "-version"], folder)
@@ -144,6 +154,7 @@ process THREAD_LIMITS {
     cpus { allocated_cpus }
     """ + publish + """
     input:
+    val task_settings
     val allocated_cpus
     output:
     path "limits_${allocated_cpus}.json"
@@ -160,7 +171,7 @@ print(values)
 PYTHON
     \"\"\"
 }
-workflow { THREAD_LIMITS(Channel.of(1, 2, 4)) }
+workflow { THREAD_LIMITS(Channel.value([results_path:params.results_path, publish_overwrite:params.publish_overwrite]), Channel.of(1, 2, 4)) }
 """)
     target = folder / "thread-results"
     nf("thread-limits", script, folder / "thread-run", test_config,
@@ -176,6 +187,15 @@ workflow { THREAD_LIMITS(Channel.of(1, 2, 4)) }
     for key in THREAD_KEYS:
         env.pop(key, None)
 
+else:
+    run("nextflow-version", [*command_prefix, "-version"], folder)
+    overlay = folder / "shell-only.config"
+    overlay.write_text("process.executor = 'local'\nprocess.cpus = 1\n"
+                       "process.container = null\ndocker.enabled = false\nshifter.enabled = false\n")
+    test_config = str(overlay)
+    for key in THREAD_KEYS:
+        env.pop(key, None)
+
 # Shared declaration: test fresh-run overwrite and cached-resume behavior with
 # an intentionally modified published file, leaving the cached task untouched.
 script = folder / "publication.nf"
@@ -184,6 +204,8 @@ params.results_path = null
 """ + default + """
 process PUBLICATION {
     """ + publish + """
+    input:
+    val task_settings
     output:
     path 'artifact.txt'
     path 'environment.json'
@@ -200,7 +222,7 @@ Path('environment.json').write_text(json.dumps(values, indent=2))
 PYTHON
     \"\"\"
 }
-workflow { PUBLICATION() }
+workflow { PUBLICATION(Channel.value([results_path:params.results_path, publish_overwrite:params.publish_overwrite])) }
 """)
 for policy in ("default", "true", "false"):
     case = folder / f"publication-{policy}"

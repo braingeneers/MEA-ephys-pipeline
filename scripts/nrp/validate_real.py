@@ -43,7 +43,8 @@ def check_execution(run, streams):
     images = json.loads(Path(__file__).with_name("images.json").read_text())
     for row in rows:
         process = row["name"].split(" (")[0]
-        image = "ks4" if process == "spikesort_kilosort4" else "nwb" if process.startswith("nwb_") else "base"
+        image = ("ks4" if process == "spikesort_kilosort4" else "nwb" if process.startswith("nwb_")
+                 else "analysis" if process == "report_generation" else "base")
         assert row["container"] == images[image], f"Unexpected processing image: {process}"
         prefix, suffix = row["hash"].split("/")
         matches = list((run / "work" / prefix).glob(suffix + "*"))

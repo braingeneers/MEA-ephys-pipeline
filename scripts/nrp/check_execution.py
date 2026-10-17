@@ -80,7 +80,8 @@ for device in ((options.workflow_device,) if options.workflow_device else ("cpu"
     assert {k: r["hash"] for k, r in tasks.items()} == {k: r["hash"] for k, r in previous.items()}
     resources = {}
     for name, row in tasks.items():
-        image = "ks4" if name == "spikesort_kilosort4" else "nwb" if name.startswith("nwb_") else "base"
+        image = ("ks4" if name == "spikesort_kilosort4" else "nwb" if name.startswith("nwb_")
+                 else "analysis" if name == "report_generation" else "base")
         assert row["container"] == IMAGES[image], (name, row["container"])
         resources[name] = check_resources(name, row, device)
         wrapper = (task_folder(run, row["hash"]) / ".command.run").read_text()

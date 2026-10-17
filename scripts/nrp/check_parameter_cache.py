@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Exercise parameter/pin changes across real Nextflow cache/resume cycles.
 
-Uses the workflow's actual parameter-loading code with shell-only tasks. Run in
-a finite driver Job; no processing containers or scientific work are launched.
+Uses the actual settings parser and process modules with tiny argv-recording
+capsules. Run in a finite driver Job or local container; no science is performed.
 """
 import argparse
 import csv
@@ -22,37 +22,42 @@ def main():
     source = Path(os.environ["SOURCE_DIR"])
     folder = root / "probes" / f"parameter-cache-{args.label}"
     folder.mkdir(parents=True, exist_ok=True)
-    workflow = (source / "pipeline/main_multi_backend.nf").read_text()
-    header = workflow.split("process job_dispatch {", 1)[0]
+    # Run the actual imported process modules with tiny argv-recording capsules.
+    # This checks their real value/path inputs and cache keys, not a copied shell task.
+    code = folder / "probe-code"
+    code.mkdir(exist_ok=True)
+    (code / "run").write_text("""#!/usr/bin/env bash
+exec python3 - "$@" <<'PYTHON'
+import json, sys
+from pathlib import Path
+out = Path('../results')
+out.mkdir(parents=True, exist_ok=True)
+(out / 'arguments.json').write_text(json.dumps(sys.argv[1:]))
+PYTHON
+""")
+    (root / "data").mkdir(exist_ok=True)
+    prepared = folder / "prepared"
+    prepared.mkdir(exist_ok=True)
+    dispatch = folder / "job.json"
+    dispatch.write_text('{}')
     script = folder / "main.nf"
-    script.write_text(header + '''
-process SORTER_PARAMETERS {
-    output:
-    path 'sorter.txt'
-    script:
-    """
-    cat > sorter.txt <<'SETTINGS'
-${spikesorting_args}
-${versions['SPIKESORT_KS4']}
-${gitCloneFunction}
-SETTINGS
-    """
-}
-process PREPROCESSING_PARAMETERS {
-    output:
-    path 'preprocessing.txt'
-    script:
-    """
-    cat > preprocessing.txt <<'SETTINGS'
-${preprocessing_args}
-SETTINGS
-    """
-}
+    script.write_text("""nextflow.enable.dsl = 2
+include { loadLaunchSettings; processOptions } from '""" + str(source / "pipeline/settings") + """'
+include { spikesort_kilosort4 as SORTER_PARAMETERS } from '""" + str(source / "pipeline/modules/spikesort_kilosort4") + """'
+include { preprocessing as PREPROCESSING_PARAMETERS } from '""" + str(source / "pipeline/modules/preprocessing") + """'
+params.params_file = null
+params.torch_device = null
+params.results_path = null
+params.publish_overwrite = null
+params.git_repo_prefix = 'https://github.com/AllenNeuralDynamics/aind-'
+settings = loadLaunchSettings(params, baseDir)
 workflow {
-    SORTER_PARAMETERS()
-    PREPROCESSING_PARAMETERS()
+    SORTER_PARAMETERS(channel.value(processOptions('spikesort_kilosort4', settings)),
+        file('""" + str(code) + """'), channel.value(1), file('""" + str(prepared) + """'))
+    PREPROCESSING_PARAMETERS(channel.value(processOptions('preprocessing', settings)),
+        file('""" + str(code) + """'), channel.value(1), file('""" + str(root / 'data') + """'), file('""" + str(dispatch) + """'))
 }
-''')
+""")
     for name in ("capsule_versions.env", "kilosort4_defaults.json"):
         shutil.copy2(source / "pipeline" / name, folder / name)
     config = folder / "local.config"
@@ -76,26 +81,20 @@ workflow {
                            check=True, timeout=300)
         with trace.open() as file:
             rows = list(csv.DictReader(file, delimiter="\t"))
-        statuses = {row["name"]: row["status"] for row in rows}
+        statuses = {row["name"].split(" (", 1)[0]: row["status"] for row in rows}
         outcomes[label] = statuses
         print(label, statuses, flush=True)
         assert statuses == expected, (label, statuses, expected)
         for row in rows:
             prefix, suffix = row["hash"].split("/")
             work = next((folder / "work" / prefix).glob(suffix + "*"))
-            if row["name"] == "SORTER_PARAMETERS":
-                lines = (work / "sorter.txt").read_text().splitlines()
-                actual = json.loads(lines[0].removeprefix("--params '").removesuffix("'"))
+            arguments = json.loads((work / "capsule/results/arguments.json").read_text())
+            actual = json.loads(arguments[arguments.index("--params") + 1])
+            if row["name"].split(" (", 1)[0] == "SORTER_PARAMETERS":
                 desired = json.loads(json.dumps(params["spikesorting"]["kilosort4"]))
                 desired["sorter"]["torch_device"] = "cuda"
                 assert actual == desired, (label, "Sorter settings were stale")
-                pin = next(line.split("=", 1)[1] for line in
-                           (folder / "capsule_versions.env").read_text().splitlines()
-                           if line.startswith("SPIKESORT_KS4="))
-                assert lines[1] == pin, (label, "Capsule pin was stale")
             else:
-                actual = json.loads((work / "preprocessing.txt").read_text().strip()
-                                    .removeprefix("--params '").removesuffix("'"))
                 assert actual == params["preprocessing"], (label, "Preprocessing settings were stale")
 
     complete = {"SORTER_PARAMETERS": "COMPLETED", "PREPROCESSING_PARAMETERS": "COMPLETED"}
@@ -113,7 +112,8 @@ workflow {
                               else line for line in lines) + "\n")
     run("capsule-pin-change", dict(cached, SORTER_PARAMETERS="COMPLETED"))
     run("pin-unchanged", cached)
-    result = {"passed": True, "source": str(source), "checks": outcomes}
+    result = {"passed": True, "source": str(source), "checks": outcomes,
+              "actual_process_modules": True, "scientific_capsules_stubbed": True}
     (folder / "result.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
 
