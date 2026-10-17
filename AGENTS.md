@@ -14,3 +14,13 @@
 - Use `trash` for local file deletion. Do not create a PR; the operator handles it.
 - Keep fixtures and execution evidence outside Git. Tiny process probes establish
   binding/cache behavior, not scientific parity or NERSC/Shifter execution.
+- A loaded Zarr analyzer can silently have no recording. Portable stage wrappers
+  must verify the bundle and read recording samples before invoking capsules that
+  classify load errors as skipped work. Missing dependencies are never zero spikes.
+- Keep executable references distinct from historical provenance. Rebase the exact
+  lazy recording graph, including its raw NWB and binary dependencies, using explicit
+  serialization bases. Do not substitute a binary cache or infer a producing task
+  directory from a basename. Preserve the capsule's JSON and pickle fallbacks.
+- Scientific fingerprints must retain Pandas nullable values distinctly from None,
+  NaN and infinity. Template metrics can contain `pd.NA`; do not drop those values
+  or change scientific tables to make packaging JSON-serializable.

@@ -70,9 +70,10 @@ The runtime checks use `SOURCE_DIR` and `TEST_ROOT` for source/evidence location
 as described in [README_NRP.md](../README_NRP.md). Evidence and generated acquisitions
 belong outside Git. Use the producing scientific image for analyzer/extension checks.
 
-Serialized recording/analyzer references still require the original workspace
-layout at this process-extraction checkpoint. Independent stage bundling must verify
-relocation before claiming tasks can run from isolated scientific bundles.
+The direct graph retains its original serialized recording references.
+[Portable local bundles](PORTABLE_BUNDLES.md) package and verify their complete
+dependencies for relocation. Independent stage entry points must use that tested
+contract before claiming execution without the producing workspace.
 
 The extraction checkpoint passed a real eleven-process CPU run on the generated
 180-second, 32-channel fixture: 15 units and 40,440 spikes, with the original
