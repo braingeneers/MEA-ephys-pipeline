@@ -82,3 +82,7 @@
 - Kilosort's total-runtime clock pads hours/minutes but uses unpadded rounded
   seconds, including possible 60. Validation may separate that measured duration;
   retain scientific counts/shapes, parameters and terminal evidence in its log.
+- Mount validation hooks explicitly for every Docker task. Remote-cloned curation
+  can infer only a work-directory mount; an unavailable BASH_ENV hook may silently
+  produce no receipt. Count actual in-container evidence separately from bounded
+  mount requests, including after an unrelated workflow failure.

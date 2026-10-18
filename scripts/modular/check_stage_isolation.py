@@ -188,6 +188,7 @@ def stage(args, stage_name, kind, expected_tasks, selected):
     options = ["--user", "1000:1000", "-e", "HOME=/tmp", "-e", "MPLBACKEND=Agg",
                "-v", str(source) + ":" + str(source) + ":ro",
                "-v", str(root / "input") + ":" + str(root / "input") + ":ro",
+               "-v", str(tools) + ":" + str(tools) + ":ro",
                "-e", "BASH_ENV=" + str(tools / "preflight.sh"), "-e", "PYTHONPATH=" + str(tools)]
     groovy = lambda text: "'" + text.replace("\\", "\\\\").replace("'", "\\'") + "'"
     (execution / "probe.config").write_text("executor.queueSize=4\nexecutor.pollInterval='1 sec'\n"
