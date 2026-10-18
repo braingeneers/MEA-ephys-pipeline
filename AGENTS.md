@@ -21,6 +21,9 @@
 - Report dependencies must be installed globally in the derived image. NRP changes
   `HOME` to `/tmp`, so build-time user-site installs disappear from its import path.
   Preserve the base scientific stack and restore its `pipelineuser` after installation.
+- BuildKit parses a raw `sha256:<config-id>` in FROM as a registry image name.
+  For an unpublished immutable parent, use a content-named local alias, verify its
+  ID before/after the build and require the child's exact parent-layer prefix.
 - Nextflow 23 does not evaluate a closure supplied as the `overwrite` option.
   Keep default/true/false publication policies static and select through `saveAs`;
   test fresh and cached-resume behavior for all three on both supported runtimes.

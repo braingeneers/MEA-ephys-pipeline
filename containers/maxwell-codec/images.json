@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "status": "locally_verified_candidates_not_active_or_published",
+  "dockerfile": "containers/maxwell-codec/Dockerfile",
+  "dockerfile_sha256": "4acf295ccf50fcdd70bd1f33ef3b70dedb93d8bda0a15b12fc4987576fee457b",
+  "plugin": {
+    "source_image": "braingeneers/modular-maxwell-to-nwb@sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed",
+    "source_path": "/opt/maxwell-hdf5-plugin/libcompression.so",
+    "path": "/opt/mea-maxwell-hdf5-plugin/libcompression.so",
+    "sha256": "4bc74ea98c08b70406aa976950fcf5f55d572430f51d3882eeb947c557dd14f4",
+    "bytes": 35776
+  },
+  "report_parent_recipe": "containers/analysis/Dockerfile",
+  "report_parent_recipe_sha256": "0d174af9c293a1d43f3a68a677149b12f612b9d492540da216161bcbc772dcc6",
+  "images": {
+    "base": {
+      "reference": "braingeneers/mea-ephys-base:0.1.0",
+      "parent": "ghcr.io/allenneuraldynamics/aind-ephys-pipeline-base@sha256:a9728fa63078b0429e4c85b5918d7286d4c3f6ed5def900f9876540513adec03",
+      "parent_image_id": "sha256:f41c83cb839b6fd820145f6c89d2bc5e08058a6eee56f41e653b21831d94e006",
+      "local_image_id": "sha256:f09087aa24b5d3cc9ee09dd9c02ea180eeadb1be45ae043d99a32ee3c8bbc9d7",
+      "registry_digest": null,
+      "scientific_package_changes": [],
+      "package_inventory_sha256": "5a61b0b8431e28051f84543e55de041e8c464258fbde1a725cf5210653f46c31"
+    },
+    "ks4": {
+      "reference": "braingeneers/mea-ephys-kilosort4:0.1.0",
+      "parent": "ghcr.io/allenneuraldynamics/aind-ephys-spikesort-kilosort4@sha256:b5192e8b2b4f62f07b98ed693f23a192dff04c119e744946ac000589026b8165",
+      "parent_image_id": "sha256:9461cd6e7714bf47af1f50ef5d2915ea59f6b92e468201718e00979388c308b0",
+      "local_image_id": "sha256:ded5c0676ff33116a4b3b83d064520aa3aed5c4f1a630a05f88e1dc67fa6598a",
+      "registry_digest": null,
+      "scientific_package_changes": [],
+      "package_inventory_sha256": "b67085ee60256ca55cb596926aed29c1a8f651c72061cee4d6cfd27a127d6e85"
+    },
+    "analysis": {
+      "reference": "braingeneers/mea-ephys-analysis:0.2.0",
+      "parent": "sha256:a372fb3a91f87543c4cc93a41ecb160056832b456dbfffcb0ceded675f54acaf",
+      "parent_image_id": "sha256:a372fb3a91f87543c4cc93a41ecb160056832b456dbfffcb0ceded675f54acaf",
+      "local_image_id": "sha256:b09b5525dda0d4c7047c1cda85b1af0051e92a02115069ec1cc317d4eba95488",
+      "registry_digest": null,
+      "scientific_package_changes": [],
+      "package_inventory_sha256": "9b8519aeb2f694aebf826d1124e02b6ba55d58f941688af395843f98cd9154e9"
+    },
+    "nwb": {
+      "reference": "braingeneers/mea-ephys-nwb:0.1.0",
+      "parent": "ghcr.io/allenneuraldynamics/aind-ephys-pipeline-nwb@sha256:03ad8e8572ad1e98da9d35c380e8fad23de895731d2d382fd9e18376dd61ab4b",
+      "parent_image_id": "sha256:55968d63a02bc90d3b25c158da89390d9ad060f726db7b56e378e14ea7557ddb",
+      "local_image_id": "sha256:b56afad72b50d1c8c5d0c23000ac7e7541eb4557ecc021a4e9fa9cf56f9f26a3",
+      "registry_digest": null,
+      "scientific_package_changes": [],
+      "package_inventory_sha256": "a599e177cf26affd15febde6bf94b8fe1950389386511acc0e482ee3146d5ea1"
+    }
+  },
+  "verification": {
+    "offline": true,
+    "user_id": 1000,
+    "home": "/tmp",
+    "codec_values_per_role": 2048,
+    "encoded_values_per_role": 2048,
+    "filtered_chunks_per_role": 32,
+    "genuine_recordings": [
+      "maxone",
+      "maxtwo_routed"
+    ],
+    "full_modeled_nwb_writer_acceptance": false
+  }
+}
