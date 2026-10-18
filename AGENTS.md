@@ -16,6 +16,10 @@
 - Groovy JsonSlurper LazyMap values can lose fields when aliases serialize the
   same tree concurrently. Materialize an eager per-invocation JSON copy under the
   shared input's lock before fan-out, preserving numeric encodings and unknown keys.
+- JSON-file decoding needs its own input-derived controls: JsonSlurper can turn
+  submitted `-0.0` into BigDecimal `0.0` before the snapshot sees it. An in-memory
+  Double snapshot test does not prove file fidelity. Keep the original bytes as
+  the numeric oracle, independently of the generated request/completion.
 - Keep process names stable unless changing and testing the backend selectors and
   trace consumers together. Test both Nextflow 26.04.6 and the NERSC 23.08.0-edge path.
 - Report dependencies must be installed globally in the derived image. NRP changes
