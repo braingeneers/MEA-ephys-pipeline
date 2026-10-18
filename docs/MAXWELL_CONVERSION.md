@@ -32,7 +32,7 @@ The bridge accepts no source replacement, finalization or deletion option.
 
 `context` has these explicit fields:
 
-- `workflow_version`: the owning MEA release, currently `0.2.9`. Native version
+- `workflow_version`: the owning MEA release, currently `0.2.10`. Native version
   `0.1.19` is read independently from its generated config, never replaced by the
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.
@@ -79,8 +79,9 @@ selection snapshot, even when a filter selects only one well.
 Native artifacts stay in the owning `derived/` namespace. Local copies publish
 beneath `<output_uri>/bridge/<run_id>/<step_id>/units/<unit_id>/`. Completion and
 `units.json` live beside `units/`. Existing different content is rejected. Exact
-interrupted copies can confirm the same deterministic receipt; operational free
-space/CPU/disk measurements remain separate task telemetry.
+interrupted copies can confirm the same deterministic receipt. Free-space
+observations and disk requests remain separate task telemetry; CPU/memory requests
+remain in the Nextflow trace.
 
 Each unit contains the unchanged NWB, original LINDI sidecar, validation sidecar,
 and declared compact companion. `conversion/` retains the complete uploaded

@@ -37,6 +37,11 @@ def require(condition, message):
         raise ContractError(message)
 
 
+def expected_phases(settings):
+    return [phase for phase in PHASES
+            if phase != 'companion' or settings['effective']['create_linked_maxwell_companion']]
+
+
 class PublishedOnly(LocalStore):
     """The owning commit code may confirm existing JSON, never create/repair it."""
     def put_json(self, uri, value):
@@ -124,7 +129,7 @@ def prepare(reference, request):
         seen.add(key)
         outcome = outcomes[unit['unit_id']]
         report, _ = store.read_json(outcome['evidence']['uri'], expected=outcome['evidence'])
-        require([p['phase'] for p in report['phases']] == PHASES
+        require([p['phase'] for p in report['phases']] == expected_phases(stage['settings'])
                 and all(p['exit_code'] == 0 for p in report['phases']), 'Incomplete native scientific phases')
         artifacts = {a['kind']: a['object'] for a in outcome['artifacts']}
         kinds = set(NAMES) if stage['settings']['effective']['create_linked_maxwell_companion'] else set(NAMES) - {'maxwell_companion'}
@@ -208,7 +213,7 @@ def verify_local(root, expected=None):
             'Local conversion lost its complete native outcome')
     report = frozen('conversion/native-evidence.json', details['native_evidence'])
     require(report.get('scientific_execution_complete') is True
-            and [p['phase'] for p in report['phases']] == PHASES
+            and [p['phase'] for p in report['phases']] == expected_phases(details['settings'])
             and all(p['exit_code'] == 0 for p in report['phases']), 'Local native science is incomplete')
     if 'projection' in details['native_unit']:
         frozen('conversion/projection.json', details['native_unit']['projection'])

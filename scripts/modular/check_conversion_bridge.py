@@ -65,7 +65,7 @@ def main():
             for row in plan['units']:
                 meta = row['unit_meta']; details = meta['maxwell_conversion']
                 self.assertEqual(details['native_owner']['workflow_version'], '0.1.19')
-                self.assertEqual(details['wrapper_owner']['workflow_version'], '0.2.9')
+                self.assertEqual(details['wrapper_owner'], request['wrapper']['owner'])
                 self.assertEqual(details['settings']['submitted'], {})
                 self.assertIs(type(meta['unknown_typed']['integer']), int)
                 self.assertIs(type(meta['unknown_typed']['float']), float)
@@ -107,7 +107,7 @@ def main():
             variants = []
             value = copy.deepcopy(request);value['recordings'][0]['unknown_typed']['integer'] += 1;variants.append(value)
             value = copy.deepcopy(request);next(iter(value['recordings'][0]['nwb_metadata'].values()))['sha256'] = '0'*64;variants.append(value)
-            value = copy.deepcopy(request);value['native']['owner']['workflow_version'] = '0.2.9';variants.append(value)
+            value = copy.deepcopy(request);value['native']['owner']['workflow_version'] = value['wrapper']['owner']['workflow_version'];variants.append(value)
             value = copy.deepcopy(request);value['settings']['nwb_chunk_channels'] = 2;variants.append(value)
             for i,value in enumerate(variants):
                 with self.subTest(case=i), self.assertRaises(bridge.ContractError):
