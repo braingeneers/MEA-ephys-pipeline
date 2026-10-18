@@ -146,7 +146,8 @@ workflow MEA_ANALYSIS {
         viz_calls.map{ cfg,c,p,prior -> children(p.results) },viz_calls.map{ cfg,c,p,prior -> children(c.results) })
     visualized = keyedProducers(visualization.out.unit_results).join(curated,failOnDuplicate:true,failOnMismatch:true)
     collect_calls = visualized.map{ id,v,c,p,prior -> tuple(taskOptions('results_collector',settings,context,prior.meta,[input_path:rawSession(prior.path).toString()]),v,c,p,prior) }
-    results_collector(collect_calls.map{ cfg,v,c,p,prior -> cfg },collect_calls.map{ cfg,v,c,p,prior -> duration(prior.path) },
+    results_collector(collect_calls.map{ cfg,v,c,p,prior -> cfg },channel.value(file("${moduleDir}/../capsules/results_collector/code")),
+        collect_calls.map{ cfg,v,c,p,prior -> duration(prior.path) },
         collect_calls.map{ cfg,v,c,p,prior -> rawSession(prior.path) },collect_calls.map{ cfg,v,c,p,prior -> family(prior.path,'job_') },
         collect_calls.map{ cfg,v,c,p,prior -> children(prior.path.resolve('data')).findAll{ !it.name.equals('ecephys_session') && !it.name.startsWith('job_') && !it.name.startsWith('spikesorted_') && !it.name.startsWith('data_process_spikesorting_') } },
         collect_calls.map{ cfg,v,c,p,prior -> family(prior.path,'spikesorted_') + family(prior.path,'data_process_spikesorting_') },

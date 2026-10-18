@@ -34,7 +34,7 @@ The shared workflow still includes correctness fixes that also affect NERSC:
 | Input/output and parameter handling | Honor explicit paths consistently, retain environment fallbacks, and reject malformed stage JSON. |
 | Resume cache keys | Include stage argument values and capsule revisions when deciding whether work can be reused; changed settings previously could reuse stale tasks with the legacy parser. |
 | Corrected no-motion JSON | Pass the nested settings to Kilosort; settings previously ignored now take effect and can change sorting results. |
-| Vendored pinned capsules | Run this checkout's dispatch, preprocessing, KS4, postprocessing, visualization and both NWB capsules; licenses and original pins are retained. |
+| Vendored pinned capsules | Run this checkout's dispatch, preprocessing, KS4, postprocessing, visualization, results collector and both NWB capsules; licenses and original pins are retained. |
 | Generic input dispatch | Vendored dispatch recognizes Neo reader classes, selects streams/blocks, and preserves supplied probe names through serialization for multiwell NWB export. Its NWB loader is unchanged. |
 | LFP export | Retain the fractional final second; materialize contiguous channels before spatial selection to bound HDF5 indexing costs. Temporary LFP binaries contain all channels; exported channel selection is unchanged. |
 | Report/burst staging and inputs | Use this checkout's code and one explicit analyzer/spike dictionary per recording; publish under `reports/<recording>/` and `bursts/<recording>/`. |
@@ -42,6 +42,7 @@ The shared workflow still includes correctness fixes that also affect NERSC:
 | Zero-spike recordings | Preserve Kilosort's confirmed zero-detection result as an empty sorting/analyzer with status and original logs; unrelated sorter errors still fail. Metrics requiring spikes are explicitly inapplicable. |
 | Visualization fallback | Use the pinned SpikeInterface version's public peak detection/localization APIs when sorted-spike locations and motion data are absent; handle empty classifier tables and preserve detector settings and trace plots. |
 | Optional device/publication controls | Device selection stays automatic unless requested; publication uses the backend's optional overwrite setting. |
+| Collector recording references | Preserve the actual raw directory when a pipeline data path is explicit; session-name substitution otherwise creates dangling analyzer references inside portable bundles. Standalone/AIND layouts without that argument retain their original mapping. |
 
 These fixes remain shared to keep one processing implementation. Separating them
 would duplicate workflow/capsule logic or preserve known failures on one backend.

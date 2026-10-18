@@ -239,7 +239,7 @@ def processOptions(String name, Map launch) {
         result.job_args = launch.job_args
     }
     if (name in ['spikesort_kilosort25', 'spikesort_spykingcircus2', 'spikesort_lupin',
-                 'curation', 'results_collector', 'quality_control', 'quality_control_collector']) {
+                 'curation', 'quality_control', 'quality_control_collector']) {
         result.clone_script = pinnedCloneScript()
         result.git_repo_prefix = launch.git_repo_prefix
     }

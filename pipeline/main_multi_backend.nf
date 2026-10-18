@@ -120,6 +120,7 @@ workflow {
     // Results collection
     results_collector_out = results_collector(
         Channel.value(processOptions('results_collector', launch_settings)),
+        Channel.value(file("${baseDir}/../capsules/results_collector/code")),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),

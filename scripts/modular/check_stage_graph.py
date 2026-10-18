@@ -31,8 +31,8 @@ def main():
                     "-v",f"{source}:{source}:ro","-v",f"{root}:{root}","-e","HOME=/tmp",
                     "-e","OMP_NUM_THREADS=1","-e","OPENBLAS_NUM_THREADS=1",images["nwb"],
                     "python",str(fixture_script),"--fixture",str(root / "data")], check=True)
-    roles = ("job_dispatch","preprocessing","kilosort4","postprocessing","visualization","nwb_ecephys","nwb_units")
-    for role in roles + ("curation","results_collector"):
+    roles = ("job_dispatch","preprocessing","kilosort4","postprocessing","visualization","nwb_ecephys","nwb_units","results_collector")
+    for role in roles + ("curation",):
         code = snapshot / "capsules" / role / "code" if role in roles else root / "cloned-stubs" / role / "code"
         code.mkdir(parents=True, exist_ok=True)
         shutil.copy2(fixture_script, code / "stage_probe_capsule.py")
@@ -40,7 +40,7 @@ def main():
         (code / "get_max_recording_duration_min.py").write_text("print('0.041666666666666664')\n")
     shim = root / "bin"
     shim.mkdir()
-    # Only the two unchanged clone callers use this test-only shim. Checkouts are
+    # Only the unchanged curation clone caller uses this test-only shim. Checkouts are
     # still checked against the real pinned hashes; no task reaches the network.
     pins = dict(line.split("=",1) for line in (source / "pipeline/capsule_versions.env").read_text().splitlines() if "=" in line)
     git = shim / "git"
@@ -48,8 +48,8 @@ def main():
         + 'a=sys.argv[1:]\n'
         + f'root=Path("/mea-probe")\npins={pins!r}\n'
         + 'if a[0]=="clone":\n'
-        + ' role="curation" if "curation" in a[-2] else "results_collector"\n'
-        + ' assert "curation" in a[-2] or "results-collector" in a[-2]\n'
+        + ' role="curation"\n'
+        + ' assert a[-2]=="https://github.com/Varda006/aind-ephys-curation.git"\n'
         + ' shutil.copytree(root/"cloned-stubs"/role, a[-1])\n'
         + 'elif "checkout" in a:\n'
         + ' assert a[a.index("checkout")+1] in pins.values(), a\n'

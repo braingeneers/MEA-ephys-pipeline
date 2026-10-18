@@ -11,6 +11,7 @@ process results_collector {
 
     input:
     val task_settings
+    path local_code, stageAs: 'capsule-source'
     val max_duration_minutes
     path ecephys_session_input, stageAs: 'capsule/data/ecephys_session'
     path job_dispatch_results, stageAs: 'capsule/data/*'
@@ -44,9 +45,9 @@ process results_collector {
         echo "[${task.tag}] allocated task time: ${task.time}"
     fi
 
-    echo "[${task.tag}] cloning git repo..."
-    ${task_settings.clone_script}
-    clone_repo "${task_settings.git_repo_prefix}ephys-results-collector.git" "${task_settings.capsule_pin}"
+    echo "[${task.tag}] staging local capsule code..."
+    cp -rL capsule-source capsule/code
+    # Vendored at the original pin; see capsules/results_collector/UPSTREAM.md.
 
     echo "[${task.tag}] running capsule..."
     cd capsule/code

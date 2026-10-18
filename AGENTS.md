@@ -38,6 +38,9 @@
 - The collector serializes analyzer recordings relative to its declared future
   publication path. Use that explicit base for source loading/fingerprinting, then
   rebase into the bundle; do not assume the collector task's analyzer directory.
+  When an explicit pipeline data path is supplied, preserve its raw directory;
+  global `ecephys_session` replacement can exit zero with a dangling recording.
+  Keep the corrected collector vendored at its recorded pin with its MIT license.
 - A named report stage must stage the whole verified bundle, selecting its analyzer
   through `analyzer_subpath`, so lazy recording dependencies share its Docker mount.
   Original direct callers may continue staging only the analyzer.

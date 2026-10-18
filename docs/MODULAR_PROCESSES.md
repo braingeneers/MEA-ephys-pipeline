@@ -3,7 +3,7 @@
 The direct entry point remains `pipeline/main_multi_backend.nf`. It imports the
 sixteen process definitions in `pipeline/modules/` and preserves the original graph,
 including all sorter branches and the currently disabled QC calls. This extraction
-does not change the scientific capsule code or their defaults.
+preserves scientific algorithms and defaults.
 
 [Named scientific stages](SCIENTIFIC_STAGES.md) compose these same processes for
 standalone or grouped execution with verified portable dependencies.
@@ -26,6 +26,13 @@ An includable caller should resolve its own helper paths from `moduleDir`. Scien
 source already vendored in `capsules/` remains maintained there with its provenance;
 changing a capsule pin alone does not replace that vendored code. The remaining
 external capsules still check out their exact recorded commits.
+
+The results collector is maintained locally at its original pin, with an explicit
+`local_code` path input after settings. Both original and named callers stage the
+same code. Its [documented correction](../capsules/results_collector/UPSTREAM.md)
+preserves recording references to explicit pipeline data; it does not rename the
+canonical `ecephys_session` directory into a session label. Collection no longer
+performs a runtime Git checkout. Other still-external capsules retain their pins.
 
 All explicit settings and capsule identities participate in task caching. The cache
 check now invokes the actual preprocessing/KS4 modules with tiny argument-recording
@@ -128,6 +135,12 @@ the default engine behavior without adding a changing resume flag to task inputs
   suite still previews the real NERSC configuration without running Shifter.
   The Docker overlay forwards the hook's thread variables through `envWhitelist`;
   the Kubernetes-native hook already runs inside its task container.
+- `scripts/modular/check_collector_paths.py --original-code <pinned-code> --retained-run <real-run>
+  --raw <raw-session> --bundle <analyzed-bundle> --output <new-directory>`:
+  run the actual upstream/repaired collector on both original and portable real
+  inputs. It compares recording fingerprints, all spikes, metric/extension files
+  and curation masks; it identifies the original dangling path despite exit zero.
+  It performs collection only, with no new sorting or analysis computation.
 
 The runtime checks use `SOURCE_DIR` and `TEST_ROOT` for source/evidence locations,
 as described in [README_NRP.md](../README_NRP.md). Evidence and generated acquisitions

@@ -118,6 +118,13 @@ scripts/params_no_motion.json
 
 `pipeline/capsule_versions.env` is the source of truth for tested capsule versions.
 
+Vendored capsules run this checkout's maintained code and retain their original
+pins/licenses with local changes documented in `capsules/*/UPSTREAM.md`. Changing a
+pin alone does not replace that code. The results collector is also vendored: it
+preserves the real source directory when a pipeline data path is explicit, avoiding
+dangling analyzer references after portable staging. Its scientific processing and
+standalone/AIND mapping without that argument remain unchanged.
+
 The validated SpikeInterface version is:
 
 ```text

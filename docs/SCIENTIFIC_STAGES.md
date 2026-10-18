@@ -78,8 +78,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.0', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.0', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.1', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.1', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -102,8 +102,10 @@ stage outputs and execution provenance. Size storage for their decoded payload a
 temporary copies; this local contract does not perform S3 publication.
 
 Serialization bases are explicit. The collector rewrites analyzer recording graphs
-relative to its **publication** directory. Assembly supplies that declared base and
-retains the same lazy graph. Producer-side copies are bound only after comparing
+relative to its **publication** directory. Its maintained capsule preserves the
+actual raw directory when pipeline data is explicit, while retaining the original
+standalone/AIND naming without that argument. Assembly supplies the declared base
+and retains the same lazy graph. Producer-side copies are bound only after comparing
 every byte, permitting canonical JSON formatting with unchanged values/types. A
 matching basename alone never establishes dependency identity.
 
