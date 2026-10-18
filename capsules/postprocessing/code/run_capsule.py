@@ -27,6 +27,7 @@ import spikeinterface.qualitymetrics as sqm
 import spikeinterface.curation as sc
 
 from spikeinterface.core.core_tools import check_json
+from parameters import analyzer_compute_parameters
 
 # AIND
 from aind_data_schema.core.processing import DataProcess, ProcessStage
@@ -289,7 +290,7 @@ if __name__ == "__main__":
             for key in ("duplicate_threshold", "return_scaled", "spike_amplitudes", "spike_locations", "principal_components"):
                 analyzer_dict.pop(key, None)
             analyzer_dict["random_spikes"] = {"method": "all"}
-            sorting_analyzer.compute(analyzer_dict)
+            sorting_analyzer.compute(analyzer_compute_parameters(analyzer_dict, sorting_analyzer.sampling_frequency))
         else:
             logging.info(f"\tCreating sorting analyzer")
             sorting_analyzer_full = si.create_sorting_analyzer(
@@ -344,7 +345,7 @@ if __name__ == "__main__":
 
             # now compute all extensions
             logging.info("\tComputing all postprocessing extensions")
-            sorting_analyzer.compute(analyzer_dict)
+            sorting_analyzer.compute(analyzer_compute_parameters(analyzer_dict, sorting_analyzer.sampling_frequency))
             
         logging.info("\tComputing quality metrics")
         metrics_to_compute = quality_metrics_names

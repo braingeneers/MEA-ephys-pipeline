@@ -53,3 +53,14 @@
   group name before adding signals or units. Reusing a channel name with a new
   group can append duplicate rows or fail on a contiguous source electrode table.
   Keep shared NWB helpers explicit process inputs in both entry points.
+- SI 0.103.2's localization node builder silently samples a 5,000-spike prototype
+  separately from the analyzer's random-spike/noise extensions. For exact validation,
+  pass one verified explicit prototype through the existing method kwargs; convert
+  its JSON vector only for compute and preserve submitted JSON provenance. Missing
+  and null prototypes have different existing meanings. Keep stochastic defaults.
+  The pinned peak selector treats seed 0 as None; retain a working nonzero seed and
+  the actual selected peaks/vector when preparing a reproducible control.
+- Startup thread probes do not establish final library threading. The maintained
+  postprocessing capsule sets OPENBLAS_NUM_THREADS=1 before importing NumPy, while
+  scientific worker count remains separately controlled. Preserve that behavior
+  and match it in capsule replays rather than inferring it from a startup probe.

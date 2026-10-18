@@ -78,8 +78,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.2', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.2', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.3', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.3', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -180,3 +180,26 @@ sampling and sorter execution annotations may still differ; the tool reports tho
 differences. A successful workflow or schema check alone does not establish exact
 scientific parity. Keep stochastic defaults and investigate numeric discrepancies
 at their owner before accepting a modular implementation.
+
+For reproducible grid-convolution validation, supply the same explicit
+`postprocessing.spike_locations.method_kwargs.prototype` vector in the complete
+postprocessing JSON, alongside the desired random-spike/noise controls. SI 0.103.2's
+node builder otherwise samples a separate 5,000-spike prototype with no seed; that
+draw is absent from the extension's recorded parameters. Changing only the other
+two seeds does not make spike locations or drift metrics reproducible.
+
+Prepare the prototype with the pinned
+`spikeinterface.sortingcomponents.tools.get_prototype_and_waveforms_from_peaks`
+using the verified recording/peak selection, the actual location window and a
+nonzero seed such as 42. Retain the returned selected peaks, waveforms, prototype
+and input identities as validation evidence, then store `prototype.tolist()` in
+the JSON. The pinned peak selector treats seed 0 as `None`; the explicit vector is
+the durable control used by subsequent tasks.
+
+The capsule converts only a supplied vector to finite float32 values, matching the
+pinned sampled prototype dtype, and checks its one-dimensional sample count against
+the recording rate and location window. Submitted JSON remains intact in provenance.
+Omitting the prototype retains the original implicit sampling. Explicit `null`
+retains SI's Gaussian fallback; it is distinct from omission. No scientific default,
+threshold or localization method is changed. `check_prototype_parameters.py --output
+<check.json>` exercises the real pinned API and rejects malformed vectors.
