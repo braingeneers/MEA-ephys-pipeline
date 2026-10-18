@@ -14,7 +14,8 @@ stable so existing NERSC/NRP selectors and trace consumers continue to match.
 `loadLaunchSettings(parameters, pipelineRoot)` in `pipeline/settings.nf` implements
 the original CLI/environment/nested-JSON precedence. `processOptions(name, settings)`
 returns only the owning task's arguments, worker options, capsule pin, image and
-required publication paths. Both functions are includable DSL2 functions. They
+required publication paths, plus execution resources and the effective KS4 device.
+Both functions are includable DSL2 functions. They
 use invocation-local maps; imported processes never read scientific global params.
 
 Callers stage checkout-owned capsule/helper directories as explicit `path` inputs.
@@ -27,6 +28,56 @@ All explicit settings and capsule identities participate in task caching. The ca
 check now invokes the actual preprocessing/KS4 modules with tiny argument-recording
 capsules, covering changed and unchanged settings and pins. These probes establish
 bindings/cache behavior, not scientific accuracy.
+
+## Keyed producer ports
+
+The eleven active processes also emit `unit_results`. Stage callers add a stable
+`unit_id` to each task's settings and join independent producers by that key.
+The original named result ports remain available to the direct graph.
+
+| Process | `unit_results` tuple |
+| --- | --- |
+| Job dispatch | `(task_settings, execution_record, results_directory, input_layout, duration_file)` |
+| Report and burst | `(task_settings, execution_record, recording_id, results_directory, input_layout)` |
+| Other active processes | `(task_settings, execution_record, results_directory, input_layout)` |
+
+`execution_record` is assigned inside the per-task script context after invocation
+settings bind. It contains the resolved container, requested CPU/memory/time/disk
+and accelerator request/limit; it does not report observed utilization. Directly
+reading `task` in a declarative output expression fails before task context exists.
+
+`results_directory` is the declared `unit-results` relative symlink to the producer's
+`capsule/results/`. `input_layout` is its declared `capsule/data/` directory. These
+are explicit Nextflow path outputs for assembly, including the input layout's staged
+references. The portable bundle helper dereferences them and uses their actual
+serialization bases; a downstream stage must not guess a predecessor work directory.
+Internal ports alone are not a verified portable bundle or stage-completion receipt.
+
+Every publishing module restricts publication to `capsule/results/*`. The separate
+internal alias avoids overlapping its directory with the original published child
+paths: Nextflow deduplicates overlapping outputs before publication filtering.
+See the [pinned Nextflow 23 publisher implementation](https://raw.githubusercontent.com/nextflow-io/nextflow/v23.08.0-edge/modules/nextflow/src/main/groovy/nextflow/processor/PublishDir.groovy).
+Keep this alias and filter together, and test multiple report units so a whole-root
+copy cannot overwrite another unit's published directory.
+
+## Per-invocation resources
+
+`process_resources` is an optional Nextflow parameter map keyed by canonical process
+name. It can be supplied in configuration or a Nextflow params file. It is separate
+from `--params_file`, which is the existing nested scientific capsule JSON.
+
+```groovy
+params.process_resources = [
+    spikesort_kilosort4: [cpus: 4, memory: '8 GB', time: '60 min', disk: '16 GB']
+]
+```
+
+The settings parser copies each process's resource map into its task settings.
+NRP resolves those explicit values first, then the existing `nrp_resources` map by
+the unqualified process name, then its original defaults. Named workflow scopes
+therefore retain direct runtime overrides. Each KS4 task's effective CLI/JSON device
+controls GPU admission, independently of other aliases' global launch parameters.
+Keep shared thread exports, image pins, retry policy and NERSC separation intact.
 
 ## Images and backend behavior
 
@@ -65,6 +116,15 @@ the default engine behavior without adding a changing resume flag to task inputs
   execute the imported report process with the NRP GPU profile and a local Docker
   overlay, proving its image selector follows the explicit settings. The report
   capsule is stubbed; this check does not submit a cluster task or exercise a GPU.
+- `scripts/modular/check_unit_ports.py --output <new-directory> --mode docker|metadata`:
+  actual imported process modules under two named aliases, with stub scientific
+  capsules. Docker mode verifies task image execution and isolated publication;
+  metadata mode observes CPU/CUDA allocation settings without CUDA computation.
+  `--legacy-runtime <cache>` also exercises the pinned older parser with the NRP
+  plugin removed for this local-only selector test. Its separate compatibility
+  suite still previews the real NERSC configuration without running Shifter.
+  The Docker overlay forwards the hook's thread variables through `envWhitelist`;
+  the Kubernetes-native hook already runs inside its task container.
 
 The runtime checks use `SOURCE_DIR` and `TEST_ROOT` for source/evidence locations,
 as described in [README_NRP.md](../README_NRP.md). Evidence and generated acquisitions

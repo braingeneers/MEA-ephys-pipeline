@@ -157,16 +157,17 @@ process THREAD_LIMITS {
     val task_settings
     val allocated_cpus
     output:
-    path "limits_${allocated_cpus}.json"
+    path "capsule/results/limits_${allocated_cpus}.json"
     script:
     \"\"\"
+    mkdir -p capsule/results
     python3 - <<'PYTHON'
 import json, os
 from pathlib import Path
 keys = "CO_CPUS N_JOBS_EXT OMP_NUM_THREADS OPENBLAS_NUM_THREADS MKL_NUM_THREADS NUMBA_NUM_THREADS".split()
 values = {key: os.environ.get(key) for key in keys}
 assert all(value == '${allocated_cpus}' for value in values.values()), values
-Path('limits_${allocated_cpus}.json').write_text(json.dumps(values, indent=2))
+Path('capsule/results/limits_${allocated_cpus}.json').write_text(json.dumps(values, indent=2))
 print(values)
 PYTHON
     \"\"\"
@@ -207,18 +208,22 @@ process PUBLICATION {
     input:
     val task_settings
     output:
-    path 'artifact.txt'
-    path 'environment.json'
+    path 'capsule/results/*'
+    path 'unit-results'
+    path 'capsule/data'
     script:
     \"\"\"
-    printf 'generated\\n' > artifact.txt
+    mkdir -p capsule/results capsule/data
+    ln -s capsule/results unit-results
+    printf 'internal\\n' > capsule/data/internal.txt
+    printf 'generated\\n' > capsule/results/artifact.txt
     python3 - <<'PYTHON'
 import json, os
 from pathlib import Path
 keys = "CO_CPUS N_JOBS_EXT OMP_NUM_THREADS OPENBLAS_NUM_THREADS MKL_NUM_THREADS NUMBA_NUM_THREADS".split()
 values = {key: os.environ.get(key) for key in keys}
 assert all(value is None for value in values.values()), values
-Path('environment.json').write_text(json.dumps(values, indent=2))
+Path('capsule/results/environment.json').write_text(json.dumps(values, indent=2))
 PYTHON
     \"\"\"
 }
@@ -242,6 +247,8 @@ for policy in ("default", "true", "false"):
     resumed = artifact.read_text()
     assert resumed == ("generated\n" if policy == "true" else "modified-after-run\n"), (policy, resumed)
     assert "CACHED" in (case / "resume.tsv").read_text()
+    assert not (published / 'unit-results').exists() and not (published / 'data').exists()
+    assert not (published / 'results').exists() and not (published / 'internal.txt').exists()
     result["checks"][f"publication_{policy}"] = {"initial": initial.strip(), "resume": resumed.strip(),
                                                    "task_cached": True, "no_thread_exports": True}
 

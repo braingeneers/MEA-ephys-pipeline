@@ -16,12 +16,17 @@ process visualization {
     path curation_results, stageAs: 'capsule/data/*'
 
     output:
+    tuple val(task_settings), val(execution_record), path('unit-results'), path('capsule/data'), emit: unit_results
     path 'capsule/results/*', emit: results
 
     script:
+    execution_record = [container: task.container ?: '', cpus: task.cpus,
+        memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
+        accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
     """
     #!/usr/bin/env bash
     set -e
+    ln -s capsule/results unit-results
 
     mkdir -p capsule
     mkdir -p capsule/data

@@ -10,14 +10,20 @@ process job_dispatch {
     path input_folder, stageAs: 'capsule/data/ecephys_session'
 
     output:
+    // Keyed producer boundary for stage composition; retain the direct ports.
+    tuple val(task_settings), val(execution_record), path('unit-results'), path('capsule/data'), path('max_duration.txt'), emit: unit_results
     path 'capsule/results/*', emit: results
     path 'max_duration.txt', emit: max_duration_file  // file containing the value
 
 
     script:
+    execution_record = [container: task.container ?: '', cpus: task.cpus,
+        memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
+        accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
     """
     #!/usr/bin/env bash
     set -e
+    ln -s capsule/results unit-results
 
     mkdir -p capsule
     mkdir -p capsule/data

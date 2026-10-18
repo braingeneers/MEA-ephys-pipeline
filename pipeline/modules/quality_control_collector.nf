@@ -5,9 +5,9 @@ process quality_control_collector {
     container { task_settings.container }
 
     // Keep option booleans static for Nextflow 23; saveAs selects one policy.
-    publishDir { "${task_settings.results_path}" }, mode: 'copy', saveAs: { filename -> task_settings.publish_overwrite == null ? new File(filename).getName() : null }
-    publishDir { "${task_settings.results_path}" }, mode: 'copy', overwrite: true, saveAs: { filename -> task_settings.publish_overwrite == true ? new File(filename).getName() : null }
-    publishDir { "${task_settings.results_path}" }, mode: 'copy', overwrite: false, saveAs: { filename -> task_settings.publish_overwrite == false ? new File(filename).getName() : null }
+    publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', saveAs: { filename -> task_settings.publish_overwrite == null ? new File(filename).getName() : null }
+    publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', overwrite: true, saveAs: { filename -> task_settings.publish_overwrite == true ? new File(filename).getName() : null }
+    publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', overwrite: false, saveAs: { filename -> task_settings.publish_overwrite == false ? new File(filename).getName() : null }
 
     input:
     val task_settings

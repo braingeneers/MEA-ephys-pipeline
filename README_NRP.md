@@ -188,6 +188,11 @@ distinct well names for NWB device/electrode grouping. Set the driver's
 `--params-file` to this generated JSON and `--input` to the recording's directory.
 The helper rejects multiple recording IDs rather than silently choosing one.
 
+Imported stages can supply per-process resources through explicit task settings;
+see [the invocation and keyed-port contract](docs/MODULAR_PROCESSES.md). Existing
+`nrp_resources` overrides also work through named workflow scopes. GPU allocation
+follows each KS4 invocation's effective device.
+
 Size resources for the real inputs. For example, an additional NRP config can
 override only selected resource fields without replacing the pinned image or
 GPU selector:

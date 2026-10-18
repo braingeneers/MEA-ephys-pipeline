@@ -180,8 +180,13 @@ def loadLaunchSettings(Map parameters, pipelineRoot) {
     }
 
 
+    def resources = options.get('process_resources', options.get('nrp_resources', [:]))
+    if (!(resources instanceof Map)) error 'process_resources must be a map keyed by process name.'
+    def effective_device = options.torch_device ?: json_params.spikesorting?.kilosort4?.sorter?.torch_device ?: 'auto'
+
     return [sorter: sorter, runmode: runmode, container_tag: options.container_tag,
         versions: versions, executor_mode: options.executor,
+        torch_device: effective_device, resources: resources,
         input_path: options.ecephys_path, results_path: options.results_path,
         publish_overwrite: options.publish_overwrite,
         git_repo_prefix: options.git_repo_prefix,
@@ -223,6 +228,10 @@ def processOptions(String name, Map launch) {
         'aind-ephys-pipeline-base'
     def result = [container: "ghcr.io/allenneuraldynamics/${image}:${launch.container_tag}".toString(),
         executor_mode: launch.executor_mode, capsule_pin: launch.versions[pinKeys[name]] ?: 'checkout']
+    def resources = launch.get('resources', [:]).get(name, [:])
+    if (!(resources instanceof Map)) error "Resources for ${name} must be a map."
+    result.resources = new LinkedHashMap(resources)
+    if (name == 'spikesort_kilosort4') result.torch_device = launch.torch_device ?: 'auto'
     def argumentName = name.startsWith('spikesort_') ? 'sorting' : name
     if (launch.arguments.containsKey(argumentName)) result.args = launch.arguments[argumentName]
     if (name in ['preprocessing', 'spikesort_kilosort25', 'spikesort_kilosort4',

@@ -5,9 +5,9 @@ process results_collector {
     container { task_settings.container }
 
     // Keep option booleans static for Nextflow 23; saveAs selects one policy.
-    publishDir { "${task_settings.results_path}" }, mode: 'copy', saveAs: { filename -> task_settings.publish_overwrite == null ? new File(filename).getName() : null }
-    publishDir { "${task_settings.results_path}" }, mode: 'copy', overwrite: true, saveAs: { filename -> task_settings.publish_overwrite == true ? new File(filename).getName() : null }
-    publishDir { "${task_settings.results_path}" }, mode: 'copy', overwrite: false, saveAs: { filename -> task_settings.publish_overwrite == false ? new File(filename).getName() : null }
+    publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', saveAs: { filename -> task_settings.publish_overwrite == null ? new File(filename).getName() : null }
+    publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', overwrite: true, saveAs: { filename -> task_settings.publish_overwrite == true ? new File(filename).getName() : null }
+    publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', overwrite: false, saveAs: { filename -> task_settings.publish_overwrite == false ? new File(filename).getName() : null }
 
     input:
     val task_settings
@@ -21,14 +21,19 @@ process results_collector {
     path visualization_results, stageAs: 'capsule/data/*'
 
     output:
+    tuple val(task_settings), val(execution_record), path('unit-results'), path('capsule/data'), emit: unit_results
     path 'capsule/results/*', emit: results
     path 'capsule/results/*', emit: nwb_data
     path 'capsule/results/*', emit: qc_data
 
     script:
+    execution_record = [container: task.container ?: '', cpus: task.cpus,
+        memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
+        accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
     """
     #!/usr/bin/env bash
     set -e
+    ln -s capsule/results unit-results
 
     mkdir -p capsule
     mkdir -p capsule/data

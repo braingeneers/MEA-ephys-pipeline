@@ -24,3 +24,14 @@
 - Scientific fingerprints must retain Pandas nullable values distinctly from None,
   NaN and infinity. Template metrics can contain `pd.NA`; do not drop those values
   or change scientific tables to make packaging JSON-serializable.
+- Build execution metadata in the process's per-task script context. `task` is not
+  available while a declarative output expression is being defined. Emit the scoped
+  variable and keep requested resources distinct from observed utilization.
+- Internal whole-result ports must use the separate `unit-results` alias and every
+  publisher must filter `capsule/results/*`. Nextflow collapses overlapping parent
+  and child outputs before publication filtering; publishing a parent directory can
+  overwrite another recording's results and publish staged scientific inputs.
+- NRP's beforeScript runs inside Kubernetes task containers. A local Docker probe
+  needs `docker.envWhitelist` for the exported thread variables, because its hook
+  runs outside the container. Do not use an unadapted Docker probe as evidence of
+  in-container thread limits. Scientific capsule `--n-jobs` is a separate control.
