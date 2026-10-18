@@ -10,10 +10,53 @@ the [generated component](CONVERTER_SOURCE.md).
 This module requires Nextflow **26.04.6**, the pinned converter image and the
 component's `MaxwellTaskRetry` library on the Nextflow classpath. For an imported
 caller, use `nextflow run /path/to/caller.nf -lib
-/path/to/pipeline/components/maxwell/lib ...`. A standalone acquisition entry and
-its scoped deployment config are separate integration work. The existing
+/path/to/pipeline/components/maxwell/lib ...`. Keep `-lib` among the `run` options,
+as described in the [Nextflow CLI reference](https://docs.seqera.io/nextflow/reference/cli/run).
+The existing
 `main_stages.nf` and original direct workflow retain their five-stage NWB interface
 and Nextflow 23/NERSC path; they do not import conversion or merge its full config.
+
+## Standalone conversion
+
+Create the output directory and save a params file such as `/data/conversion.json`:
+
+```json
+{
+  "recordings_file": "/data/recordings.json",
+  "unit_bindings_file": "/data/unit-bindings.json",
+  "settings": {},
+  "output_uri": "/data/results",
+  "run_id": "experiment-a-conversion",
+  "step_id": "convert",
+  "local_bind_paths": ["/data/projections"]
+}
+```
+
+```bash
+NXF_SYNTAX_PARSER=v1 nextflow -C pipeline/nextflow_conversion.config \
+  run pipeline/main_conversion.nf -lib pipeline/components/maxwell/lib \
+  -profile docker -params-file /data/conversion.json
+```
+
+`recordings_file` and `unit_bindings_file` contain the complete arrays described
+below. Alternatively, pass `recordings` and `unit_bindings` as JSON arrays. Use
+`settings_file` for a scientific settings object in its own file; supplying both
+a nonempty `settings` map and `settings_file` is rejected. No scientific defaults
+are inserted into submitted `{}`. Pin `run_id` when referring to this publication
+later; an omitted ID is generated once for that invocation.
+
+`nextflow_conversion.config` includes only the exported deployment configuration.
+Its `docker` and `k8s` profiles retain native image/resource/retry policy in the
+process definitions. It does not include the old KS4 `task_settings` selectors.
+Kubernetes uses Jobs; local file inputs/output paths must be visible on the shared
+workspace with the same absolute paths. Select namespace, service account and PVC
+explicitly for that deployment. NERSC settings remain in their existing config.
+
+The printed `BRIDGE_COMPLETION` names a JSON document with a `units_file` reference.
+Its ordinary local `units.json` can feed `main_stages.nf --stage all --units_file
+/path/to/units.json` with the separate KS4 configuration. The consumer-image
+codec/model validation and complete scientific acceptance remain distinct from
+conversion-entry validation.
 
 ## Inputs
 
@@ -32,7 +75,7 @@ The bridge accepts no source replacement, finalization or deletion option.
 
 `context` has these explicit fields:
 
-- `workflow_version`: the owning MEA release, currently `0.2.10`. Native version
+- `workflow_version`: the owning MEA release, currently `0.2.11`. Native version
   `0.1.19` is read independently from its generated config, never replaced by the
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.
@@ -66,6 +109,14 @@ Binding metadata is preserved; `maxwell_conversion` is reserved for bridge
 provenance. The native recording/well IDs remain separate and explicit. Unknown
 recording fields and uploaded inventories are retained in each unit's complete
 selection snapshot, even when a filter selects only one well.
+
+Imported callers can use `conversionOwnerVersion()` from `pipeline/conversion.nf`
+for the actual owning version rather than an outer workflow/Recipe version.
+Every invocation takes an eager independent snapshot of records, settings and
+context before fan-out. This retains nested unknown metadata when aliases share
+JSON parsed by Groovy's lazy reader, including integer/float encodings, signed
+zero and map order. Missing retry-library loading or a different Nextflow version
+is rejected before native tasks schedule.
 
 ## Completed outputs
 
@@ -111,6 +162,5 @@ The bounded implementation tests use real modeled Max One and routed Max Two
 conversion, duplicate raw basenames, explicit reversed bindings, external
 projection directories and typed unknown metadata. Guard checks use private
 copies; they do not fabricate successful conversion. Consumer filter/model
-compatibility, automatic acquisition entry/profile packaging, two-alias runtime
-isolation, complete scientific parity and cluster/GPU/S3 service acceptance are
+compatibility, complete scientific parity and cluster/GPU/S3 service acceptance are
 separate requirements.

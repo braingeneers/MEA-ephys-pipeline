@@ -21,9 +21,10 @@ The existing five MEA stages continue to consume local units through their curre
 interface and retain Nextflow 23/NERSC compatibility. The separate
 [`MEA_MAXWELL_CONVERSION` bridge](MAXWELL_CONVERSION.md) maps explicit recording/well
 bindings to completed local units, retaining native and wrapper ownership plus all
-declared projection/sibling dependencies. Its standalone acquisition entry and
-scoped deployment configuration remain separate integration work. Importing the
-full converter config into old entry points would change their runtime requirements.
+declared projection/sibling dependencies. `main_conversion.nf` calls the same bridge
+with its dedicated `nextflow_conversion.config` and explicit native `-lib` path.
+Importing a complete converter config into old entry points would change their
+runtime requirements.
 
 To update, run the canonical `export_component.py` from the desired exact Workflows
 commit, preparing a new directory outside both repositories. Its Python 3.11/Git
@@ -41,5 +42,5 @@ modeled Max One/routed Max Two inputs with default submitted settings `{}`. Both
 selected units produced valid NWB, compact companion, LINDI and validation siblings;
 published products and original source/projection bytes reverified. These are tiny
 converter/packaging checks. Full original-vs-exported scientific parity, consuming
-codec/model runtimes, acquisition integration and actual GPU/cluster acceptance remain
+codec/model runtimes and actual GPU/cluster acceptance remain
 separate requirements. Scientific fixtures/logs remain outside Git.

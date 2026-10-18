@@ -23,8 +23,9 @@ The complete maintained native Maxwell converter is available as a
 [generated source component](CONVERTER_SOURCE.md). It has its own standalone
 Nextflow 26 entry and verified native artifact outputs. The separate named
 [`MEA_MAXWELL_CONVERSION` bridge](MAXWELL_CONVERSION.md) emits completed local units
-for preprocessing. Its standalone acquisition entry is separate integration work;
-the existing five exports and their Nextflow 23/NERSC path retain their interface.
+for preprocessing. `main_conversion.nf` is its separate standalone entry with a
+scoped config and explicit retry-library path. The existing five exports and
+their Nextflow 23/NERSC path retain their interface.
 
 ## Local execution
 
@@ -85,8 +86,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.10', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.10', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.11', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.11', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional

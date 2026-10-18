@@ -2,19 +2,54 @@ nextflow.enable.dsl = 2
 
 include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellMetadata } from './components/maxwell/component'
 
+def conversionRuntime() {
+    if (nextflow.version.toString() != '26.04.6') error 'Maxwell conversion requires Nextflow 26.04.6; existing NWB/NERSC entries retain their own runtime.'
+    try {
+        this.class.classLoader.loadClass('MaxwellTaskRetry')
+    } catch (ClassNotFoundException ignored) {
+        error 'Load the owning conversion retry library with: nextflow run <entry> -lib <pipeline>/components/maxwell/lib'
+    }
+}
+
+def conversionVersion(path) {
+    def match = (file(path).text =~ /(?m)^\s*version\s*=\s*['"]([^'"]+)['"]/)
+    if (!match.find()) error 'An owning workflow requires a literal version.'
+    match.group(1)
+}
+
+def conversionOwnerVersion() { conversionVersion("${moduleDir}/nextflow.config") }
+
+def conversionCopy(value) {
+    if (value instanceof Map) {
+        def result = new LinkedHashMap()
+        value.each { key,item -> result[key] = conversionCopy(item) }
+        return result
+    }
+    if (value instanceof List) return value.collect { conversionCopy(it) }
+    if (value instanceof GString) return value.toString()
+    value
+}
+
+def conversionSnapshot(value) {
+    // JsonSlurper LazyMap materialization mutates internal state. A shared input
+    // must be copied under its own lock before aliases serialize it concurrently.
+    synchronized (value) {
+        groovy.json.JsonOutput.toJson(value)  // Validate JSON without changing numeric encodings.
+        conversionCopy(value)
+    }
+}
+
 // This separate module deliberately does not enter the five-stage Nextflow 23 path.
 def conversionContext(Map settings, Map context) {
+    conversionRuntime()
+    settings = conversionSnapshot(settings)
+    context = conversionSnapshot(context)
     def allowed = ['output_uri','workflow_version','run_id','step_id','unit_bindings','runtime','local_bind_paths'] as Set
     if (context.keySet() - allowed) error 'Unknown conversion context; source replacement/finalization is unsupported.'
     def nativeRoot = "${moduleDir}/components/maxwell"
     def defaults = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/defaults.json").toFile())
     if (settings.keySet() - defaults.keySet()) error 'Unknown conversion settings; source replacement/finalization is unsupported.'
-    def literal = { path ->
-        def match = (file(path).text =~ /(?m)^\s*version\s*=\s*['"]([^'"]+)['"]/)
-        if (!match.find()) error 'An owning workflow requires a literal version.'
-        match.group(1)
-    }
-    def ownerVersion = literal("${moduleDir}/nextflow.config")
+    def ownerVersion = conversionOwnerVersion()
     if (context.workflow_version != ownerVersion) error 'Conversion context must retain the owning MEA version.'
     for (key in ['run_id','step_id']) {
         if (!(context[key] instanceof String) || !(context[key] ==~ /[A-Za-z0-9][A-Za-z0-9_.-]{0,159}/))
@@ -47,7 +82,7 @@ def conversionContext(Map settings, Map context) {
     def image = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/image.json").toFile()).pinned_reference
     def distribution = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/export-manifest.json").toFile())
     def nativeContext = [output_base_uri:output,output_uri:output,run_id:context.run_id,step_id:context.step_id,
-        workflow_version:literal("${nativeRoot}/nextflow.config"),runtime:new LinkedHashMap(context.runtime ?: [:]),
+        workflow_version:conversionVersion("${nativeRoot}/nextflow.config"),runtime:new LinkedHashMap(context.runtime ?: [:]),
         local_bind_paths:(localPaths+[directory.toString()]).unique()]
     def metadata = maxwellMetadata(settings,nativeContext,image)
     [native:[context:nativeContext,owner:metadata.owner,defaults:defaults,
@@ -59,6 +94,7 @@ def conversionContext(Map settings, Map context) {
 
 def conversionSelection(Map request, records) {
     if (!(records instanceof List) || !records) error 'Expected one nonempty complete recordings selection.'
+    records = conversionSnapshot(records)
     def normalize = { value ->
         if (!(value instanceof String) || !value) error 'Explicit recording/binding input_uri is required.'
         if (value.startsWith('s3://') || value.startsWith('file:///')) return value
@@ -175,7 +211,7 @@ workflow MEA_MAXWELL_CONVERSION {
         if (values.size() != 1) error 'Expected one complete recordings selection.'
         conversionSelection(cfg,values[0])
     }
-    def inputBindings = context.unit_bindings.collect { it.input_uri }
+    def inputBindings = cfg.wrapper.unit_bindings.collect { it.input_uri }
     // Explicit paths supply Docker/local transport visibility, never unit identity.
     def paths = inputBindings.findAll { !it.startsWith('s3://') }.collect { file(it,checkIfExists:true) }
     def root = file(cfg.native.context.output_base_uri,checkIfExists:true)
@@ -188,9 +224,9 @@ workflow MEA_MAXWELL_CONVERSION {
     // Native exports take a value list; their context bindings must be static.
     // Complete parent directories make projection/source URIs visible in local tasks.
     def nativeContext = cfg.native.context
-    PREPARE_MAXWELL_SELECTION(selection.map { it.recordings },settings,nativeContext +
-        [step_id:context.step_id+'-raw',collection_uri:cfg.native.context.output_base_uri+'derived/nwb/'])
-    MAXWELL_TO_NWB(PREPARE_MAXWELL_SELECTION.out.artifacts,settings,nativeContext)
+    PREPARE_MAXWELL_SELECTION(selection.map { it.recordings },cfg.settings,nativeContext +
+        [step_id:nativeContext.step_id+'-raw',collection_uri:cfg.native.context.output_base_uri+'derived/nwb/'])
+    MAXWELL_TO_NWB(PREPARE_MAXWELL_SELECTION.out.artifacts,cfg.settings,nativeContext)
     def bridge = file("${moduleDir}/helpers/maxwell_bridge.py")
     def runtime = file("${moduleDir}/components/maxwell/runtime")
     def common = file("${moduleDir}/components/maxwell/components/common/python")
@@ -198,7 +234,7 @@ workflow MEA_MAXWELL_CONVERSION {
         bridge,runtime,common,localBindings)
     calls = MEA_MAXWELL_PREPARE_UNITS.out.plan.flatMap { request,plan ->
         def value = new groovy.json.JsonSlurper().parse(plan.toFile())
-        value.units.collect { unit -> tuple([unit_id:unit.unit_meta.unit_id,step_id:context.step_id,
+        value.units.collect { unit -> tuple([unit_id:unit.unit_meta.unit_id,step_id:nativeContext.step_id,
             image:cfg.image,requested_bytes:unit.requested_bytes],plan) }
     }
     MEA_MAXWELL_MATERIALIZE_UNIT(calls,bridge,runtime,common,localBindings)

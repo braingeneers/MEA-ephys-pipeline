@@ -7,9 +7,11 @@ branches remain available in `pipeline/main_multi_backend.nf`.
 Use [scientific stages](docs/SCIENTIFIC_STAGES.md) to run stages independently or
 compose named subworkflows in one Nextflow graph. They use the same scientific
 processes as the original entry point. These stages accept NWB/session directories;
-vendor acquisition conversion and durable S3 transfer require separate adapters.
+Maxwell acquisition conversion has a separate entry with its own runtime profile;
+durable S3 transport for these MEA stages remains a separate adapter.
 
 - [Named stages and local Docker examples](docs/SCIENTIFIC_STAGES.md)
+- [Maxwell conversion, bindings and completed local units](docs/MAXWELL_CONVERSION.md)
 - [Process settings, resources and compatibility](docs/MODULAR_PROCESSES.md)
 - [Portable dependency bundles](docs/PORTABLE_BUNDLES.md)
 - [NRP Kubernetes execution](README_NRP.md)
