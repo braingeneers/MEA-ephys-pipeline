@@ -2,14 +2,14 @@
 
 [`pipeline/components/maxwell`](../pipeline/components/maxwell/README.md) contains
 the complete maintained fresh converter, generated from Workflows commit
-`01487885b17e8138f3b87c04bfe077f95bdb5ced`. The exporter was introduced at `e7d1813`.
+`2a3cb08fbccb244b0cecc4b634c8882ab38613f7`. The exporter was introduced at `e7d1813`.
 Its [manifest](../pipeline/components/maxwell/export-manifest.json) records original
 paths/hashes, the exact generator, image pin, transformations and content identity.
 Generated code retains upstream headers and observed notices; its source ownership
 remains independent of the surrounding MEA code.
 
-The native owner is `braingeneers-modular-maxwell-to-nwb` 0.1.19, common contracts
-are 0.1.8, and the scientific image is the immutable 0.1.3 reference recorded in
+The native owner is `braingeneers-modular-maxwell-to-nwb` 0.1.21, common contracts
+are 0.1.8, and the scientific image is the immutable 0.1.5 reference recorded in
 `image.json`. Native outputs are verified artifact references after complete
 publication. Source validation, conversion, channel-major repacking, compact
 companion, LINDI, final validation and verification are included. Source replacement
@@ -35,12 +35,27 @@ generated scientific code or copy an unpinned live branch. The packaged verifier
 checks bytes, modes and the complete file inventory against the generated manifest;
 bind its content digest to the reviewed source revision as well.
 
-The import was checked without a Workflows execution mount: two exact exports
-matched, an offline independent image build passed its complete runtime identity,
-and the standalone native entry completed five real Nextflow tasks on generated
-modeled Max One/routed Max Two inputs with default submitted settings `{}`. Both
-selected units produced valid NWB, compact companion, LINDI and validation siblings;
-published products and original source/projection bytes reverified. These are tiny
-converter/packaging checks. Full original-vs-exported scientific parity, consuming
-codec/model runtimes and actual GPU/cluster acceptance remain
+This snapshot has 48 manifest entries (49 regular files), including the explicitly
+staged `runtime/nwb_graph.py` guard. Its exact content digest is
+`34daaaba2a0911f2716e013e837493bced5aec8d2f1a4f6fce93619ae21ccdb2`.
+The native image preserves physical reference topology, while runtime identity v2
+binds all verified scientific tool hashes and the extraction record. Both MEA
+writers stage the same owning guard before export or source-copy/append. Historical
+evidence keeps its original producer; a graph that cannot be written requires a
+fresh conversion or explicitly validated immutable-source metadata refresh.
+
+This release was checked with two deterministic exports, then five native and nine
+portable bridge Nextflow tasks on the unchanged modeled Max One/routed Max Two
+raw/projection pairs. All products retained verified compact companion, LINDI,
+validation, publication and owner evidence. Both consumer export and copy/append
+policies passed on all four fresh NWBs. An independent offline validator accepted
+12 output copies with exact scientific/model/reference and fresh UUID comparisons,
+and rejected 16 wrong-value/reference controls. Core HDF5 and Zarr writer controls,
+both writer helper-staging failures, and 84-task alias graphs on each supported
+Nextflow version also passed. Graph probes use test scientific capsules; they do
+not establish scientific producer parity.
+
+The native shared dependency is publicly pinned. MEA source and consumer image
+publication remain phase 05. Full original-vs-exported converter parity, actual
+scientific producer zero/nonempty acceptance and GPU/cluster acceptance remain
 separate requirements. Scientific fixtures/logs remain outside Git.

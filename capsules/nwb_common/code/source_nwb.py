@@ -42,7 +42,7 @@ def _cached_nwb_versions(path):
         return collect(root)
 
 
-def open_source_nwb(path, mode, io_class):
+def open_source_nwb(path, mode, io_class, *, for_writing=False):
     """Open a source with an isolated map and explicit cached-schema checks.
 
     Older core files remain readable with the current core implementation.
@@ -52,6 +52,11 @@ def open_source_nwb(path, mode, io_class):
     from hdmf.build import BuildManager
     from packaging.version import InvalidVersion, Version
     from pynwb import get_type_map
+
+    # Writers stage the owning helper explicitly beside this adapter. Import it
+    # before opening a writer; ordinary read-only metadata discovery stays usable.
+    if for_writing or mode != 'r':
+        from nwb_graph import require_writable_graph
 
     versions = _cached_nwb_versions(path)
     if any(name == 'ndx-cell-culture' for name, _ in versions):
@@ -80,7 +85,14 @@ def open_source_nwb(path, mode, io_class):
                              f'installed {installed_version}. Use a compatible NWB I/O runtime.')
     # Merge into this invocation's copy, never the global registered type map.
     io_class.load_namespaces(type_map, str(path))
-    return io_class(str(path), mode, manager=BuildManager(type_map))
+    reader = io_class(str(path), mode, manager=BuildManager(type_map))
+    if for_writing or mode != 'r':
+        try:
+            require_writable_graph(reader)
+        except BaseException:
+            reader.close()
+            raise
+    return reader
 
 
 def source_nwb_from_jobs(jobs, data_base):

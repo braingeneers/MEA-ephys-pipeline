@@ -88,6 +88,12 @@
   cached versions. Test the concrete HDF5 and Zarr constructors, legacy core files
   and byte-string version headers. Import success alone does not prove backend
   compatibility, modeled export/append or full scientific producer acceptance.
+- Stage the owning NWB graph guard explicitly into both writer modules and both
+  entry points. Preflight sources before export or any destination copy; old
+  expanded-reference graphs may read successfully but cannot be written. Retain
+  private namespace maps and permit valid reference links, including core aliases.
+  Zarr export controls must use the capsule's `link_data=False` policy, and each
+  fixture file needs a fresh NWB container instance.
 - SI 0.103.2's localization node builder silently samples a 5,000-spike prototype
   separately from the analyzer's random-spike/noise extensions. For exact validation,
   pass one verified explicit prototype through the existing method kwargs; convert

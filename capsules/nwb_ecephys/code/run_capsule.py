@@ -340,7 +340,7 @@ if __name__ == "__main__":
                     else:
                         nwb_file_name = f"{nwb_original_file_name}_{block_str}_{recording_str}"
                     input_io_class = NWBZarrIO if nwbfile_input_path.is_dir() else NWBHDF5IO
-                    read_io = open_source_nwb(nwbfile_input_path, "r", input_io_class)
+                    read_io = open_source_nwb(nwbfile_input_path, "r", input_io_class, for_writing=True)
                     logging.info(f"Using existing NWB file: {nwb_file_name}")
                     nwbfile = read_io.read()
                     if metadata_only_source:

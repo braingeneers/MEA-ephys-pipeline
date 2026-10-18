@@ -10,6 +10,7 @@ from pynwb import NWBHDF5IO
 from cell_culture_projection import verify_cell_culture_projection
 from ephys_modular.contracts import ContractError, canonical_json, decode_json
 from maxwell_lindi_codec import MaxwellMxwDataCodec
+from nwb_graph import require_writable_hdf5
 from validate_conversion_outputs import (DEFAULT_NWB_DATASET_PATH, prepare_maxwell_plugin,
     validate_lindi, validate_linked_maxwell, validate_nwb_data)
 
@@ -18,6 +19,7 @@ def verify_outputs(request):
     source, nwb, lindi = (Path(request[key]) for key in ('source', 'nwb', 'lindi'))
     raw_path = request['raw_dataset_path']
     plugin = Path(prepare_maxwell_plugin())
+    require_writable_hdf5(nwb)
     shape, chunks = validate_nwb_data(original_file=source, nwb_path=nwb,
         raw_dataset_path=raw_path, nwb_dataset_path=DEFAULT_NWB_DATASET_PATH,
         chunk_size_samples=50000)

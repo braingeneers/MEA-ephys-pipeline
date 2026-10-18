@@ -13,6 +13,7 @@ process nwb_units {
     val task_settings
     path local_code, stageAs: 'capsule-source'
     path source_metadata_helper, stageAs: 'source_nwb.py'
+    path source_graph_helper, stageAs: 'nwb_graph.py'
     val max_duration_minutes
     path ecephys_session_input, stageAs: 'capsule/data/ecephys_session'
     path job_dispatch_results, stageAs: 'capsule/data/*'
@@ -40,6 +41,7 @@ process nwb_units {
     echo "[${task.tag}] staging local capsule code..."
     cp -rL capsule-source capsule/code
     cp source_nwb.py capsule/code/source_nwb.py
+    cp nwb_graph.py capsule/code/nwb_graph.py
     # Vendored at the original pin; see capsules/nwb_units/UPSTREAM.md.
 
     if [[ ${task_settings.executor_mode} == "slurm" ]]; then

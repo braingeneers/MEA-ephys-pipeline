@@ -197,12 +197,14 @@ workflow MEA_FINAL_EXPORT {
     verified = VERIFY_REPORTED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     calls = verified.map{ meta,path -> tuple(taskOptions('nwb_ecephys',settings,context,meta),path) }
     nwb_ecephys(calls.map{ cfg,path -> cfg },channel.value(file("${moduleDir}/../capsules/nwb_ecephys/code")),
-        channel.value(file("${moduleDir}/../capsules/nwb_common/code/source_nwb.py")),calls.map{ cfg,path -> duration(path) },
+        channel.value(file("${moduleDir}/../capsules/nwb_common/code/source_nwb.py")),
+        channel.value(file("${moduleDir}/components/maxwell/runtime/nwb_graph.py")),calls.map{ cfg,path -> duration(path) },
         calls.map{ cfg,path -> rawSession(path) },calls.map{ cfg,path -> family(path,'job_') })
     raw = keyedProducers(nwb_ecephys.out.unit_results).join(keyedUnits(verified),failOnDuplicate:true,failOnMismatch:true)
     unit_calls = raw.map{ id,n,prior -> tuple(taskOptions('nwb_units',settings,context,prior.meta),n,prior) }
     nwb_units(unit_calls.map{ cfg,n,prior -> cfg },channel.value(file("${moduleDir}/../capsules/nwb_units/code")),
         channel.value(file("${moduleDir}/../capsules/nwb_common/code/source_nwb.py")),
+        channel.value(file("${moduleDir}/components/maxwell/runtime/nwb_graph.py")),
         unit_calls.map{ cfg,n,prior -> duration(prior.path) },unit_calls.map{ cfg,n,prior -> rawSession(prior.path) },
         unit_calls.map{ cfg,n,prior -> family(prior.path,'job_') },unit_calls.map{ cfg,n,prior -> children(prior.path.resolve('data/collected')) },
         unit_calls.map{ cfg,n,prior -> children(n.results) })

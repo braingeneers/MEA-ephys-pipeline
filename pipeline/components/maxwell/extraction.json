@@ -212,9 +212,45 @@
     },
     "repack_nwb_channel_major.py": {
       "source_sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
-      "extracted_sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
+      "extracted_sha256": "550af7b5ea995839f6d65a95c73eba6932f8e35ef1d58953b903aedfec35a933",
       "scientific_ast_sha256": "491bbc6f8b17fd563b63d750434695d803acc96193e11d052c0a4a6e8a378b88",
-      "cli_default_bindings": {}
+      "cli_default_bindings": {},
+      "unaffected_ast_sha256": "2177ce750ef66a1f57c46b1e0a38557cb34ba9a853719794ab3e28eabc2f58cf",
+      "reviewed_reference_adapter": {
+        "functions": [
+          "_copy_dataset_attrs_and_scales",
+          "_copy_dataset_attrs_with_ref_remap",
+          "_copy_group_attrs_with_ref_remap",
+          "_copy_nwb_graph",
+          "_copy_tree_except_target",
+          "_has_references",
+          "_object_key",
+          "_remap_reference_value",
+          "main"
+        ],
+        "reason": "Allocate the complete NWB graph once and translate internal references without expanded-reference root aliases; publish local output only after success. Numerical chunk bytes/order, target creation properties and CLI defaults retain the original baseline.",
+        "source_functions_ast_sha256": {
+          "_copy_dataset_attrs_and_scales": "7f19db0d18078035373b0c2a09c2090b2dc247fc1ad52b6c288a0a3b1ec821ab",
+          "_copy_dataset_attrs_with_ref_remap": "727ad6974e36a45ea5af4ed8ff5b19ab829086d700762b8009e5b6d2684900cd",
+          "_copy_group_attrs_with_ref_remap": "27ea1608716ce46208adeafa461b40c1cfde283e1533f64d85f3203dd8cd9ede",
+          "_copy_tree_except_target": "2059c5efecb075aba76227ddfa4d2b0d6fcf8a327986ebbe247a050ae608995f",
+          "_remap_reference_value": "0701f33b029502fdd68293d7ce1edda52c5a8b2a7425ba7ae55de0a502e39a07",
+          "main": "fb7345017510c187e35671e10fa8f606f4df9a11f703ca72c35c021b176d767f"
+        },
+        "owned_functions_ast_sha256": {
+          "_copy_nwb_graph": "7f0587786d7cc84b8b2bc485f3870f3d8695c4adf6110cfdcee88b31776e0ece",
+          "_has_references": "a83e8eb4c8955ceccb9f940c22aaa957f72d9a46c1c7d87a0c8bc29ac16a68aa",
+          "_object_key": "39fd5e8afd7feadcbb3de7a64a0451eda3b64e712f7941ffb1ed385ae47349d3",
+          "main": "09e4b873e173b8cf7b8257e425770436803e170195ba6dee2b5c42afd266aa3f"
+        },
+        "preserved_function_ast_sha256": {
+          "_copy_chunks_channel_major": "7fd76493845adb2b85124b0805b326b3efd2208f3ab515379d41ae4bd75e29ed",
+          "_create_empty_dataset_like": "a6a24e85bb2a4328af7c01a3792521a3acca43fa2a98ebe8141bba37a8d54d1a",
+          "fail": "9b7b0c7d18420a3d78eec5bd3ab489bf1c3689194328b2d2dffaa595bab4dcb9",
+          "parse_args": "2d2257a8da3b281e33bf459c35b18fc1e2429dd6897e71f412ae4f787b6c457a"
+        },
+        "ast_python": "3.11.15"
+      }
     },
     "update_nwb_metadata.py": {
       "source_sha256": "982e82226f3e36c7dd40ae09859a74af6231e1220a4a88d92dd1beea92a2661c",
@@ -302,8 +338,8 @@
       "role": "fresh owning scientific defaults"
     },
     "runtime_identity.py": {
-      "extracted_sha256": "97f9c5a5e9f6997ced737140f3ca62a5f0ab93614312536ba95fd796523d5a92",
-      "role": "exact owned imports and dependency/plugin lock"
+      "extracted_sha256": "9ad22973c6fa6dbbe9bfc676bf241db784101f2ba128435eeaa0c35797b80bc3",
+      "role": "exact owned imports, dependency/plugin lock and version-2 tool-byte evidence"
     },
     "maxwell_companion_graph.py": {
       "extracted_sha256": "f5684549550fb448c58f0616a92fdbb1db0139fdd500eb3ebfacb7b62f47f5d4",

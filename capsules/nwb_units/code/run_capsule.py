@@ -129,6 +129,13 @@ if __name__ == "__main__":
         io_class = NWBHDF5IO
     logging.info(f"NWB backend: {NWB_BACKEND}")
 
+    # Admit every source before either the bulk copy or a per-recording append
+    # copy. An immutable old graph must not leave partial scientific outputs.
+    for source_path in nwb_files:
+        source_io_class = NWBZarrIO if source_path.is_dir() else NWBHDF5IO
+        with open_source_nwb(source_path, "r", source_io_class, for_writing=True):
+            pass
+
     # if more than 1 input NWB files, we copy them all to the results
     # since some processing might have failed
     if len(nwb_files) > 1:

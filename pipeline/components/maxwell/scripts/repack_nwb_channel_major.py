@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 import h5py
@@ -14,6 +16,7 @@ import numpy as np
 def fail(message: str) -> None:
     print(f"[repack_nwb_channel_major] {message}", file=sys.stderr)
     raise SystemExit(1)
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,88 +31,152 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _remap_reference_value(value, src_file: h5py.File, dst_file: h5py.File):
-    if isinstance(value, h5py.Reference):
-        if not value:
-            return value
-        src_obj = src_file[value]
-        if src_obj.name in dst_file:
-            return dst_file[src_obj.name].ref
-        return value
 
-    if hasattr(value, "dtype"):
-        ref_dtype = h5py.check_dtype(ref=value.dtype)
-        if ref_dtype is not None:
-            remapped = value.copy()
-            it = np.nditer(remapped, flags=["multi_index", "refs_ok"], op_flags=["readwrite"])
-            for ref_cell in it:
-                ref_cell[...] = _remap_reference_value(ref_cell[()], src_file, dst_file)
-            return remapped
-
-    return value
+def _object_key(obj):
+    info = h5py.h5o.get_info(obj.id)
+    return info.fileno, info.addr
 
 
-def _copy_group_attrs_with_ref_remap(
-    *,
-    src_group: h5py.Group,
-    dst_group: h5py.Group,
-    src_file: h5py.File,
-    dst_file: h5py.File,
-) -> None:
-    for key, value in src_group.attrs.items():
-        dst_group.attrs[key] = _remap_reference_value(value, src_file, dst_file)
+def _has_references(dtype):
+    dtype = np.dtype(dtype)
+    if h5py.check_dtype(ref=dtype) is not None:
+        return True
+    if dtype.names:
+        return any(_has_references(dtype.fields[name][0]) for name in dtype.names)
+    if dtype.subdtype:
+        return _has_references(dtype.subdtype[0])
+    variable = h5py.check_dtype(vlen=dtype)
+    return isinstance(variable, np.dtype) and _has_references(variable)
 
 
-def _copy_dataset_attrs_with_ref_remap(
-    *,
-    src_dataset: h5py.Dataset,
-    dst_dataset: h5py.Dataset,
-    src_file: h5py.File,
-    dst_file: h5py.File,
-    skip_dimension_attrs: bool = False,
-) -> None:
-    for key, value in src_dataset.attrs.items():
-        if skip_dimension_attrs and key in {"DIMENSION_LIST", "REFERENCE_LIST"}:
-            continue
-        dst_dataset.attrs[key] = _remap_reference_value(value, src_file, dst_file)
+def _copy_nwb_graph(source, destination, target_dataset_path):
+    """Allocate each physical object once, then translate references and attributes.
 
+    H5Ocopy with expand_refs can add root aliases and independent copies of
+    reference targets. Metadata pointers must instead resolve into the complete
+    destination graph. Preserve existing internal hard/soft links and HDF5 types;
+    external links/storage and VDSs require an explicit self-contained source.
+    """
+    target = source[target_dataset_path]
+    if not isinstance(target, h5py.Dataset):
+        raise ValueError('Repack target must be a dataset: ' + target_dataset_path)
+    target_key = _object_key(target)
+    copied = {_object_key(source): destination}
+    pairs = [(source, destination)]
+    soft_links = []
 
-def _copy_tree_except_target(
-    *,
-    src_group: h5py.Group,
-    dst_group: h5py.Group,
-    target_dataset_path: str,
-    groups_needing_attr_copy: list[str],
-    datasets_needing_attr_copy: list[str],
-) -> None:
-    groups_needing_attr_copy.append(src_group.name)
-
-    for name in src_group.keys():
-        obj = src_group[name]
-        src_path = obj.name
-
-        if isinstance(obj, h5py.Dataset):
-            if src_path == target_dataset_path:
-                continue
-            src_group.copy(name, dst_group, name=name, expand_refs=True)
-            datasets_needing_attr_copy.append(src_path)
-            continue
-
-        if isinstance(obj, h5py.Group):
-            if target_dataset_path.startswith(f"{src_path}/"):
-                nested = dst_group.require_group(name)
-                _copy_tree_except_target(
-                    src_group=obj,
-                    dst_group=nested,
-                    target_dataset_path=target_dataset_path,
-                    groups_needing_attr_copy=groups_needing_attr_copy,
-                    datasets_needing_attr_copy=datasets_needing_attr_copy,
-                )
+    def allocate(src, parent, name):
+        key = _object_key(src)
+        if key in copied:
+            parent[name] = copied[key]
+            return
+        if isinstance(src, h5py.Group):
+            dst = h5py.Group(h5py.h5g.create(parent.id, name.encode('utf-8'),
+                                          gcpl=src.id.get_create_plist()))
+        elif isinstance(src, h5py.Dataset):
+            if src.is_virtual or src.external:
+                raise ValueError('NWB repack requires a self-contained physical dataset: ' + src.name)
+            if key == target_key:
+                path = parent.name.rstrip('/') + '/' + name
+                dst = _create_empty_dataset_like(src, destination, path)
             else:
-                src_group.copy(name, dst_group, name=name, expand_refs=True)
-            continue
+                source.copy(src, parent, name=name, without_attrs=True, expand_refs=False)
+                dst = parent[name]
+        else:
+            raise ValueError('Unsupported NWB HDF5 object: ' + src.name)
+        copied[key] = dst
+        pairs.append((src, dst))
+        if isinstance(src, h5py.Group):
+            allocate_children(src, dst)
 
-        fail(f"Unhandled HDF5 object type at path {src_path}: {type(obj)}")
+    def allocate_children(src, dst):
+        for name in src:
+            link = src.get(name, getlink=True)
+            if isinstance(link, h5py.SoftLink):
+                soft_links.append((src, dst, name, link))
+            elif isinstance(link, h5py.ExternalLink):
+                raise ValueError('NWB repack requires a self-contained source; external link: '
+                                 + src.name.rstrip('/') + '/' + name)
+            else:
+                allocate(src[name], dst, name)
+
+    allocate_children(source, destination)
+    if target_key not in copied:
+        raise ValueError('Repack target is outside the retained hard-linked source graph.')
+    for src, dst, name, link in soft_links:
+        try:
+            key = _object_key(src[name])
+        except (KeyError, RuntimeError) as error:
+            raise ValueError('Dangling NWB soft link: ' + src.name.rstrip('/') + '/' + name) from error
+        if key not in copied:
+            raise ValueError('NWB soft link leaves the retained source graph: ' + name)
+        dst[name] = h5py.SoftLink(link.path)
+
+    def reference(value, owner):
+        if not value:
+            return type(value)()
+        try:
+            original = owner.file[value]
+        except (KeyError, RuntimeError, ValueError) as error:
+            raise ValueError('Invalid NWB reference in ' + owner.name) from error
+        key = _object_key(original)
+        if key not in copied:
+            raise ValueError('NWB reference leaves the retained source graph in ' + owner.name)
+        dst = copied[key]
+        if isinstance(value, h5py.RegionReference):
+            region = h5py.h5r.get_region(value, owner.file.id)
+            return h5py.h5r.create(destination.id, dst.name.encode('utf-8'), h5py.h5r.DATASET_REGION, region)
+        return dst.ref
+
+    def translate(value, dtype, owner):
+        dtype = np.dtype(dtype)
+        if not _has_references(dtype):
+            return value
+        if dtype.subdtype:
+            return translate(value, dtype.subdtype[0], owner)
+        result = np.array(value, dtype=dtype, copy=True)
+        if h5py.check_dtype(ref=dtype) is not None:
+            for index in np.ndindex(result.shape):
+                result[index] = reference(result[index], owner)
+        elif dtype.names:
+            for name in dtype.names:
+                field = dtype.fields[name][0]
+                if _has_references(field):
+                    result[name] = translate(result[name], field, owner)
+        else:
+            base = h5py.check_dtype(vlen=dtype)
+            for index in np.ndindex(result.shape):
+                result[index] = translate(result[index], base, owner)
+        return result[()] if result.shape == () else result
+
+    for src, dst in pairs:
+        if isinstance(src, h5py.Dataset) and _has_references(src.dtype) and src.shape is not None:
+            if isinstance(h5py.check_dtype(vlen=src.dtype), np.dtype):
+                # Assign one vlen element at a time: bulk assignment in the
+                # pinned h5py treats the outer arrays as individual references.
+                for index in np.ndindex(src.shape):
+                    dst[index] = translate(src[index], h5py.check_dtype(vlen=src.dtype), src)
+            elif src.ndim == 0:
+                dst[()] = translate(src[()], src.dtype, src)
+            else:
+                row_bytes = max(1, int(np.prod(src.shape[1:])) * src.dtype.itemsize)
+                rows = max(1, min(1024, (8 * 1024 * 1024) // row_bytes))
+                for start in range(0, src.shape[0], rows):
+                    selection = slice(start, min(start + rows, src.shape[0]))
+                    dst[selection] = translate(src[selection], src.dtype, src)
+        for name, value in src.attrs.items():
+            original = src.attrs.get_id(name)
+            dtype = original.dtype
+            # Keep the exact HDF5 datatype/space, including string padding in
+            # dimension-scale CLASS and nested reference attribute types.
+            attribute = h5py.h5a.create(dst.id, name.encode('utf-8'), original.get_type(), original.get_space())
+            try:
+                if not isinstance(value, h5py.Empty):
+                    data = np.asarray(translate(value, dtype, src), dtype=dtype)
+                    attribute.write(data, mtype=h5py.h5t.py_create(dtype))
+            finally:
+                attribute.close()
+    return copied[target_key]
 
 
 def _create_empty_dataset_like(src_dataset: h5py.Dataset, dst_file: h5py.File, dataset_path: str) -> h5py.Dataset:
@@ -125,26 +192,6 @@ def _create_empty_dataset_like(src_dataset: h5py.Dataset, dst_file: h5py.File, d
     )
     return h5py.Dataset(dataset_id)
 
-
-def _copy_dataset_attrs_and_scales(
-    *,
-    src_dataset: h5py.Dataset,
-    dst_dataset: h5py.Dataset,
-    dst_file: h5py.File,
-) -> None:
-    for key, value in src_dataset.attrs.items():
-        if key in {"DIMENSION_LIST", "REFERENCE_LIST"}:
-            continue
-        dst_dataset.attrs[key] = value
-
-    for axis in range(src_dataset.ndim):
-        label = src_dataset.dims[axis].label
-        if label:
-            dst_dataset.dims[axis].label = label
-
-        for scale in src_dataset.dims[axis]:
-            if scale.name in dst_file:
-                dst_dataset.dims[axis].attach_scale(dst_file[scale.name])
 
 
 def _copy_chunks_channel_major(*, src_dataset: h5py.Dataset, dst_dataset: h5py.Dataset) -> None:
@@ -174,71 +221,30 @@ def _copy_chunks_channel_major(*, src_dataset: h5py.Dataset, dst_dataset: h5py.D
                 )
 
 
+
 def main() -> None:
     args = parse_args()
-
     input_file = Path(args.input_file)
     output_file = Path(args.output_file)
     dataset_path = args.dataset_path
-
     if not input_file.exists():
         fail(f"Input file does not exist: {input_file}")
-
-    if output_file.exists():
-        output_file.unlink()
-
+    if input_file.resolve() == output_file.resolve():
+        fail("Input and output must be different files.")
     output_file.parent.mkdir(parents=True, exist_ok=True)
-
     with h5py.File(str(input_file), "r") as src_file:
         if dataset_path not in src_file:
             fail(f"Target dataset path not found: {dataset_path}")
         src_dataset = src_file[dataset_path]
-
-        with h5py.File(str(output_file), "w") as dst_file:
-            groups_needing_attr_copy: list[str] = []
-            datasets_needing_attr_copy: list[str] = []
-            _copy_tree_except_target(
-                src_group=src_file,
-                dst_group=dst_file,
-                target_dataset_path=dataset_path,
-                groups_needing_attr_copy=groups_needing_attr_copy,
-                datasets_needing_attr_copy=datasets_needing_attr_copy,
-            )
-
-            dst_dataset = _create_empty_dataset_like(
-                src_dataset=src_dataset,
-                dst_file=dst_file,
-                dataset_path=dataset_path,
-            )
-            _copy_dataset_attrs_and_scales(
-                src_dataset=src_dataset,
-                dst_dataset=dst_dataset,
-                dst_file=dst_file,
-            )
-            _copy_dataset_attrs_with_ref_remap(
-                src_dataset=src_dataset,
-                dst_dataset=dst_dataset,
-                src_file=src_file,
-                dst_file=dst_file,
-                skip_dimension_attrs=True,
-            )
-            for group_path in groups_needing_attr_copy:
-                _copy_group_attrs_with_ref_remap(
-                    src_group=src_file[group_path],
-                    dst_group=dst_file[group_path],
-                    src_file=src_file,
-                    dst_file=dst_file,
-                )
-            for dataset_path_to_fix in datasets_needing_attr_copy:
-                _copy_dataset_attrs_with_ref_remap(
-                    src_dataset=src_file[dataset_path_to_fix],
-                    dst_dataset=dst_file[dataset_path_to_fix],
-                    src_file=src_file,
-                    dst_file=dst_file,
-                )
-            _copy_chunks_channel_major(src_dataset=src_dataset, dst_dataset=dst_dataset)
-            dst_file.flush()
-
+        # Publish the local result only after the full graph and chunks succeed.
+        # Existing output and input remain intact on an invalid reference.
+        with tempfile.TemporaryDirectory(prefix='.' + output_file.name + '-', dir=output_file.parent) as scratch:
+            temporary = Path(scratch) / output_file.name
+            with h5py.File(temporary, "w") as dst_file:
+                dst_dataset = _copy_nwb_graph(src_file, dst_file, dataset_path)
+                _copy_chunks_channel_major(src_dataset=src_dataset, dst_dataset=dst_dataset)
+                dst_file.flush()
+            os.replace(temporary, output_file)
     print(
         "[repack_nwb_channel_major] Wrote repacked NWB file: "
         f"{output_file} (dataset={dataset_path})"
