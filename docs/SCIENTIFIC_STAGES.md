@@ -21,9 +21,10 @@ Conversion from vendor acquisitions is separate.
 
 The complete maintained native Maxwell converter is available as a
 [generated source component](CONVERTER_SOURCE.md). It has its own standalone
-Nextflow 26 entry and verified native artifact outputs. The named MEA conversion
-bridge and acquisition entry are separate integration work; the existing five
-exports and their Nextflow 23/NERSC path retain their current interface.
+Nextflow 26 entry and verified native artifact outputs. The separate named
+[`MEA_MAXWELL_CONVERSION` bridge](MAXWELL_CONVERSION.md) emits completed local units
+for preprocessing. Its standalone acquisition entry is separate integration work;
+the existing five exports and their Nextflow 23/NERSC path retain their interface.
 
 ## Local execution
 
