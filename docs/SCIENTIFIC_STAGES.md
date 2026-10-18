@@ -86,8 +86,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.11', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.11', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.12', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.12', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -136,6 +136,11 @@ authored subject/session metadata, identifiers and existing electrode/device
 bindings. Importing metadata does not enable raw export. Existing flat NWB inputs
 still select their own output backend and retain their existing acquisition data.
 The two NWB capsules share an explicitly staged [metadata helper](../capsules/nwb_common/README.md).
+The helper also checks cached source schema versions and gives each read its own
+namespace manager. The [modeled NWB reader candidate](../containers/nwb-io/README.md)
+preserves the numerical/SI stack while supporting the converter's core2.10 and
+ndx-cell-culture1.0 files. It remains inactive pending complete writer/producer
+acceptance and shared profile integration.
 
 Every complete bundle records ordered stage provenance, requested images/resources,
 capsule pins/arguments, predecessor digest and validated outcomes. Failed assembly

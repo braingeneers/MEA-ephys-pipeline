@@ -12,7 +12,7 @@ import time
 
 import probeinterface as pi
 import spikeinterface as si
-from source_nwb import (electrode_groups_for_recording, metadata_for_electrode_groups,
+from source_nwb import (open_source_nwb, electrode_groups_for_recording, metadata_for_electrode_groups,
                         apply_electrode_groups, devices_for_units)
 
 # needed to lead extensions
@@ -338,7 +338,7 @@ if __name__ == "__main__":
                     ecephys_session_folder
                 )
 
-                with io_class(str(nwbfile_output_path), "a") as append_io:
+                with open_source_nwb(nwbfile_output_path, "a", io_class) as append_io:
                     nwbfile = append_io.read()
 
                     added_stream_names = []

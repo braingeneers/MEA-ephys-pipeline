@@ -2,6 +2,87 @@
 from pathlib import Path
 
 
+def _cached_nwb_versions(path):
+    """Read version declarations before merging any cached schema into a map."""
+    import json
+
+    def collect(root):
+        versions = [('core', root.attrs.get('nwb_version'))]
+        location = root.attrs.get('.specloc')
+        if location is None:
+            return versions
+        specs = root[location]
+        for name in specs.keys():
+            stored = specs[name]
+            choices = list(stored.keys())
+            if not choices:
+                raise ValueError(f'Cached NWB namespace {name!r} has no version.')
+            # Both pinned backends select the last stored version. Read its
+            # declarations without resolving cross-namespace dependencies.
+            raw = stored[choices[-1]]['namespace'][()]
+            if hasattr(raw, 'size') and raw.size == 1:
+                raw = raw.item()
+            for record in json.loads(raw)['namespaces']:
+                versions.append((record['name'], record.get('version')))
+        return versions
+
+    if Path(path).is_dir():
+        import zarr
+
+        root = zarr.open_group(str(path), mode='r')
+        try:
+            return collect(root)
+        finally:
+            close = getattr(root.store, 'close', None)
+            if close is not None:
+                close()
+    import h5py
+
+    with h5py.File(path, 'r') as root:
+        return collect(root)
+
+
+def open_source_nwb(path, mode, io_class):
+    """Open a source with an isolated map and explicit cached-schema checks.
+
+    Older core files remain readable with the current core implementation.
+    A newer cached core, or a different modeled extension version, must not be
+    silently ignored in favor of installed classes before scientific export.
+    """
+    from hdmf.build import BuildManager
+    from packaging.version import InvalidVersion, Version
+    from pynwb import get_type_map
+
+    versions = _cached_nwb_versions(path)
+    if any(name == 'ndx-cell-culture' for name, _ in versions):
+        try:
+            import ndx_cell_culture  # noqa: F401; register the installed schema.
+        except ModuleNotFoundError as error:
+            if error.name != 'ndx_cell_culture':
+                raise
+            raise ValueError('Modeled NWB input requires the pinned ndx-cell-culture runtime.') from error
+
+    type_map = get_type_map()
+    installed = type_map.namespace_catalog
+    for name, source_version in versions:
+        if name not in installed.namespaces:
+            continue
+        if isinstance(source_version, bytes):
+            source_version = source_version.decode('utf-8')
+        installed_version = installed.get_namespace(name).version
+        try:
+            source = Version(str(source_version))
+            current = Version(str(installed_version))
+        except InvalidVersion as error:
+            raise ValueError(f'Cannot verify cached NWB namespace {name!r} version {source_version!r}.') from error
+        if source > current or (name == 'ndx-cell-culture' and source != current):
+            raise ValueError(f'Unsupported cached NWB namespace {name!r}: source {source_version}, '
+                             f'installed {installed_version}. Use a compatible NWB I/O runtime.')
+    # Merge into this invocation's copy, never the global registered type map.
+    io_class.load_namespaces(type_map, str(path))
+    return io_class(str(path), mode, manager=BuildManager(type_map))
+
+
 def source_nwb_from_jobs(jobs, data_base):
     """Return one source header per session; never infer it from a basename.
 

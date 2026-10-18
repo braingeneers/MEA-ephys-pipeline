@@ -37,7 +37,7 @@ from hdmf_zarr import NWBZarrIO
 from numcodecs import Blosc
 
 from aind_nwb_utils.utils import get_ephys_devices_from_metadata
-from source_nwb import (source_nwb_from_jobs, electrode_groups_for_recording,
+from source_nwb import (open_source_nwb, source_nwb_from_jobs, electrode_groups_for_recording,
                         metadata_for_electrode_groups, apply_electrode_groups)
 
 # AIND
@@ -340,7 +340,7 @@ if __name__ == "__main__":
                     else:
                         nwb_file_name = f"{nwb_original_file_name}_{block_str}_{recording_str}"
                     input_io_class = NWBZarrIO if nwbfile_input_path.is_dir() else NWBHDF5IO
-                    read_io = input_io_class(str(nwbfile_input_path), "r")
+                    read_io = open_source_nwb(nwbfile_input_path, "r", input_io_class)
                     logging.info(f"Using existing NWB file: {nwb_file_name}")
                     nwbfile = read_io.read()
                     if metadata_only_source:

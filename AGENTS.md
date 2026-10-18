@@ -83,6 +83,11 @@
   group name before adding signals or units. Reusing a channel name with a new
   group can append duplicate rows or fail on a contiguous source electrode table.
   Keep shared NWB helpers explicit process inputs in both entry points.
+- Inspect cached namespace versions before merging them into an invocation-owned
+  NWB type map; installed schemas can otherwise silently replace incompatible
+  cached versions. Test the concrete HDF5 and Zarr constructors, legacy core files
+  and byte-string version headers. Import success alone does not prove backend
+  compatibility, modeled export/append or full scientific producer acceptance.
 - SI 0.103.2's localization node builder silently samples a 5,000-spike prototype
   separately from the analyzer's random-spike/noise extensions. For exact validation,
   pass one verified explicit prototype through the existing method kwargs; convert

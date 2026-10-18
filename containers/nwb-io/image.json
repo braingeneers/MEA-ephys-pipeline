@@ -1,0 +1,54 @@
+{
+  "status": "locally_built_nwb_io_candidate_not_activated_or_published",
+  "reference": "braingeneers/mea-ephys-nwb:0.2.0",
+  "local_image_id": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
+  "registry_digest": null,
+  "parent": "ghcr.io/allenneuraldynamics/aind-ephys-pipeline-nwb@sha256:03ad8e8572ad1e98da9d35c380e8fad23de895731d2d382fd9e18376dd61ab4b",
+  "artifacts_lock_sha256": "7f374ddbc55a81cc5d1144fedf9bb09c40a34565335a73534abe39fc18c0d1f9",
+  "dockerfile_sha256": "a3a9069d373f7dfb9f094a9dd8d467efef4e8576400ae6f7b99ea30fb26c4359",
+  "schema_version": 1,
+  "artifacts_lock": "artifacts.lock.json",
+  "preserved_distributions": 104,
+  "preserved_nonbytecode_files": 12897,
+  "dependency_changes": {
+    "added": {
+      "ndx-cell-culture": "1.0.0",
+      "platformdirs": "4.2.2"
+    },
+    "candidate_distributions": 110,
+    "native_ndx_package_files_equal": 5,
+    "parent_distributions": 108,
+    "passed": true,
+    "unchanged_actual_nonbytecode_files": 12897,
+    "unchanged_distributions": 104,
+    "updated": {
+      "hdmf": [
+        "3.14.5",
+        "6.1.0"
+      ],
+      "hdmf-zarr": [
+        "0.9.0",
+        "0.12.0"
+      ],
+      "neuroconv": [
+        "0.6.7",
+        "0.7.0"
+      ],
+      "pynwb": [
+        "2.8.2",
+        "4.0.0"
+      ]
+    }
+  },
+  "verified_scope": {
+    "typed_modeled_inputs": 2,
+    "neural_values": 17600,
+    "codec_values_read": 2048,
+    "codec_values_encoded": 2048,
+    "allocated_filtered_chunks": 32,
+    "old_plain_hdf5_and_zarr": true,
+    "legacy_fixed_byte_version_header": true,
+    "full_modeled_export_append_or_producer_acceptance": false,
+    "active_workflow_default": false
+  }
+}

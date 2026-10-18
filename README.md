@@ -17,6 +17,7 @@ durable S3 transport for these MEA stages remains a separate adapter.
 - [NRP Kubernetes execution](README_NRP.md)
 - [NERSC execution](README_NERSC.md)
 - [Report image build and release](containers/analysis/README.md)
+- [Modeled NWB reader candidate](containers/nwb-io/README.md)
 
 Scientific defaults, parameter precedence and original capsule pins are maintained
 beside the workflow in `pipeline/`. Build the derived report image as documented

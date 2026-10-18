@@ -21,3 +21,14 @@ Run `scripts/modular/check_nwb_source_metadata.py` in the pinned NWB worker agai
 real raw/units exports and the prior derived NWB. It also checks malformed source
 graphs and repeated channel names across two devices. The original isolated NWB
 validator remains a separate schema/data check.
+
+Both capsules open source headers through `open_source_nwb`. It inspects the
+source's declared core and cached namespace versions before merging schemas into
+a private type map. Older supported core files remain readable; a newer core or
+a different `ndx-cell-culture` version fails explicitly. Modeled files require the
+pinned extension package. HDF5 and Zarr use their own backend namespace loaders.
+Rejected files cannot replace another invocation's registered schema map.
+
+The [NWB I/O candidate](../../containers/nwb-io/README.md) supplies the compatible
+reader stack. Its complete typed-read checks do not establish modeled graph
+preservation through export/append or acceptance of the full scientific producers.

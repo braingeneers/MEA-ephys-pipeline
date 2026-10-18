@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "image_version": "0.2.0",
+  "parent_image": "ghcr.io/allenneuraldynamics/aind-ephys-pipeline-nwb@sha256:03ad8e8572ad1e98da9d35c380e8fad23de895731d2d382fd9e18376dd61ab4b",
+  "plugin": {
+    "source_image": "braingeneers/modular-maxwell-to-nwb@sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed",
+    "sha256": "4bc74ea98c08b70406aa976950fcf5f55d572430f51d3882eeb947c557dd14f4",
+    "bytes": 35776
+  },
+  "ndx_source": {
+    "url": "https://codeload.github.com/braingeneers/ndx-cell-culture/tar.gz/4691d789120b397eb1aa4a6169f1ed353fecaca8",
+    "commit": "4691d789120b397eb1aa4a6169f1ed353fecaca8",
+    "filename": "ndx-cell-culture-4691d789.tar.gz",
+    "sha256": "45ff4c7ac153bc4a82a9abc32a292a98c00733b868b6bfbd76e93b237463a68a",
+    "bytes": 64980
+  },
+  "runtime": [
+    {
+      "name": "hdmf",
+      "version": "6.1.0",
+      "filename": "hdmf-6.1.0-py3-none-any.whl",
+      "sha256": "3354913c85c1b242e8a6f2677804dcaf0b86c44b5187fa6fb27c29ef00f4224d",
+      "bytes": 362345,
+      "url": "https://files.pythonhosted.org/packages/2f/cd/84ef0cfad5be45ffe8da0658fc4a12b33c654383040469d2a79a8e870ee5/hdmf-6.1.0-py3-none-any.whl"
+    },
+    {
+      "name": "hdmf-zarr",
+      "version": "0.12.0",
+      "filename": "hdmf_zarr-0.12.0-py3-none-any.whl",
+      "sha256": "aaf866122799f547b9594f54fe906e2ffc4e8b9fe1928bf15a037dfcc864c98b",
+      "bytes": 33787,
+      "url": "https://files.pythonhosted.org/packages/96/74/eeff5039149201bead00c27fab2ddf071899307bd578c3eabcd069ba4eba/hdmf_zarr-0.12.0-py3-none-any.whl"
+    },
+    {
+      "name": "ndx-cell-culture",
+      "version": "1.0.0",
+      "filename": "ndx_cell_culture-1.0.0-py3-none-any.whl",
+      "sha256": "48bcf15ef1ed6020c1aaf7c3bc0b04bba9ea26227d722fd85941e1ae05d48683",
+      "bytes": 16979,
+      "from_source": true
+    },
+    {
+      "name": "neuroconv",
+      "version": "0.7.0",
+      "filename": "neuroconv-0.7.0-py3-none-any.whl",
+      "sha256": "a197442b680d933cf2c40788013e9647f4808f7db83244591128ac810b62c7dc",
+      "bytes": 317431,
+      "url": "https://files.pythonhosted.org/packages/c5/a2/f745011c8873991d18c1944e2b1347ac6a1e10755f0e94c678085eeb428f/neuroconv-0.7.0-py3-none-any.whl"
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.2.2",
+      "filename": "platformdirs-4.2.2-py3-none-any.whl",
+      "sha256": "2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee",
+      "bytes": 18146,
+      "url": "https://files.pythonhosted.org/packages/68/13/2aa1f0e1364feb2c9ef45302f387ac0bd81484e9c9a4c5688a322fbdfd08/platformdirs-4.2.2-py3-none-any.whl"
+    },
+    {
+      "name": "pynwb",
+      "version": "4.0.0",
+      "filename": "pynwb-4.0.0-py3-none-any.whl",
+      "sha256": "3b138f9d64151146ae8a7dd5ce5f82680a93447e478cfc829a0e7b4966892a93",
+      "bytes": 1411767,
+      "url": "https://files.pythonhosted.org/packages/20/52/e8a3ee1cd6510eeeaddaaf7e51eea14b705d15c1261ed612d8bce424725c/pynwb-4.0.0-py3-none-any.whl"
+    }
+  ],
+  "build_tools": [
+    {
+      "name": "hatchling",
+      "version": "1.27.0",
+      "filename": "hatchling-1.27.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/08/e7/ae38d7a6dfba0533684e0b2136817d667588ae3ec984c1a4e5df5eb88482/hatchling-1.27.0-py3-none-any.whl",
+      "sha256": "d3a2f3567c4f926ea39849cdf924c7e99e6686c9c8e288ae1037c8fa2a5d937b"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "filename": "packaging-26.3-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl",
+      "sha256": "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+    },
+    {
+      "name": "pathspec",
+      "version": "1.1.1",
+      "filename": "pathspec-1.1.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl",
+      "sha256": "a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.7.0",
+      "filename": "pluggy-1.7.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/40/9e/2b38731e0fc536806f16490e1a12d7f0dc2a1235aa8cc07bcc75416a7daa/pluggy-1.7.0-py3-none-any.whl",
+      "sha256": "7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec"
+    },
+    {
+      "name": "trove-classifiers",
+      "version": "2026.9.21.13",
+      "filename": "trove_classifiers-2026.9.21.13-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/30/81/0da8afb52a71d0a4f2bd3152357b1a441e393b286374802b9d3addab4ab5/trove_classifiers-2026.9.21.13-py3-none-any.whl",
+      "sha256": "8b1ff4f9c191b1040b71c37f1e445ab99732911e3cd91de52838453a854d7a17"
+    }
+  ],
+  "source_date_epoch": 315532800,
+  "preserved_scientific_packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.17.1",
+    "spikeinterface": "0.103.2"
+  }
+}
