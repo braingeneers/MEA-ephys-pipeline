@@ -96,8 +96,11 @@ The collector rewrites analyzer graphs relative to its future publication direct
 so its analyzer descriptor must supply that explicit `base`. Source fingerprinting
 loads the recording with the declared base and passes it to the analyzer loader.
 The portable result uses its own analyzer directory after rebasing. Copy aliases
-compare full SHA-256 identities recursively; JSON may differ only in formatting,
-with unchanged parsed types/values. They never bind by basename alone.
+compare full SHA-256 identities recursively; JSON may differ only in whitespace,
+with unchanged parsed types/values and dictionary order. The visualization capsule
+uses timeseries dictionary order for plot rows, so executable serializations retain
+that order. Canonical key sorting is reserved for manifest hashes. Aliases never
+bind by basename alone.
 
 The helper changes executable filesystem keys in extractor kwargs and their
 metadata-folder references. NWB-internal `electrical_series_path` remains unchanged.

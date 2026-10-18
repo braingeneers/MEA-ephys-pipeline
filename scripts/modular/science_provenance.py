@@ -33,7 +33,9 @@ def sorter_log(check, label, value):
             assert re.fullmatch(r"N/A|[\d. %|/GB]+", resource[3]), text
             text = resource[1] + resource[2] + " <execution resource>"
         elif "Total runtime:" in text:
-            text, count = re.subn(r"Total runtime: [\d.]+s = \d\d:\d\d:\d\d h:m:s$",
+            # The pinned producer uses :02d for hours/minutes, then
+            # round(seconds) without padding (which can also round up to 60).
+            text, count = re.subn(r"Total runtime: \d+(?:\.\d+)?s = \d{2,}:[0-5]\d:(?:[0-5]?\d|60) h:m:s$",
                                  "Total runtime: <execution duration>", text)
             assert count == 1, text
         elif "Sorting output saved in:" in text:

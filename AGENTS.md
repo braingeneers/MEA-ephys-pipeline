@@ -79,3 +79,6 @@
   visualization capsule iterates timeseries layers to choose plot rows; sorting
   keys reverses raw/highpass and highpass/CMR rows. Keep canonical manifest hashes
   separate, and reject dependency aliases whose JSON key order differs.
+- Kilosort's total-runtime clock pads hours/minutes but uses unpadded rounded
+  seconds, including possible 60. Validation may separate that measured duration;
+  retain scientific counts/shapes, parameters and terminal evidence in its log.

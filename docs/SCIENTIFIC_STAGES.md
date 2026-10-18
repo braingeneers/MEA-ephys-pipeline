@@ -78,8 +78,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.3', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.3', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.6', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.6', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -195,7 +195,9 @@ The collector's generated fallback description dates are separated only when the
 supplied fixture directory lacks authored description/subject JSON. Its remaining
 fallback metadata is compared as produced; it is not inferred authored NWB metadata.
 A successful workflow or schema check alone does not establish exact
-scientific parity. Keep stochastic defaults and investigate numeric discrepancies
+scientific parity. Excel comparison covers named sheets, values and formulas;
+archive timestamps and workbook styling are outside that helper's logical-table
+scope. Keep stochastic defaults and investigate numeric discrepancies
 at their owner before accepting a modular implementation.
 
 `check_bundle_layer_order.py --source <producer-preprocessedviz.json>
