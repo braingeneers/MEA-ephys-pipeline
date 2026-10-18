@@ -105,7 +105,10 @@ Serialization bases are explicit. The collector rewrites analyzer recording grap
 relative to its **publication** directory. Its maintained capsule preserves the
 actual raw directory when pipeline data is explicit, while retaining the original
 standalone/AIND naming without that argument. Assembly supplies the declared base
-and retains the same lazy graph. Producer-side copies are bound only after comparing
+and retains the same lazy graph. The collector resolves source and target bases to
+physical paths before computing relative references, including when a verified
+input base is a symlink. A future publication directory need not exist or be created.
+Producer-side copies are bound only after comparing
 every byte, permitting JSON whitespace changes with unchanged values/types and
 dictionary order. Timeseries layer order determines visualization rows and must
 survive rebasing; only manifest hashes use canonical key sorting. A
@@ -218,6 +221,16 @@ all forbidden roots. Mount/launch success alone does not establish scientific pa
 run the complete comparisons and original validators over the resulting chain.
 The tool currently targets the controlled single-recording CPU fixture and uses
 the locally built report image digest; it is not an S3 or production launch wrapper.
+
+`check_collector_bases.py --direct-task <collector-task>
+--relocated-task <collector-task> --old-code <old-collector-code>
+--output <fresh-directory>` replays the old and repaired collector CLIs against the
+retained 15-unit CPU reference. Run it in the pinned base image with original task
+trees read-only. It covers direct and symlinked raw bases plus a symlinked future
+publication base that remains absent. It compares every recording sample/time,
+gain/geometry property, spike, analyzer extension/PCA payload and curation mask, and
+requires a missing recording dependency to fail. This collects retained science;
+fresh independent stage execution remains a separate acceptance check.
 
 `check_bundle_layer_order.py --source <producer-preprocessedviz.json>
 --portable <bundle/data/preprocessedviz.json> --output <fresh-directory>` checks

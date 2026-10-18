@@ -87,6 +87,11 @@ def remap_extractor_path(recording_dict, base_folder, relative_to=None):
     This function remaps the file_path and folder_path in the recording_dict
     to be absolute or relative paths, resolving any symlinks if they exist.
     """
+    # Use the same physical coordinates for targets and their serialization base.
+    # A future publication directory need not exist yet.
+    base_folder = Path(base_folder).resolve()
+    if relative_to is not None:
+        relative_to = Path(relative_to).resolve()
     path_list_iter = extractor_dict_iterator(recording_dict)
     access_paths = {}
     for path_iter in path_list_iter:

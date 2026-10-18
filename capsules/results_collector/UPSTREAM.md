@@ -13,3 +13,9 @@ successfully. Standalone/AIND collection without an explicit pipeline data path
 retains its original session-name mapping. Scientific arrays, metrics, curation,
 metadata collection and output families are unchanged.
 Four upstream trailing-whitespace lines are normalized.
+
+Serialization source and target bases are resolved to their physical coordinates
+before computing relative paths. A symlinked `verified/data/ecephys_session` base
+otherwise produces paths whose `..` traversal escapes the actual raw directory.
+Future publication directories may still be absent; resolution does not require
+their creation. This retains the original recording graphs and payloads.

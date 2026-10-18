@@ -87,6 +87,14 @@ def main():
     after='            recording_dict_str = json.dumps(recording_dict_mapped, indent=4)\n            if pipeline_data_path is None:\n                recording_dict_str = recording_dict_str.replace("ecephys_session", session_name)'
     assert before in expected
     expected=expected.replace(before,after,1)
+    before='    path_list_iter = extractor_dict_iterator(recording_dict)'
+    after=('    # Use the same physical coordinates for targets and their serialization base.\n'
+           '    # A future publication directory need not exist yet.\n'
+           '    base_folder = Path(base_folder).resolve()\n'
+           '    if relative_to is not None:\n'
+           '        relative_to = Path(relative_to).resolve()\n' + before)
+    assert expected.count(before)==1
+    expected=expected.replace(before,after,1)
     expected='\n'.join(line.rstrip() for line in expected.splitlines())+'\n'
     assert (fixed/'run_capsule.py').read_text()==expected,'Unexpected scientific collector source change'
     assert (fixed/'run').read_bytes()==(args.original_code/'run').read_bytes()
@@ -131,7 +139,7 @@ def main():
     else:
         raise AssertionError('Missing recording accepted')
     result={'passed':True,'scientific_recomputation':False,'actual_capsule_replays':4,
-            'only_behavior_changes_two_explicit_path_guards':True,'upstream_trailing_whitespace_normalized':True,
+            'only_behavior_changes_explicit_path_guards_and_physical_bases':True,'upstream_trailing_whitespace_normalized':True,
             'original_license_and_runner_unchanged':True,
             'original_portable_failure_reproduced':True,'direct_and_portable_science_identical':True,
             'legacy_implicit_path_branch_retained':True,'missing_dependency_rejected':missing_rejected,
