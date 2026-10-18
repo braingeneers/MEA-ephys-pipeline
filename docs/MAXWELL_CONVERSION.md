@@ -75,7 +75,7 @@ The bridge accepts no source replacement, finalization or deletion option.
 
 `context` has these explicit fields:
 
-- `workflow_version`: the owning MEA release, currently `0.2.18`. Native version
+- `workflow_version`: the owning MEA release, currently `0.2.19`. Native version
   `0.1.24` is read independently from its generated config, never replaced by the
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.
@@ -174,3 +174,7 @@ projection directories and typed unknown metadata. Guard checks use private
 copies; they do not fabricate successful conversion. Consumer filter/model
 compatibility, complete scientific parity and cluster/GPU/S3 service acceptance are
 separate requirements.
+
+Bridge plans and completed result JSON use this same decoder. The emitted
+Nextflow unit tuple preserves original metadata types and signs; validating the
+persisted JSON alone does not prove that downstream port value.

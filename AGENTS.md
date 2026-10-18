@@ -21,6 +21,9 @@
   overflow large integers before snapshots. Use original input bytes as the
   numeric oracle; compare float types/sign bits, never only Python equality or a
   generated request. Snapshot tests alone do not establish file fidelity.
+- Apply that decoder to bridge result/plan files too. Correct persisted unit JSON
+  does not prove the emitted Nextflow tuple retains its metadata. Capture actual
+  output-port values before downstream consumers and compare against original inputs.
 - Keep process names stable unless changing and testing the backend selectors and
   trace consumers together. Test both Nextflow 26.04.6 and the NERSC 23.08.0-edge path.
 - Report dependencies must be installed globally in the derived image. NRP changes

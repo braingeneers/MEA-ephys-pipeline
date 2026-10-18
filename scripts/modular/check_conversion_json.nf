@@ -1,12 +1,12 @@
 // Compare file/string/typed/channel results to original input bytes in Python.
-include { conversionJson; conversionValue; conversionSnapshot } from '../../pipeline/conversion'
+include { conversionJson; conversionValue; conversionSnapshot; conversionReadJson } from '../../pipeline/conversion'
 
 workflow {
     def text = file(params.input_file,checkIfExists:true).getText('UTF-8')
     def fromFile = conversionValue([:],params.input_file,'settings',true)
     def fromString = conversionValue(text,null,'settings',true)
     def fromTyped = conversionValue(fromFile,null,'settings',true)
-    def cases = [file:fromFile,string:fromString,typed:conversionSnapshot(fromTyped)]
+    def cases = [file:fromFile,string:fromString,typed:conversionSnapshot(fromTyped),reread:conversionReadJson(file(params.input_file))]
     def arrayText = '['+text+']'
     cases.array = conversionValue(arrayText,null,'recordings',false)[0]
     def invalid = [

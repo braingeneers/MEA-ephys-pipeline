@@ -5,11 +5,13 @@ include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellMetadata; maxwellJso
 // Use before constructing value channels; preserves the original JSON numbers.
 def conversionJson(String text) { maxwellJson(text) }
 
+def conversionReadJson(path) { conversionJson(path.getText('UTF-8')) }
+
 def conversionValue(value, filename, String name, boolean object) {
     if (filename != null) {
         if (value != null && !(object && value instanceof Map && value.isEmpty()))
             error "Provide ${name} or ${name}_file, not both."
-        value = conversionJson(file(filename.toString(),checkIfExists:true).getText('UTF-8'))
+        value = conversionReadJson(file(filename.toString(),checkIfExists:true))
     } else if (value instanceof String) {
         value = conversionJson(value)
     }
@@ -249,18 +251,18 @@ workflow MEA_MAXWELL_CONVERSION {
     MEA_MAXWELL_PREPARE_UNITS(MAXWELL_TO_NWB.out.artifacts.combine(selection).map { uri,request -> tuple(request,uri) },
         bridge,runtime,common,localBindings)
     calls = MEA_MAXWELL_PREPARE_UNITS.out.plan.flatMap { request,plan ->
-        def value = new groovy.json.JsonSlurper().parse(plan.toFile())
+        def value = conversionReadJson(plan)
         value.units.collect { unit -> tuple([unit_id:unit.unit_meta.unit_id,step_id:nativeContext.step_id,
             image:cfg.image,requested_bytes:unit.requested_bytes],plan) }
     }
     MEA_MAXWELL_MATERIALIZE_UNIT(calls,bridge,runtime,common,localBindings)
     commitPlan = MEA_MAXWELL_PREPARE_UNITS.out.plan.map { request,plan ->
-        def value = new groovy.json.JsonSlurper().parse(plan.toFile())
+        def value = conversionReadJson(plan)
         tuple(request+[commit_disk_bytes:value.commit_disk_bytes],plan)
     }
     finished = MEA_MAXWELL_MATERIALIZE_UNIT.out.units.collect(flat:false).map { rows -> rows.sort { a,b -> a[0].unit_id <=> b[0].unit_id }.collect { it[1] } }
     MEA_MAXWELL_COMMIT_UNITS(commitPlan,finished,bridge,runtime,common,localBindings)
-    completed = MEA_MAXWELL_COMMIT_UNITS.out.result.map { new groovy.json.JsonSlurper().parse(it.toFile()) }
+    completed = MEA_MAXWELL_COMMIT_UNITS.out.result.map { conversionReadJson(it) }
     emit:
     units = completed.flatMap { result -> result.units.collect { unit -> tuple(unit.metadata,file(unit.input,checkIfExists:true)) } }
     artifacts = completed.map { it.native_artifacts.uri }
