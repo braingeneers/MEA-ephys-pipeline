@@ -27,7 +27,8 @@ params.torch_device = null
 // null preserves Nextflow's normal/resume publication defaults.
 params.publish_overwrite = null
 params.git_repo_prefix = System.getenv('GIT_REPO_PREFIX') ?: 'https://github.com/AllenNeuralDynamics/aind-'
-params.report_container_image = 'braingeneers/mea-ephys-analysis:0.1.0'
+params.report_container_image = null
+params.container_images = [:]
 
 launch_settings = loadLaunchSettings(params, baseDir)
 sorter = launch_settings.sorter

@@ -1,7 +1,8 @@
 # Owning-manager and schema-cache NWB candidate
 
-`braingeneers/mea-ephys-nwb:0.2.2` is an inactive, unpublished candidate derived
-from the exact accepted [0.2.0 reader image](../nwb-io/README.md). It retains every
+`braingeneers/mea-ephys-nwb:0.2.2` is the configured local writer image, derived
+from the exact accepted [0.2.0 reader image](../nwb-io/README.md). Registry publication
+is pending; [the runtime index](../README.md) records this state. It retains every
 parent layer, package version, numerical library, Maxwell codec and user setting.
 It makes two narrowly pinned backend changes:
 
@@ -34,7 +35,7 @@ The standard-library coordinator invokes Docker with networking disabled and use
 a content-named local alias for BuildKit's exact parent. It verifies the unchanged
 parent-layer prefix, environment and `pipelineuser`. `image.json` records the local
 ID, recipe hashes and verified scope; a registry digest remains pending publication.
-Workflow selectors are intentionally unchanged until complete consumer acceptance.
+Both maintained callers select it through the shared invocation image map.
 
 ## Focused verification
 
@@ -65,4 +66,5 @@ default Device addition and materialize empty projection collections consistentl
 
 These focused checks do not replace real scientific producer acceptance, the full
 zero/nonempty/layout/raw-enabled matrix, independent model/scientific validation,
-or supported workflow/profile tests. The candidate stays inactive until those gates.
+or supported workflow/profile tests. Complete acceptance retains those separate
+results and owners; the build-time `image.json` does not relabel them as its pilot.

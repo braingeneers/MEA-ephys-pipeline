@@ -14,7 +14,8 @@ params.params_file = null
 params.torch_device = null
 params.publish_overwrite = null
 params.git_repo_prefix = System.getenv('GIT_REPO_PREFIX') ?: 'https://github.com/AllenNeuralDynamics/aind-'
-params.report_container_image = 'braingeneers/mea-ephys-analysis:0.1.0'
+params.report_container_image = null
+params.container_images = [:]
 
 def selected = params.stage.toString()
 if (!(selected in ['all','preprocessing','sorting','analysis','reporting','export'])) error 'stage must be all, preprocessing, sorting, analysis, reporting or export.'

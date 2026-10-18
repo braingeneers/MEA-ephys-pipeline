@@ -17,10 +17,11 @@ durable S3 transport for these MEA stages remains a separate adapter.
 - [NRP Kubernetes execution](README_NRP.md)
 - [NERSC execution](README_NERSC.md)
 - [Report image build and release](containers/analysis/README.md)
-- [Modeled NWB reader candidate](containers/nwb-io/README.md)
-- [Owning-manager NWB backend candidate](containers/nwb-backend/README.md)
+- [Shared runtime images, overrides and publication state](containers/README.md)
+- [Modeled NWB reader dependency layer](containers/nwb-io/README.md)
+- [Owning-manager NWB backend](containers/nwb-backend/README.md)
 - [Reproducible native modeled validation controls](docs/NATIVE_CONTROLS.md)
 
 Scientific defaults, parameter precedence and original capsule pins are maintained
-beside the workflow in `pipeline/`. Build the derived report image as documented
-before local development; its release record will freeze the registry digest.
+beside the workflow in `pipeline/`. Build the documented runtime images before
+local development; their release records will freeze registry digests.

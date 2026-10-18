@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MEA electrophysiology workflow parameters",
+  "description": "Shared launch parameters for original and named-stage callers. Scientific settings remain in nested --params_file JSON. Runtime image defaults live in container_images.json.",
+  "type": "object",
+  "properties": {
+    "ecephys_path": {"type": ["string", "null"], "description": "Input NWB/session directory for the original caller or preprocessing/all."},
+    "input_bundle": {"type": ["string", "null"], "description": "Verified local bundle for an independent downstream stage."},
+    "results_path": {"type": "string", "minLength": 1, "description": "Explicit local publication directory."},
+    "stage": {"type": "string", "enum": ["all", "preprocessing", "sorting", "analysis", "reporting", "export"]},
+    "unit_id": {"type": ["string", "null"], "description": "Stable identity for a named-stage input."},
+    "units_file": {"type": ["string", "null"], "description": "JSON list of named-stage inputs and metadata."},
+    "params_file": {"type": ["string", "null"], "description": "Nested scientific capsule JSON; distinct from Nextflow -params-file."},
+    "sorter": {"type": "string", "enum": ["kilosort4", "kilosort25", "spykingcircus2", "lupin"]},
+    "runmode": {"type": "string", "description": "Existing caller mode; fast retains its original capsule overrides."},
+    "torch_device": {"type": ["string", "null"], "enum": ["cpu", "cuda", null]},
+    "n_jobs": {"type": "integer", "description": "Scientific worker count; -1 retains the existing all-worker behavior."},
+    "publish_overwrite": {"type": ["boolean", "null"]},
+    "container_images": {
+      "type": "object",
+      "description": "Per-invocation runtime overrides. Omitted roles inherit container_images.json; local, NERSC and NRP receive the same explicit task settings.",
+      "properties": {
+        "base": {"type": "string", "minLength": 1},
+        "ks4": {"type": "string", "minLength": 1},
+        "nwb": {"type": "string", "minLength": 1},
+        "analysis": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "report_container_image": {"type": ["string", "null"], "minLength": 1, "description": "Existing report-only override; takes precedence over container_images.analysis."},
+    "process_resources": {"type": "object", "description": "Per-process resource maps, independent of scientific settings and other invocations."},
+    "nrp_resources": {"type": "object", "description": "Existing NRP resource fallback below explicit invocation resources."}
+  },
+  "additionalProperties": true
+}

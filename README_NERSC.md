@@ -17,6 +17,12 @@ The NERSC setup has been validated with:
 - burst detection
 - NWB export
 
+This list records the original NERSC setup. The modular branch shares the
+[workflow runtime image map](containers/README.md) with the local and NRP callers;
+its newly configured images are locally validated and await registry publication.
+Local parser/profile checks do not establish a new Shifter or Perlmutter run.
+NERSC launch scripts, environment setup and its independent profile remain intact.
+
 ## Quick start
 
 ### 1. Clone the NERSC branch

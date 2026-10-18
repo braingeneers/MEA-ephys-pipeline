@@ -29,9 +29,9 @@ their Nextflow 23/NERSC path retain their interface.
 
 ## Local execution
 
-Build the [report image](../containers/analysis/README.md), install Docker and
-Nextflow, and use an absolute POSIX output directory. The Docker config pins the
-scientific base/KS4/NWB images, sets two CPU threads by default, and forwards thread
+Build the [runtime images](../containers/README.md), install Docker and Nextflow,
+and use an absolute POSIX output directory. Shared invocation settings select
+base/KS4/NWB/report images; the Docker config sets two CPU threads and forwards thread
 variables into task containers. Capsule `--n_jobs` is a separate explicit control.
 
 ```bash
@@ -86,8 +86,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.12', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.12', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.15', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.15', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -98,7 +98,8 @@ reads the literal version from its owning `nextflow.config`.
 Bundles publish under `<context.output_uri>/bundles/<unit-id>.<kind>`. Original
 capsule publications use `<context.output_uri>/artifacts/<unit-id>/`. Capsule code
 and helper directories are explicit module-relative path inputs. Package
-`pipeline/`, `capsules/` and `scripts/nrp/images.json` together.
+`pipeline/` (including `container_images.json`) and `capsules/` together. The NRP
+development submission helpers additionally need `scripts/nrp/`.
 
 ## Boundary verification
 
@@ -137,10 +138,12 @@ bindings. Importing metadata does not enable raw export. Existing flat NWB input
 still select their own output backend and retain their existing acquisition data.
 The two NWB capsules share an explicitly staged [metadata helper](../capsules/nwb_common/README.md).
 The helper also checks cached source schema versions and gives each read its own
-namespace manager. The [modeled NWB reader candidate](../containers/nwb-io/README.md)
-preserves the numerical/SI stack while supporting the converter's core2.10 and
-ndx-cell-culture1.0 files. It remains inactive pending complete writer/producer
-acceptance and shared profile integration.
+namespace manager. The configured [NWB runtime](../containers/README.md) preserves
+the numerical/SI stack while supporting the converter's core2.10 and
+ndx-cell-culture1.0 files. Its reader layer and owning-manager/cache patches have
+separate pinned recipes. Local integration is active; registry publication remains
+pending. Full modeled writer and source Data verification remains distinct from
+schema validity or a reader-only check.
 
 Every complete bundle records ordered stage provenance, requested images/resources,
 capsule pins/arguments, predecessor digest and validated outcomes. Failed assembly

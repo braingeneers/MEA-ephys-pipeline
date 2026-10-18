@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "integrated_local_defaults_registry_publication_pending",
+  "workflow_version": "0.2.15",
+  "defaults": "pipeline/container_images.json",
+  "images": {
+    "base": {
+      "reference": "braingeneers/mea-ephys-base:0.1.0",
+      "local_image_id": "sha256:f09087aa24b5d3cc9ee09dd9c02ea180eeadb1be45ae043d99a32ee3c8bbc9d7",
+      "registry_digest": null,
+      "build_records": ["containers/maxwell-codec/images.json"]
+    },
+    "ks4": {
+      "reference": "braingeneers/mea-ephys-kilosort4:0.1.0",
+      "local_image_id": "sha256:ded5c0676ff33116a4b3b83d064520aa3aed5c4f1a630a05f88e1dc67fa6598a",
+      "registry_digest": null,
+      "build_records": ["containers/maxwell-codec/images.json"]
+    },
+    "nwb": {
+      "reference": "braingeneers/mea-ephys-nwb:0.2.2",
+      "local_image_id": "sha256:eecd0f294805f2098c5b29a8be821e3aa9184fd6381e006f8fda069df874921c",
+      "registry_digest": null,
+      "build_records": ["containers/nwb-io/image.json", "containers/nwb-backend/image.json"]
+    },
+    "analysis": {
+      "reference": "braingeneers/mea-ephys-analysis:0.2.0",
+      "local_image_id": "sha256:b09b5525dda0d4c7047c1cda85b1af0051e92a02115069ec1cc317d4eba95488",
+      "registry_digest": null,
+      "build_records": ["containers/analysis/image.json", "containers/maxwell-codec/images.json"]
+    }
+  }
+}

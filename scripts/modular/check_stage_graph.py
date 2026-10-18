@@ -26,6 +26,8 @@ def main():
     for folder in ("pipeline","capsules","scripts/nrp","containers/analysis"):
         shutil.copytree(source / folder, snapshot / folder)
     images = json.loads((source / "scripts/nrp/images.json").read_text())
+    overrides = {role: item["local_image_id"] for role, item in
+                 json.loads((source / "containers/runtime-images.json").read_text())["images"].items()}
     fixture_script = source / "scripts/modular/stage_probe_capsule.py"
     subprocess.run(["docker","run","--rm","--cpus","1","--memory","2g","--user","1000:1000",
                     "-v",f"{source}:{source}:ro","-v",f"{root}:{root}","-e","HOME=/tmp",
@@ -44,10 +46,14 @@ def main():
     # Separate aliases have the same unit names and source basenames. Distinct
     # settings and context roots must survive every nested process invocation.
     for alias in ("alpha","beta"):
+        scoped_resources = {name:dict(value, cpus=1 if alias == "alpha" else 2,
+                                      memory="2 GB" if alias == "alpha" else "3 GB")
+                            for name,value in resources.items()}
         (root / (alias + ".json")).write_text(json.dumps({"ecephys_path":str(root / "data/slow"),
             "results_path":str(root / "published" / alias), "torch_device":"cpu","n_jobs":1,
             "git_repo_prefix":"https://github.com/AllenNeuralDynamics/aind-",
-            "process_resources":resources, "params_file":str(root / (alias + "-science.json"))}))
+            "process_resources":scoped_resources, "container_images":{} if alias == "alpha" else overrides,
+            "params_file":str(root / (alias + "-science.json"))}))
         (root / (alias + "-science.json")).write_text(json.dumps({"spikesorting":{"sorter":"kilosort4",
             "kilosort4":{"sorter":{"torch_device":"cpu","probe_marker":alias}}}}))
     (root / "component.nf").write_text(f'''nextflow.enable.dsl=2
@@ -79,7 +85,7 @@ workflow {{
 ''')
     overlay = root / "probe.config"
     overlay.write_text("executor.queueSize=8\nexecutor.pollInterval='1 sec'\n"
-        + "docker.runOptions='--user 1000:1000 -e HOME=/tmp -e MPLBACKEND=Agg'\n")
+        + "docker.runOptions='--user 1000:1000 --network none -e HOME=/tmp -e MPLBACKEND=Agg'\n")
     command = ["nextflow"]
     env = os.environ.copy()
     if args.legacy_runtime:
@@ -110,7 +116,14 @@ workflow {{
         sorter = json.loads((Path(row["path"])/"data/probe_kilosort4.json").read_text())
         params = json.loads(sorter["argv"][sorter["argv"].index("--params")+1])
         assert params["sorter"]["probe_marker"]==alias and params["sorter"]["torch_device"]=="cpu"
-        assert set(sorter["threads"].values())=={"1"}
+        assert set(sorter["threads"].values())=={"1" if alias=="alpha" else "2"}
+        for provenance in record["metadata"]["stage_provenance"]:
+            for process in provenance["processes"]:
+                name, execution = process["name"], process["execution"]
+                role = "ks4" if name=="spikesort_kilosort4" else "nwb" if name in ("nwb_ecephys","nwb_units") else "analysis" if name=="report_generation" else "base"
+                assert execution["container"]==(images[role] if alias=="alpha" else overrides[role])
+                assert execution["cpus"]==(1 if alias=="alpha" else 2)
+                assert execution["memory"]==("2 GB" if alias=="alpha" else "3 GB")
         assert (root/"published"/alias/"export/bundles"/(unit+".exported")/"bundle.json").is_file()
     with (root/"trace.tsv").open() as stream:
         rows=list(csv.DictReader(stream,delimiter="\t"))

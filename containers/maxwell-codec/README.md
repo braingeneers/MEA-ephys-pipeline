@@ -11,7 +11,9 @@ The maintained converter installer records the vendor download provenance in
 
 ## Local development builds
 
-Candidates are not active workflow defaults or published releases. The original
+The accepted base/KS4/report builds are configured as local workflow defaults;
+registry publication remains pending. [The runtime index](../README.md) identifies
+their exact IDs and the final NWB backend child. The original
 three registry parents are digest-pinned in `build.py`. The report parent is the
 unchanged [report image recipe](../analysis/README.md); build it first when the
 recorded local image is unavailable:
@@ -38,6 +40,6 @@ The four output names are `braingeneers/mea-ephys-base:0.1.0`,
 `braingeneers/mea-ephys-kilosort4:0.1.0`, `braingeneers/mea-ephys-analysis:0.2.0` and
 `braingeneers/mea-ephys-nwb:0.1.0`. The record captures exact local image IDs and
 build commands; publication must freeze registry digests before release use.
-Existing profiles/selectors and the original report image stay unchanged until
-consumer integration. Codec tests alone do not prove modeled NWB read/write,
+The codec-only NWB 0.1.0 image is historical, not the configured writer default.
+Codec tests alone do not prove modeled NWB read/write,
 real exporter compatibility or complete conversion/scientific parity.

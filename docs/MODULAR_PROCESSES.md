@@ -114,17 +114,19 @@ Keep shared thread exports, image pins, retry policy and NERSC separation intact
 
 ## Images and backend behavior
 
-Only report generation uses the derived
-`braingeneers/mea-ephys-analysis:0.1.0` image. Build instructions are in
-[the image directory](../containers/analysis/README.md). It contains the same base
-scientific stack plus exactly the two spreadsheet dependency versions previously
-installed by every report task. `--report_container_image` can select an equivalent
-built image. Task execution performs no package installation.
+Both callers use [`pipeline/container_images.json`](../pipeline/container_images.json)
+through shared invocation settings. Base/KS4/report images add the offline Maxwell
+codec; NWB writers also use the bounded reader and owning-manager/cache repairs.
+[Runtime recipes and exact local identities](../containers/README.md) document
+dependency deltas and pending registry publication. Tasks install no packages.
+A `container_images` map overrides selected roles per invocation;
+`--report_container_image` retains precedence for reports. Bundles and verification
+use that invocation's base image as well.
 
 NERSC launchers, Shifter configuration and the older Nextflow pin remain separate
-from the opt-in NRP configuration. NRP retains its pinned base/KS4/NWB images,
-thread limits, resources and GPU selector; its report selector uses the explicit
-task image. Actual NERSC/Shifter execution requires an operator-side smoke test.
+from the opt-in NRP configuration. NRP retains its thread limits, resources and GPU
+selector; image selectors follow explicit task settings. Actual NERSC/Shifter
+execution requires an operator-side smoke test.
 
 Publication keeps the original normal/resume defaults when `--publish_overwrite`
 is unset, and explicit true/false behavior when supplied. Nextflow 23 clones named
@@ -158,6 +160,14 @@ the default engine behavior without adding a changing resume flag to task inputs
   suite still previews the real NERSC configuration without running Shifter.
   The Docker overlay forwards the hook's thread variables through `envWhitelist`;
   the Kubernetes-native hook already runs inside its task container.
+  Give the local probe driver 12 CPUs so its completion-order assertion tests
+  concurrent units rather than a scheduler-imposed serial execution.
+- `scripts/modular/check_consumer_images.py --baseline-source <exact-prior-export>
+  --output <new-directory>`: compare all scientific arguments/non-image process
+  options with that prior owner, verify default/override/report precedence and
+  isolated maps, resolve backend configs and preview both maintained callers with
+  valid and rejected image settings. It runs no scientific tasks. The legacy
+  option checks actual NRP selectors without the Nextflow-26-only plugin.
 - `scripts/modular/check_collector_paths.py --original-code <pinned-code> --retained-run <real-run>
   --raw <raw-session> --bundle <analyzed-bundle> --output <new-directory>`:
   run the actual upstream/repaired collector on both original and portable real

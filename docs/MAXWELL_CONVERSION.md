@@ -75,7 +75,7 @@ The bridge accepts no source replacement, finalization or deletion option.
 
 `context` has these explicit fields:
 
-- `workflow_version`: the owning MEA release, currently `0.2.13`. Native version
+- `workflow_version`: the owning MEA release, currently `0.2.15`. Native version
   `0.1.21` is read independently from its generated config, never replaced by the
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.

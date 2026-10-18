@@ -30,6 +30,18 @@
 - Use `trash` for local file deletion. Do not create a PR; the operator handles it.
 - Keep fixtures and execution evidence outside Git. Tiny process probes establish
   binding/cache behavior, not scientific parity or NERSC/Shifter execution.
+- Give out-of-order alias probes enough driver CPU capacity to run both aliases
+  concurrently (12 CPUs for the full port probe). A four-CPU local scheduler can
+  queue the second two-CPU unit until the first finishes; a timing assertion then
+  fails despite correct inputs and all task exits0. Preserve the failed trace and
+  rerun in a fresh root with adequate capacity, without weakening the assertion.
+- The original direct caller fans out each dispatch result as a preprocessing
+  job. When adapting named-stage stubs to that caller, keep their extra diagnostic
+  receipt outside declared dispatch results. A diagnostic JSON is not a job.
+- Resolve shared consumer image defaults in `pipeline/settings.nf` from
+  `pipeline/container_images.json`. Preserve per-invocation overrides in process
+  and boundary tasks; Docker/NRP selectors must follow explicit task settings.
+  Keep legacy report-image precedence and NERSC's independent profile.
 - A loaded Zarr analyzer can silently have no recording. Portable stage wrappers
   must verify the bundle and read recording samples before invoking capsules that
   classify load errors as skipped work. Missing dependencies are never zero spikes.

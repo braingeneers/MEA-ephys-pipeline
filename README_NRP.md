@@ -5,10 +5,11 @@ ReadWriteMany PVC. `pipeline/nextflow_nrp.config` provides CPU and GPU profiles;
 `scripts/nrp/` contains submission, input-inspection and synthetic-test helpers.
 
 Process modules now receive explicit invocation settings; see
-[the portable module interface](docs/MODULAR_PROCESSES.md). Report generation needs
-the [derived report image](containers/analysis/README.md), containing the exact two
-spreadsheet dependencies formerly installed inside each task. Build it locally for
-development; the release record pins its registry digest after publication.
+[the portable module interface](docs/MODULAR_PROCESSES.md). Shared
+[runtime images](containers/README.md) provide the offline Maxwell codec, report
+spreadsheet dependencies and bounded NWB I/O repairs. Image selectors follow each
+invocation's `container_images` map. Build the documented images for local
+development; registry digest publication is pending.
 
 ## Separation from NERSC
 
@@ -174,9 +175,11 @@ python3 scripts/nrp/submit.py --test-id "$TEST_ID" job decoder \
   --command 'python {source}/scripts/nrp/install_maxwell_plugin.py --directory {root}/runtime/maxwell-plugin'
 ```
 
-After it succeeds, set `params.nrp_hdf5_plugin_path` to that directory in the
-additional NRP config. This enables the decoder in every task's environment;
-the existing processing images and NERSC configuration are unchanged. Check
+The configured runtime images already contain this decoder. This historical
+external-plugin option is needed only for an explicitly selected custom image
+without the bundled plugin. After it succeeds, set `params.nrp_hdf5_plugin_path`
+to that directory in the additional NRP config. This overrides the decoder path
+in each NRP task without changing the independent NERSC configuration. Check
 actual sample reads with `inspect_recordings.py --kind maxwell|nwb --input <file>
 --output <JSON>` in an NRP Job with `HDF5_PLUGIN_PATH` set. A registered filter
 alone does not prove the source chunks can be decoded.

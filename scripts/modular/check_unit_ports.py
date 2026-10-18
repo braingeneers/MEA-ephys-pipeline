@@ -28,7 +28,9 @@ def main():
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     images = json.loads((source / "scripts/nrp/images.json").read_text())
-    analysis = json.loads((source / "containers/analysis/image.json").read_text())["local_image_id"]
+    runtime = json.loads((source / "containers/runtime-images.json").read_text())["images"]
+    overrides = {role: item["local_image_id"] for role, item in runtime.items()}
+    analysis = overrides["analysis"]
     for unit in ("slow", "fast", "job-probe"):
         path = root / "data" / unit / "prepared"
         path.mkdir(parents=True)
@@ -83,9 +85,12 @@ PYTHON
         if alias == "beta":
             resources["report_generation"] = {"cpus": 2, "memory": "768 MB", "time": "11 min", "disk": "256 MB"}
         launches[alias] = {"executor": "k8s", "ecephys_path": str(root / "data"), "results_path": str(root / "published" / alias),
-                           "params_file": str(params_path), "torch_device": device, "report_container_image": analysis,
+                           "params_file": str(params_path), "torch_device": device,
                            "git_repo_prefix": "https://github.com/AllenNeuralDynamics/aind-", "publish_overwrite": True,
                            "process_resources": resources}
+        if alias == "beta":
+            launches[alias]["container_images"] = dict(overrides, analysis=overrides["base"])
+            launches[alias]["report_container_image"] = analysis
         (root / (alias + "-launch.json")).write_text(json.dumps(launches[alias]))
     component = r'''nextflow.enable.dsl=2
 include { processOptions } from @SETTINGS@
@@ -165,7 +170,7 @@ workflow {
         env["PATH"] = str(shim) + os.pathsep + env["PATH"]
     overlay = root / "local.config"
     overlay.write_text("process.executor='local'\nexecutor.queueSize=8\nshifter.enabled=false\ndocker.enabled=" + str(args.mode == "docker").lower() + "\n"
-                       "docker.runOptions='--user 1000:1000 -e HOME=/tmp'\n"
+                       "docker.runOptions='--user 1000:1000 --network none -e HOME=/tmp'\n"
                        "docker.envWhitelist=" + json.dumps(list(THREAD_KEYS)) + "\n"
                        "params.nrp_resources=[spikesort_kilosort4:[cpus:7],report_generation:[cpus:3,memory:'896 MB',time:'12 min',disk:'384 MB']]\n")
     command = [executable, "-C", str(nrp) + "," + str(overlay), "run", str(root / "main.nf"), "-profile",
@@ -186,7 +191,8 @@ workflow {
             device = "cuda" if args.mode == "metadata" and alias == "beta" else "cpu"
             assert data["unit"] == unit and data["params"]["sorter"] == {"torch_device": device, "probe_marker": alias}
             assert data["threads"] == {key: str(cpus) for key in THREAD_KEYS}
-            assert row["execution"]["cpus"] == cpus and row["execution"]["container"] == images["ks4"]
+            expected_ks4 = images["ks4"] if alias == "alpha" else overrides["ks4"]
+            assert row["execution"]["cpus"] == cpus and row["execution"]["container"] == expected_ks4
             assert row["execution"]["memory"] == ("512 MB" if cpus == 1 else "768 MB")
             assert row["execution"]["disk"] == ("128 MB" if cpus == 1 else "256 MB")
             expected_accelerator = {"request": 1, "limit": 1} if device == "cuda" else None
@@ -195,7 +201,8 @@ workflow {
                          if path.is_dir() and (path / "sentinel.txt").is_file()]
             assert len(sentinels) == 1 and sentinels[0].read_text() == unit
             report = next(row for row in reports if (row["alias"], row["unit"]) == (alias, unit))
-            assert report["recording"] == unit and report["execution"]["container"] == analysis
+            expected_report = images["analysis"] if alias == "alpha" else analysis
+            assert report["recording"] == unit and report["execution"]["container"] == expected_report
             report_cpus = 3 if alias == "alpha" else 2
             assert report["execution"]["cpus"] == report_cpus
             published = root / "published" / alias / "reports" / unit / "probe.json"
@@ -222,7 +229,9 @@ workflow {
               "scientific_capsules_stubbed": True, "cluster_work_submitted": False, "cuda_computation": False,
               "unit_keys_and_input_layouts_verified": True, "out_of_order_completion_verified": True,
               "independent_argv_resources_images_and_publication": True,
-              "nrp_unqualified_resource_fallback_verified": True, "sorting": sorting, "reports": reports, "job": job}
+              "nrp_unqualified_resource_fallback_verified": True,
+              "default_and_per_alias_image_overrides_verified": True,
+              "legacy_report_image_precedence_verified": True, "sorting": sorting, "reports": reports, "job": job}
     (root / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps({key: value for key, value in result.items() if key not in {"sorting", "reports", "job"}}, indent=2))
 

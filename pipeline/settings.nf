@@ -48,6 +48,23 @@ def loadLaunchSettings(Map parameters, pipelineRoot) {
     options.container_tag = "si-${versions['SPIKEINTERFACE_VERSION']}"
     println "CONTAINER TAG: ${options.container_tag}"
 
+    // Shared runtime defaults, copied independently for every invocation. This
+    // is deployment configuration, separate from the nested scientific JSON.
+    def images = new LinkedHashMap(new groovy.json.JsonSlurper().parseText(
+        new File("${pipelineRoot}/container_images.json").text))
+    def image_overrides = options.get('container_images', [:])
+    if (!(image_overrides instanceof Map)) error 'container_images must be a map keyed by base, ks4, nwb or analysis.'
+    def unknown_images = image_overrides.keySet() - images.keySet()
+    if (unknown_images) error "Unknown container_images roles: ${unknown_images}"
+    images.putAll(image_overrides)
+    // Keep the original report CLI option as the most specific override.
+    if (options.report_container_image != null) images.analysis = options.report_container_image
+    images.each { role, image ->
+        if (!(image instanceof CharSequence) || !image.toString().trim())
+            error "container_images.${role} must be a non-empty image reference."
+        images[role] = image.toString()
+    }
+
     params_keys = options.keySet()
 
     // if not specified, assume local executor
@@ -190,7 +207,7 @@ def loadLaunchSettings(Map parameters, pipelineRoot) {
         input_path: options.ecephys_path, results_path: options.results_path,
         publish_overwrite: options.publish_overwrite,
         git_repo_prefix: options.git_repo_prefix,
-        report_container_image: options.report_container_image ?: 'braingeneers/mea-ephys-analysis:0.1.0',
+        container_images: images, report_container_image: images.analysis,
         job_args: job_args, arguments: [job_dispatch: job_dispatch_args,
             preprocessing: preprocessing_args, sorting: spikesorting_args,
             postprocessing: postprocessing_args, curation: curation_args,
@@ -223,10 +240,11 @@ def processOptions(String name, Map launch) {
     if (!(name in pinKeys) && !(name in ['report_generation', 'burst_detection'])) {
         error "Unknown MEA process: ${name}"
     }
-    def image = name in ['nwb_ecephys', 'nwb_units'] ? 'aind-ephys-pipeline-nwb' :
-        name in ['spikesort_kilosort4', 'spikesort_kilosort25'] ? "aind-ephys-${name.replace('_', '-')}" :
-        'aind-ephys-pipeline-base'
-    def result = [container: "ghcr.io/allenneuraldynamics/${image}:${launch.container_tag}".toString(),
+    def image = name in ['nwb_ecephys', 'nwb_units'] ? launch.container_images.nwb :
+        name == 'spikesort_kilosort4' ? launch.container_images.ks4 :
+        name == 'spikesort_kilosort25' ? "ghcr.io/allenneuraldynamics/aind-ephys-spikesort-kilosort25:${launch.container_tag}".toString() :
+        name == 'report_generation' ? launch.container_images.analysis : launch.container_images.base
+    def result = [container: image,
         executor_mode: launch.executor_mode, capsule_pin: launch.versions[pinKeys[name]] ?: 'checkout']
     def resources = launch.get('resources', [:]).get(name, [:])
     if (!(resources instanceof Map)) error "Resources for ${name} must be a map."
@@ -250,6 +268,5 @@ def processOptions(String name, Map launch) {
             Boolean.parseBoolean(launch.publish_overwrite.toString())
     }
     if (name == 'results_collector') result.input_path = launch.input_path
-    if (name == 'report_generation') result.container = launch.report_container_image
     return result
 }
