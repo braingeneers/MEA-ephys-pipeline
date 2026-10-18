@@ -75,8 +75,8 @@ The bridge accepts no source replacement, finalization or deletion option.
 
 `context` has these explicit fields:
 
-- `workflow_version`: the owning MEA release, currently `0.2.16`. Native version
-  `0.1.22` is read independently from its generated config, never replaced by the
+- `workflow_version`: the owning MEA release, currently `0.2.17`. Native version
+  `0.1.23` is read independently from its generated config, never replaced by the
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.
   Use separate roots or distinct run/step identities for independent invocations.
@@ -112,11 +112,21 @@ selection snapshot, even when a filter selects only one well.
 
 Imported callers can use `conversionOwnerVersion()` from `pipeline/conversion.nf`
 for the actual owning version rather than an outer workflow/Recipe version.
-Every invocation takes an eager independent snapshot of records, settings and
-context before fan-out. This retains nested unknown metadata when aliases share
-JSON parsed by Groovy's lazy reader, including integer/float encodings, signed
-zero and map order. Missing retry-library loading or a different Nextflow version
-is rejected before native tasks schedule.
+Decode original JSON with `conversionJson(text)` before creating imported value
+channels. The owning decoder uses Jackson bundled with Nextflow 26.04.6: JSON
+integers retain arbitrary precision; floating tokens use finite IEEE binary64,
+including signed zero and exponent-form floats. Duplicate keys, trailing content,
+nonstandard values and overflow to infinity are rejected. The standalone entry
+uses this same decoder for `*_file` inputs and JSON strings. Each invocation then
+takes an eager independent snapshot before fan-out, retaining nested unknown
+metadata, scalar types and map order while isolating concurrent aliases.
+
+For exact original numeric fidelity, use those files/strings or already-correctly
+typed channels. Nextflow's own `-params-file` object reader and Groovy JsonSlurper
+can lose signed zero, turn exponent-form floats into integer output, and overflow
+large integers before this workflow receives them. A snapshot cannot restore that
+information. Missing retry-library loading or a different Nextflow version is
+rejected before native tasks schedule.
 
 ## Completed outputs
 

@@ -10,7 +10,9 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 from pathlib import Path
+import re
 import shutil
 import sys
 import unittest
@@ -20,15 +22,44 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'pipeline/helpers'))
 import maxwell_bridge as bridge
 
 
+def json_identity(value):
+    """JSON equality with integer/float distinctions and IEEE signed zero."""
+    if type(value) is dict:
+        return ('object', {key: json_identity(item) for key, item in value.items()})
+    if type(value) is list:
+        return ('array', [json_identity(item) for item in value])
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError('Non-finite input oracle')
+        return ('float', value.hex())
+    return (type(value).__name__, value)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', type=Path, required=True)
     parser.add_argument('--request', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--bindings', type=Path, required=True, help='Original submitted bindings JSON, never the generated request')
+    parser.add_argument('--recordings', type=Path, required=True, help='Original submitted recordings JSON')
+    parser.add_argument('--settings', type=Path, help='Original submitted settings JSON; omitted means {}')
+    parser.add_argument('--owner-root', type=Path, default=Path(__file__).resolve().parents[2]/'pipeline/components/maxwell',
+                        help='Reviewed exported owner; select the matching historical export explicitly for old fixtures')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     plan = bridge.read_json(args.plan)
     request = bridge.read_json(args.request)
+    bindings = json.loads(args.bindings.read_text())
+    recordings = json.loads(args.recordings.read_text())
+    settings = json.loads(args.settings.read_text()) if args.settings else {}
+    distribution = json.loads((args.owner_root/'export-manifest.json').read_text())
+    image = json.loads((args.owner_root/'image.json').read_text())
+    version = re.search(r"(?m)^\s*version\s*=\s*['\"]([^'\"]+)['\"]", (args.owner_root/'nextflow.config').read_text()).group(1)
+    if version != distribution['owner_version'] or image != distribution['scientific_image']:
+        raise ValueError('Reviewed owner manifest/config/image disagree')
+    expected_metadata = {row['metadata']['unit_id']: row['metadata'] for row in bindings}
+    if len(expected_metadata) != len(bindings):
+        raise ValueError('Duplicate submitted unit identity')
     unit = plan['units'][0]
     original = bridge.parse_file(unit['publication_root'], prefix=True)
     controls = {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -64,16 +95,22 @@ def main():
             native_ids = set()
             for row in plan['units']:
                 meta = row['unit_meta']; details = meta['maxwell_conversion']
-                self.assertEqual(details['native_owner']['workflow_version'], '0.1.19')
+                self.assertEqual(details['native_owner']['workflow_version'], version)
+                self.assertEqual(details['native_owner']['image'], image['pinned_reference'])
+                self.assertEqual(request['native']['distribution'], {
+                    'source_commit': distribution['source_commit'], 'content_sha256': distribution['content_sha256']})
                 self.assertEqual(details['wrapper_owner'], request['wrapper']['owner'])
-                self.assertEqual(details['settings']['submitted'], {})
-                self.assertIs(type(meta['unknown_typed']['integer']), int)
-                self.assertIs(type(meta['unknown_typed']['float']), float)
-                self.assertIs(meta['unknown_typed']['bool'], False)
-                self.assertIsNone(meta['unknown_typed']['nullable'])
+                self.assertEqual(json_identity(details['settings']['submitted']), json_identity(settings))
+                self.assertEqual(json_identity({key:value for key,value in meta.items() if key != 'maxwell_conversion'}),
+                                 json_identity(expected_metadata[meta['unit_id']]))
                 native_ids.add(details['native_unit']['unit_id'])
-                self.assertEqual(row['evidence']['conversion/recordings.json'], request['recordings'])
-                self.assertEqual(set(details['artifacts']), set(bridge.NAMES))
+                self.assertEqual(json_identity(row['evidence']['conversion/recordings.json']), json_identity(recordings))
+                self.assertEqual(json_identity(request['recordings']), json_identity(recordings))
+                self.assertEqual(json_identity(request['wrapper']['unit_bindings']), json_identity(bindings))
+                expected_kinds = set(bridge.NAMES)
+                if settings.get('create_linked_maxwell_companion') is False:
+                    expected_kinds.remove('maxwell_companion')
+                self.assertEqual(set(details['artifacts']), expected_kinds)
                 bridge.verify_local(bridge.parse_file(row['publication_root'], prefix=True), (plan['digest'], row))
             self.assertEqual(len(native_ids), 2)
             self.assertEqual({Path(r['input_uri']).name for r in request['recordings']}, {'recording.raw.h5'})
@@ -172,7 +209,9 @@ def main():
     unchanged = all(Path(path).is_file() and hashlib.sha256(Path(path).read_bytes()).hexdigest()==checksum for path,checksum in controls.items())
     report = dict(passed=result.wasSuccessful() and unchanged,tests=result.testsRun,failures=len(result.failures),errors=len(result.errors),
         private_case_directories=len(cases),protected_files=len(controls),native_and_published_unit_files_unchanged=unchanged,
-        converter_parity_claimed=False)
+        converter_parity_claimed=False, owner_source_commit=distribution['source_commit'], owner_version=version,
+        original_bindings_sha256=hashlib.sha256(args.bindings.read_bytes()).hexdigest(),
+        original_recordings_sha256=hashlib.sha256(args.recordings.read_bytes()).hexdigest())
     (args.output/'result.json').write_text(json.dumps(report,indent=2)+'\n')
     if not report['passed']:raise SystemExit(1)
 

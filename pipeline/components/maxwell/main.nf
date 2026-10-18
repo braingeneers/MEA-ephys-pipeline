@@ -1,4 +1,4 @@
-include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB } from './component'
+include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellJson } from './component'
 
 workflow {
     def runId = params.run_id ?: java.util.UUID.randomUUID().toString()
@@ -13,7 +13,7 @@ workflow {
     def localPaths = []
     if (root.startsWith('file:///')) localPaths.add(root)
     def records = params.recordings
-    if (records instanceof String) records = new groovy.json.JsonSlurper().parseText(records)
+    if (records instanceof String) records = maxwellJson(records)
     if (!params.artifacts) {
         if (!(records instanceof List) || !records) error 'Provide artifacts or a nonempty recordings array'
         records.each { record ->
@@ -22,7 +22,7 @@ workflow {
         }
     }
     def settings = params.settings
-    if (settings instanceof String) settings = new groovy.json.JsonSlurper().parseText(settings)
+    if (settings instanceof String) settings = maxwellJson(settings)
     def context = [output_base_uri: root, output_uri: root, run_id: runId,
         step_id: params.step_id, workflow_version: workflow.manifest.version,
         runtime: params, local_bind_paths: (localPaths + (params.local_bind_paths ?: [])).unique()]

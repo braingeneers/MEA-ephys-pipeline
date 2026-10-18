@@ -1,6 +1,22 @@
 nextflow.enable.dsl = 2
 
-include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellMetadata } from './components/maxwell/component'
+include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellMetadata; maxwellJson } from './components/maxwell/component'
+
+// Use before constructing value channels; preserves the original JSON numbers.
+def conversionJson(String text) { maxwellJson(text) }
+
+def conversionValue(value, filename, String name, boolean object) {
+    if (filename != null) {
+        if (value != null && !(object && value instanceof Map && value.isEmpty()))
+            error "Provide ${name} or ${name}_file, not both."
+        value = conversionJson(file(filename.toString(),checkIfExists:true).getText('UTF-8'))
+    } else if (value instanceof String) {
+        value = conversionJson(value)
+    }
+    if (object ? !(value instanceof Map) : !(value instanceof List) || !value)
+        error "${name} must be ${object ? 'a JSON object' : 'a nonempty JSON array'}."
+    value
+}
 
 def conversionRuntime() {
     if (nextflow.version.toString() != '26.04.6') error 'Maxwell conversion requires Nextflow 26.04.6; existing NWB/NERSC entries retain their own runtime.'

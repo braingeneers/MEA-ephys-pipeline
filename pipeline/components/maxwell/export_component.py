@@ -190,6 +190,14 @@ where needed, a public reader endpoint and normal credentials. The workflow owns
 transfers/verification and emits only after publication. Do not mix full runtime
 configs into other workflows. See main.nf/component.nf for the exact native ports.
 
+For exact JSON numeric fidelity, pass recordings/settings as JSON strings or call
+the exported maxwellJson(text) before creating value channels. Its pinned-runtime
+Jackson decoder retains arbitrary-precision integers and finite binary64 floats,
+including negative zero. It rejects duplicate keys, trailing content and non-finite
+values. Nextflow's own params-file object reader and Groovy JsonSlurper can alter
+numbers before this component receives them; typed inputs retain their supplied
+values, not a recoverable copy of the original bytes.
+
 The complete tree includes image build source as well as staged runtime. Consumers
 may select a smaller explicit runtime closure; do not ship tests/scientific data or
 discard common schemas/libraries. export-manifest.json records roles and hashes.

@@ -1,9 +1,9 @@
 // Test-only real-conversion graph. No scientific process is stubbed.
-include { MEA_MAXWELL_CONVERSION as ALPHA; MEA_MAXWELL_CONVERSION as BETA; conversionOwnerVersion } from '../../pipeline/conversion'
+include { MEA_MAXWELL_CONVERSION as ALPHA; MEA_MAXWELL_CONVERSION as BETA; conversionOwnerVersion; conversionJson } from '../../pipeline/conversion'
 
 workflow {
-    def records = new groovy.json.JsonSlurper().parse(file(params.recordings_file).toFile())
-    def bindings = new groovy.json.JsonSlurper().parse(file(params.unit_bindings_file).toFile())
+    def records = conversionJson(file(params.recordings_file).getText('UTF-8'))
+    def bindings = conversionJson(file(params.unit_bindings_file).getText('UTF-8'))
     def base = [workflow_version:conversionOwnerVersion(),run_id:'two-aliases',
         unit_bindings:bindings,local_bind_paths:params.local_bind_paths]
     ALPHA(channel.value(records),[:],base+[step_id:'alpha',output_uri:params.alpha_output])

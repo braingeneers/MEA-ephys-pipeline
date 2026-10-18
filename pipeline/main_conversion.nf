@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
-include { MEA_MAXWELL_CONVERSION; conversionRuntime; conversionOwnerVersion } from './conversion'
+include { MEA_MAXWELL_CONVERSION; conversionRuntime; conversionOwnerVersion; conversionValue } from './conversion'
 
 params.recordings = null
 params.recordings_file = null
@@ -14,19 +14,6 @@ params.run_id = null
 params.step_id = 'convert'
 params.local_bind_paths = []
 params.runtime = [:]
-
-def conversionValue(value, filename, String name, boolean object) {
-    if (filename != null) {
-        if (value != null && !(object && value instanceof Map && value.isEmpty()))
-            error "Provide ${name} or ${name}_file, not both."
-        value = new groovy.json.JsonSlurper().parse(file(filename.toString(),checkIfExists:true).toFile())
-    } else if (value instanceof String) {
-        value = new groovy.json.JsonSlurper().parseText(value)
-    }
-    if (object ? !(value instanceof Map) : !(value instanceof List) || !value)
-        error "${name} must be ${object ? 'a JSON object' : 'a nonempty JSON array'}."
-    value
-}
 
 workflow {
     conversionRuntime()

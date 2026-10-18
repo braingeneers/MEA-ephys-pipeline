@@ -1,5 +1,23 @@
 nextflow.enable.dsl = 2
 
+// Nextflow's bundled Jackson reader preserves JSON integer/floating encodings and
+// IEEE negative zero. JsonSlurper's BigDecimal reader loses the latter on input.
+def maxwellJson(String text) {
+    def mapper = new com.fasterxml.jackson.databind.ObjectMapper()
+    mapper.enable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+    mapper.enable(com.fasterxml.jackson.core.JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+    def value = mapper.readValue(text, Object.class)
+    maxwellFiniteJson(value)
+    value
+}
+
+def maxwellFiniteJson(value) {
+    if (value instanceof Map) value.values().each { maxwellFiniteJson(it) }
+    else if (value instanceof List) value.each { maxwellFiniteJson(it) }
+    else if (value instanceof Double && !Double.isFinite(value))
+        error 'Maxwell JSON floating values must be finite binary64 numbers.'
+}
+
 // Each alias gets an independent metadata value. Global params are deployment only.
 def maxwellMetadata(settings, context, image) {
     if (!(settings instanceof Map)) error 'Maxwell settings must be an object'

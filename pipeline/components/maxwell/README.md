@@ -1,7 +1,7 @@
 # Generated Maxwell conversion component
 
-Generated from https://github.com/braingeneers/workflows at `f81cfac8fdae1718830ae11485f2be280245f7f0`.
-Owning workflow version: `0.1.22`. Scientific task image: `braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`.
+Generated from https://github.com/braingeneers/workflows at `7eedb8781050a955781541d587e4201365b7fcf3`.
+Owning workflow version: `0.1.23`. Scientific task image: `braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`.
 Generated scientific/controller files retain their upstream bytes and headers.
 Only Docker COPY source paths are relocated. No license is inferred or reassigned;
 consult the recorded upstream notices/headers and source provenance.
@@ -37,6 +37,14 @@ where needed, a public reader endpoint and normal credentials. The workflow owns
 transfers/verification and emits only after publication. Do not mix full runtime
 configs into other workflows. See main.nf/component.nf for the exact native ports.
 
+For exact JSON numeric fidelity, pass recordings/settings as JSON strings or call
+the exported maxwellJson(text) before creating value channels. Its pinned-runtime
+Jackson decoder retains arbitrary-precision integers and finite binary64 floats,
+including negative zero. It rejects duplicate keys, trailing content and non-finite
+values. Nextflow's own params-file object reader and Groovy JsonSlurper can alter
+numbers before this component receives them; typed inputs retain their supplied
+values, not a recoverable copy of the original bytes.
+
 The complete tree includes image build source as well as staged runtime. Consumers
 may select a smaller explicit runtime closure; do not ship tests/scientific data or
 discard common schemas/libraries. export-manifest.json records roles and hashes.
@@ -45,13 +53,13 @@ Regenerate from the exact committed exporter, with Python 3.11+ and Git:
 
 ```bash
 python3.11 export_component.py export --source-repository /path/to/workflows \
-  --source-revision f81cfac8fdae1718830ae11485f2be280245f7f0 --output /path/to/new-component
+  --source-revision 7eedb8781050a955781541d587e4201365b7fcf3 --output /path/to/new-component
 ```
 
 For a local development rebuild (not a published image or replacement release pin):
 
 ```bash
-docker build --network none --build-arg SOURCE_REVISION=f81cfac8fdae1718830ae11485f2be280245f7f0 \
+docker build --network none --build-arg SOURCE_REVISION=7eedb8781050a955781541d587e4201365b7fcf3 \
   -t maxwell-export-check:development /path/to/component
 docker run --rm --network none --entrypoint python maxwell-export-check:development \
   scripts/runtime_identity.py
