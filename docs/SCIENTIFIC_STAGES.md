@@ -164,3 +164,19 @@ every unit column, with only newly generated per-unit UUIDs excluded. Add
 It also tests nested path bases, missing/ambiguous sources and multi-device channel
 identity. Run the original isolated `scripts/nrp/validate_nwb.py` separately; do not
 upgrade processing dependencies to obtain a compatible validation stack.
+
+`check_stage_science.py --phase analyzers --direct <direct-run> --grouped <named-run>
+--output <comparison.json>` compares a single reference recording with named unit
+`reference`. Run it in the pinned report image, which adds Excel readers to the
+base scientific stack. It reads every prepared/analyzer/published recording sample,
+all analyzer extension arrays and PCA model states, report tables, bursts and
+figures. `--phase nwb --source-nwb <input.nwb>` uses the isolated NWB reader stack
+to compare all final NWB datasets and authored source metadata/electrode rows.
+
+This is a strict diagnostic check: differences and incomplete-check errors both
+produce a nonzero exit and retained JSON. Generated IDs, named unit-column order,
+known creation dates and extension execution times are recorded separately. Plot
+sampling and sorter execution annotations may still differ; the tool reports those
+differences. A successful workflow or schema check alone does not establish exact
+scientific parity. Keep stochastic defaults and investigate numeric discrepancies
+at their owner before accepting a modular implementation.
