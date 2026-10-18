@@ -88,6 +88,13 @@
   cached versions. Test the concrete HDF5 and Zarr constructors, legacy core files
   and byte-string version headers. Import success alone does not prove backend
   compatibility, modeled export/append or full scientific producer acceptance.
+- Backend dataset discovery must use a loaded NWB's owning reader manager;
+  matching namespace versions do not make private cached-schema classes compatible
+  with a fresh global builder. Keep the in-memory fallback and never replace a
+  global manager factory in maintained task code. Pinned compatibility patches
+  belong in the workflow-owned image recipe with exact source/version guards.
+  Zarr export must finalize consolidated metadata after caching specifications;
+  verify both metadata views and preserve an explicit unconsolidated request.
 - Stage the owning NWB graph guard explicitly into both writer modules and both
   entry points. Preflight sources before export or any destination copy; old
   expanded-reference graphs may read successfully but cannot be written. Retain

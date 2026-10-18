@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "locally_verified_backend_candidate_not_activated_or_published",
+  "reference": "braingeneers/mea-ephys-nwb:0.2.2",
+  "local_image_id": "sha256:eecd0f294805f2098c5b29a8be821e3aa9184fd6381e006f8fda069df874921c",
+  "registry_digest": null,
+  "parent": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
+  "parent_reference": "braingeneers/mea-ephys-nwb:0.2.0",
+  "command": [
+    "docker",
+    "build",
+    "--network",
+    "none",
+    "--pull=false",
+    "--build-arg",
+    "PARENT_IMAGE=braingeneers/mea-build-parent:sha256-a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
+    "--tag",
+    "braingeneers/mea-ephys-nwb:0.2.2",
+    "/home/davidparks21/myprojects/Braingeneers/MEA-ephys-pipeline/containers/nwb-backend"
+  ],
+  "patch": {
+    "schema_version": 2,
+    "image_version": "0.2.2",
+    "parent_reference": "braingeneers/mea-ephys-nwb:0.2.0",
+    "parent_image_id": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
+    "patches": [
+      {
+        "patch_id": "neuroconv-0.7.0-source-manager-v1",
+        "distribution": "neuroconv",
+        "version": "0.7.0",
+        "module": "neuroconv/tools/nwb_helpers/_dataset_configuration.py",
+        "source_sha256": "c6973f5ea2fb96695747940450e168d63483bacedc9982b464a0f596b3f52fe0",
+        "patched_sha256": "a0f4783d0bf8f5a2fb71e307761511fa3b5755c4ca4b5c51f06d6ea969109b4f"
+      },
+      {
+        "patch_id": "hdmf-zarr-0.12.0-export-cache-v1",
+        "distribution": "hdmf-zarr",
+        "version": "0.12.0",
+        "module": "hdmf_zarr/backend.py",
+        "source_sha256": "61f1f159cb015a721910871923b19e134dc74086e1e52e098bb3bbc66c3a8b2c",
+        "patched_sha256": "f63dcd2b102b2eb764835b35cfaff9b4676a0dedc1d74bbebce88925ef6d4653"
+      }
+    ]
+  },
+  "source_sha256": {
+    "Dockerfile": "befe1ae6ecc214db4f35de04e842f3b56f71ebeca8374688319bb02d483267e6",
+    "patch.lock.json": "30bc072c33bfa3a7732ec660845206de40512926d5c124ed36399d1d9be5323f",
+    "patch_runtime.py": "12a007dba6da2eca25107270610188acddb463b0cc2e0324e577c0e7a9aaa183"
+  },
+  "verified_scope": {
+    "native_layouts": 2,
+    "configuration_export_roundtrips": 10,
+    "in_memory_fallback": true,
+    "two_invocation_managers_isolated": true,
+    "old_unwritable_graphs_rejected": 2,
+    "patch_drift_controls": 4,
+    "actual_stale_cache_rejected": true,
+    "scientific_producer_pilot": false,
+    "full_writer_matrix_or_parent_acceptance": false
+  }
+}

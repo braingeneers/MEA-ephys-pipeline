@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "image_version": "0.2.2",
+  "parent_reference": "braingeneers/mea-ephys-nwb:0.2.0",
+  "parent_image_id": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
+  "patches": [
+    {
+      "patch_id": "neuroconv-0.7.0-source-manager-v1",
+      "distribution": "neuroconv",
+      "version": "0.7.0",
+      "module": "neuroconv/tools/nwb_helpers/_dataset_configuration.py",
+      "source_sha256": "c6973f5ea2fb96695747940450e168d63483bacedc9982b464a0f596b3f52fe0",
+      "patched_sha256": "a0f4783d0bf8f5a2fb71e307761511fa3b5755c4ca4b5c51f06d6ea969109b4f"
+    },
+    {
+      "patch_id": "hdmf-zarr-0.12.0-export-cache-v1",
+      "distribution": "hdmf-zarr",
+      "version": "0.12.0",
+      "module": "hdmf_zarr/backend.py",
+      "source_sha256": "61f1f159cb015a721910871923b19e134dc74086e1e52e098bb3bbc66c3a8b2c",
+      "patched_sha256": "f63dcd2b102b2eb764835b35cfaff9b4676a0dedc1d74bbebce88925ef6d4653"
+    }
+  ]
+}
