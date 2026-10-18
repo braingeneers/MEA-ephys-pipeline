@@ -1,6 +1,6 @@
 {
   "applicable_notice_files": [],
-  "content_sha256": "3ddd80ec3b3346338dc23c778ea35ed5072e9c28c58c29f5ee050af9d6e27640",
+  "content_sha256": "79a0490983091635d65a5e86021cd34a33a93b5b56fa3a81c05a88ecc60fed6b",
   "files": {
     "Dockerfile": {
       "bytes": 964,
@@ -15,7 +15,7 @@
       "bytes": 3871,
       "mode": "100644",
       "role": "distribution",
-      "sha256": "7036ce53d9f1de4b660947bf5d13fbf180a600416e228978be37875609df7b1b",
+      "sha256": "6a1081027d67e24538476a2f35b7f0127493f18d07b131838e31c760bea3aa3d",
       "source_path": null,
       "source_sha256": null,
       "transform": "generated-portable-instructions"
@@ -159,9 +159,9 @@
       "bytes": 558,
       "mode": "100644",
       "role": "task-runtime",
-      "sha256": "4f42c049b22b0720dfb13329726391f1c6ea2df6bfcfe74892882d0045b9ec96",
+      "sha256": "789d8206b76c2cdddf14e621bf8e6162d6ae04b5a85d11970a6a0316da9965e4",
       "source_path": "workflow-sources/modular-maxwell-to-nwb/nextflow.config",
-      "source_sha256": "4f42c049b22b0720dfb13329726391f1c6ea2df6bfcfe74892882d0045b9ec96",
+      "source_sha256": "789d8206b76c2cdddf14e621bf8e6162d6ae04b5a85d11970a6a0316da9965e4",
       "transform": "copy"
     },
     "process-policy.json": {
@@ -439,7 +439,7 @@
     "path": "workflow-sources/modular-maxwell-to-nwb/export_component.py",
     "sha256": "d3fcc4b6f289538637227fc16dec9a3d9a5fa293a4e1aac5fdbc9c8ffa5893d8"
   },
-  "owner_version": "0.1.23",
+  "owner_version": "0.1.24",
   "regeneration": [
     "python3.11",
     "export_component.py",
@@ -447,7 +447,7 @@
     "--source-repository",
     "/path/to/workflows",
     "--source-revision",
-    "7eedb8781050a955781541d587e4201365b7fcf3",
+    "beaa98304999034d28867ca218ff08ea0305820e",
     "--output",
     "/path/to/new-component"
   ],
@@ -466,7 +466,7 @@
     "version": "0.1.5"
   },
   "scientific_source_transformed": false,
-  "source_commit": "7eedb8781050a955781541d587e4201365b7fcf3",
+  "source_commit": "beaa98304999034d28867ca218ff08ea0305820e",
   "source_replacement_supported": false,
   "source_repository": "https://github.com/braingeneers/workflows"
 }
