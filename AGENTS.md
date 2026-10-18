@@ -35,3 +35,12 @@
   needs `docker.envWhitelist` for the exported thread variables, because its hook
   runs outside the container. Do not use an unadapted Docker probe as evidence of
   in-container thread limits. Scientific capsule `--n-jobs` is a separate control.
+- The collector serializes analyzer recordings relative to its declared future
+  publication path. Use that explicit base for source loading/fingerprinting, then
+  rebase into the bundle; do not assume the collector task's analyzer directory.
+- A named report stage must stage the whole verified bundle, selecting its analyzer
+  through `analyzer_subpath`, so lazy recording dependencies share its Docker mount.
+  Original direct callers may continue staging only the analyzer.
+- Preserve the real report capsule's empty statuses: zero analyzed units produce
+  `no_detected_units`; a nonempty analyzer with no retained units produces
+  `no_curated_units`. Both can legitimately feed burst `no_spikes`.

@@ -10,3 +10,6 @@ a loadable zero-unit sorting, status metadata and the original detector log.
 Both the exact terminal exception and zero-detection log evidence are required;
 other errors retain the original failure behavior. Detection thresholds and
 nonempty sorting behavior are unchanged.
+
+The unchanged `detected_no_spikes` function lives in `code/outcomes.py` so stage
+validation and the capsule use one maintained classifier.

@@ -5,6 +5,9 @@ sixteen process definitions in `pipeline/modules/` and preserves the original gr
 including all sorter branches and the currently disabled QC calls. This extraction
 does not change the scientific capsule code or their defaults.
 
+[Named scientific stages](SCIENTIFIC_STAGES.md) compose these same processes for
+standalone or grouped execution with verified portable dependencies.
+
 ## Invocation interface
 
 Every process takes a `task_settings` value map first, followed by its original

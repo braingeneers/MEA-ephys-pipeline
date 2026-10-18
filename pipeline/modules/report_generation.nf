@@ -21,13 +21,16 @@ process report_generation {
     execution_record = [container: task.container ?: '', cpus: task.cpus,
         memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
         accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
+    // Named stages stage the whole verified bundle so lazy recording dependencies
+    // remain in the same Docker mount. Direct callers still pass the analyzer.
+    def analyzer_dir = 'capsule/data/analyzer.zarr' + (task_settings.analyzer_subpath ? "/${task_settings.analyzer_subpath}" : '')
     """
     #!/usr/bin/env bash
     set -e
     ln -s capsule/results unit-results
     mkdir -p 'capsule/results/${recording_id}'
     python capsule/code/run_capsule.py \
-        --analyzer-dir capsule/data/analyzer.zarr \
+        --analyzer-dir '${analyzer_dir}' \
         --output-dir 'capsule/results/${recording_id}' \
         --thresholds '{"firing_rate": 0.1, "presence_ratio": 0.8}'
     """

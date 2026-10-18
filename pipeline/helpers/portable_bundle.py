@@ -149,6 +149,33 @@ def at_pointer(value, pointer):
     return value
 
 
+def register_alias(source, target, mappings):
+    """Bind an explicitly declared input copy to verified existing bundle bytes.
+
+    Runtime JSON may have been canonically reserialized by an earlier bundle.
+    Only JSON formatting may differ; every other byte and JSON value must match.
+    This supports copy staging without associating dependencies by basename alone.
+    """
+    source = Path(source).resolve(strict=True)
+    previous = mappings.get(source)
+    if previous is not None:
+        if previous != target:
+            raise BundleError(f"Ambiguous dependency alias: {source}")
+        return
+    if source.is_dir():
+        if not target.is_dir() or {p.name for p in source.iterdir()} != {p.name for p in target.iterdir()}:
+            raise BundleError(f"Dependency alias directory differs: {source}")
+        for item in sorted(source.iterdir()):
+            register_alias(item, target / item.name, mappings)
+    else:
+        if not target.is_file():
+            raise BundleError(f"Dependency alias lacks target: {source}")
+        if sha256(source) != sha256(target):
+            if source.suffix != '.json' or encoded(json.loads(source.read_text())) != encoded(json.loads(target.read_text())):
+                raise BundleError(f"Dependency alias content differs: {source}")
+    mappings[source] = target
+
+
 def rebase_extractor(value, old_base, new_base, mappings, bundle_root):
     """Rebase executable kwargs, leaving annotations and provenance untouched.
 
@@ -170,7 +197,9 @@ def rebase_extractor(value, old_base, new_base, mappings, bundle_root):
         elif not original.is_absolute():
             raise BundleError(f"Non-absolute dependency without relative_paths: {path}")
         try:
-            original = original.resolve(strict=True)
+            # A producer may serialize relative to its future publication base.
+            # Normalize that declared base before requiring the final dependency.
+            original = original.resolve().resolve(strict=True)
         except FileNotFoundError as error:
             raise BundleError(f"Missing recording dependency: {original}") from error
         target = mappings.get(original)
@@ -257,7 +286,8 @@ def fingerprint(descriptor, root, portable=False):
         value = group["recording"][0]
         if portable:
             assert_local_extractor(value, location, root)
-        analyzer = si.load_sorting_analyzer(location, load_extensions=False)
+        recording = si.load(value, base_folder=base)
+        analyzer = si.SortingAnalyzer.load_from_zarr(location, recording=recording)
         if analyzer.recording is None:
             raise BundleError(f"Analyzer recording could not be loaded: {location}")
         extensions = {}
@@ -401,6 +431,11 @@ def pack(spec, output):
         if destination.parts[0] != "data":
             raise BundleError("Payload destinations must be under data/")
         copy_payload(item["source"], output / destination, mappings, copied)
+    for item in spec.get('dependency_aliases', []):
+        destination = relative_path(item['destination'])
+        if destination.parts[0] != 'data':
+            raise BundleError('Dependency alias destinations must be under data/')
+        register_alias(item['source'], output / destination, mappings)
     descriptors = spec.get("serializations", [])
     check_recording_ids(spec, output / "data")
     check_catalogue(descriptors, output / "data")
@@ -419,7 +454,7 @@ def pack(spec, output):
             group = zarr.open(str(destination), mode="r+")
             source_group = zarr.open(str(original), mode="r")
             value = source_group["recording"][0]
-            replacement = rebase_extractor(value, original, destination, mappings, output)
+            replacement = rebase_extractor(value, Path(descriptor["base"]), destination, mappings, output)
             expected = fingerprint(descriptor, output)
             group["recording"][0] = replacement
             zarr.consolidate_metadata(group.store)

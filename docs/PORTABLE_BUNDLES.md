@@ -72,6 +72,7 @@ The specification has these fields:
 | `recording_ids` | Unique internal recording identities |
 | `payloads` | List of `{source, destination}` POSIX paths; destinations are relative and under `data/` |
 | `serializations` | Complete executable dependency catalogue described below |
+| `dependency_aliases` | Optional explicit `{source, destination}` bindings for equivalent staged producer copies; every file is checked before binding |
 | `metadata` | Optional small caller-owned provenance/settings object |
 
 Each serialization descriptor has `format`, `source`, `path`, `base`, optional
@@ -90,6 +91,13 @@ Skipped-preprocessing drift uses the input base. Binary-folder dictionaries use
 their own directory; an analyzer's Zarr `recording` dataset uses its analyzer
 directory. Do not derive those bases from a raw filename or assume a predecessor
 workspace will remain mounted.
+
+The collector rewrites analyzer graphs relative to its future publication directory,
+so its analyzer descriptor must supply that explicit `base`. Source fingerprinting
+loads the recording with the declared base and passes it to the analyzer loader.
+The portable result uses its own analyzer directory after rebasing. Copy aliases
+compare full SHA-256 identities recursively; JSON may differ only in formatting,
+with unchanged parsed types/values. They never bind by basename alone.
 
 The helper changes executable filesystem keys in extractor kwargs and their
 metadata-folder references. NWB-internal `electrical_series_path` remains unchanged.
