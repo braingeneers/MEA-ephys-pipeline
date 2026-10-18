@@ -78,8 +78,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.1', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.1', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.2', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.2', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -118,6 +118,12 @@ extensions, curation mask, visualization and collected families. Reporting prese
 expected report/burst recording. Export requires NWB structure and unit/spike counts
 matching curation. Full scientific NWB validation is a separate integration check.
 
+Final export reads an NWB source header from the declared recording graph, retaining
+authored subject/session metadata, identifiers and existing electrode/device
+bindings. Importing metadata does not enable raw export. Existing flat NWB inputs
+still select their own output backend and retain their existing acquisition data.
+The two NWB capsules share an explicitly staged [metadata helper](../capsules/nwb_common/README.md).
+
 Every complete bundle records ordered stage provenance, requested images/resources,
 capsule pins/arguments, predecessor digest and validated outcomes. Failed assembly
 can leave a partial directory, including a generic packing manifest. It lacks a
@@ -148,3 +154,13 @@ Fresh standalone/grouped and relocated scientific parity, actual NERSC/Shifter
 execution and GPU/NRP science are separate acceptance checks. The Docker config
 does not merge NERSC or Kubernetes configuration. S3 adapters and workflow-service
 definitions remain independent of this portable scientific interface.
+
+`check_nwb_source_metadata.py --source <input.nwb> --raw-output <derived-raw.nwb>
+--units-output <derived-units.nwb> --baseline <previous-final.nwb> --output <check.json>`
+runs in the pinned NWB worker. For the generated reference fixture, it compares
+authored metadata, every source electrode column, every LFP sample/timestamp and
+every unit column, with only newly generated per-unit UUIDs excluded. Add
+`--flat-output <flat-input-export.nwb>` to check the existing flat-input path.
+It also tests nested path bases, missing/ambiguous sources and multi-device channel
+identity. Run the original isolated `scripts/nrp/validate_nwb.py` separately; do not
+upgrade processing dependencies to obtain a compatible validation stack.

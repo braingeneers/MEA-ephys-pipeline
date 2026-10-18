@@ -30,12 +30,15 @@ from neuroconv.tools.spikeinterface.spikeinterface import (
 
 from pynwb import NWBHDF5IO, NWBFile
 from pynwb.file import Device
+from pynwb.ecephys import ElectricalSeries
 from hdmf_zarr import NWBZarrIO
 
 # for NWB Zarr, let's use built-in compressors, so thay can be read without Python
 from numcodecs import Blosc
 
 from aind_nwb_utils.utils import get_ephys_devices_from_metadata
+from source_nwb import (source_nwb_from_jobs, electrode_groups_for_recording,
+                        metadata_for_electrode_groups, apply_electrode_groups)
 
 # AIND
 try:
@@ -259,6 +262,8 @@ if __name__ == "__main__":
             job_dict = json.load(f)
         job_dicts.append(job_dict)
     logging.info(f"Found {len(job_dicts)} JSON job files")
+    all_job_dicts = job_dicts
+    flat_nwb_input_path = nwbfile_input_path
 
     # check for timestamps to overwrite recording timestamps
     timestamps_folder = data_folder / "timestamps"
@@ -269,8 +274,10 @@ if __name__ == "__main__":
     for session_name in session_names:
         logging.info(f"Session: {session_name}")
         # filter job_dicts for this session
-        job_dicts = [jd for jd in job_dicts if jd["session_name"] == session_name]
+        job_dicts = [jd for jd in all_job_dicts if jd["session_name"] == session_name]
         input_folder = job_dicts[0].get("input_folder")
+        nwbfile_input_path = flat_nwb_input_path or source_nwb_from_jobs(job_dicts, data_folder)
+        metadata_only_source = flat_nwb_input_path is None and nwbfile_input_path is not None
 
         recording_names = [job_dict["recording_name"] for job_dict in job_dicts]        
 
@@ -324,13 +331,25 @@ if __name__ == "__main__":
                 read_io = None
                 if nwbfile_input_path is not None:
                     nwb_original_file_name = nwbfile_input_path.stem
-                    if block_str in nwb_original_file_name and recording_str in nwb_original_file_name:
+                    if metadata_only_source:
+                        # Header discovery must not change the original graph
+                        # output namespace (which belongs to the job session).
+                        nwb_file_name = f"{session_name}_{block_str}_{recording_str}"
+                    elif block_str in nwb_original_file_name and recording_str in nwb_original_file_name:
                         nwb_file_name = nwb_original_file_name
                     else:
                         nwb_file_name = f"{nwb_original_file_name}_{block_str}_{recording_str}"
-                    read_io = io_class(str(nwbfile_input_path), "r")
+                    input_io_class = NWBZarrIO if nwbfile_input_path.is_dir() else NWBHDF5IO
+                    read_io = input_io_class(str(nwbfile_input_path), "r")
                     logging.info(f"Using existing NWB file: {nwb_file_name}")
                     nwbfile = read_io.read()
+                    if metadata_only_source:
+                        # The declared raw source supplies authored metadata. The
+                        # existing WRITE_RAW/LFP branches own signal selection.
+                        for name, container in list(nwbfile.acquisition.items()):
+                            if isinstance(container, ElectricalSeries):
+                                nwbfile.acquisition.pop(name)
+                        nwbfile.set_modified()
                 else:
                     # if no input file, create a new one
                     nwb_file_name = f"{session_name}_{block_str}_{recording_str}"
@@ -472,7 +491,15 @@ if __name__ == "__main__":
 
                     probe_info = None
                     fixed_probe_device_name = None
-                    if probe_device_name is None:
+                    source_groups = electrode_groups_for_recording(recording, nwbfile) if nwbfile_input_path is not None else None
+                    if source_groups is not None:
+                        source_metadata = metadata_for_electrode_groups(nwbfile, source_groups)
+                        devices_from_metadata = {item['name']:nwbfile.devices[item['name']]
+                                                 for item in source_metadata['Ecephys']['Device']}
+                        probe_device_name = next(iter(devices_from_metadata))
+                        electrode_group_location = nwbfile.electrode_groups[source_groups[0]].location
+                        add_probe_device_from_rig = True
+                    elif probe_device_name is None:
                         electrode_group_location = "unknown"
                         probes_info = recording.get_annotation("probes_info", None)
                         if probes_info is not None and len(probes_info) == 1:
@@ -542,7 +569,11 @@ if __name__ == "__main__":
 
                     # keep track of all added probe device names
                     if probe_device_name not in probe_device_names:
-                        nwbfile.add_device(probe_device)
+                        if probe_device_name in nwbfile.devices:
+                            probe_device = nwbfile.devices[probe_device_name]
+                            logging.info(f"\tPreserving source device: {probe_device_name}")
+                        else:
+                            nwbfile.add_device(probe_device)
                         probe_device_names.append(probe_device_name)
 
                     # add other devices (e.g., lasers)
@@ -588,6 +619,9 @@ if __name__ == "__main__":
                             for group in channel_groups_unique
                         ]
                     electrode_metadata["Ecephys"]["ElectrodeGroup"] = electrode_groups_metadata
+                    if source_groups is not None:
+                        apply_electrode_groups(recording, source_groups)
+                        electrode_metadata = source_metadata
 
                     if WRITE_RAW:
                         electrical_series_name = f"ElectricalSeries{probe_device_name}"

@@ -47,3 +47,9 @@
 - Preserve the real report capsule's empty statuses: zero analyzed units produce
   `no_detected_units`; a nonempty analyzer with no retained units produces
   `no_curated_units`. Both can legitimately feed burst `no_spikes`.
+- Resolve a nested NWB recording's authored header from executable kwargs and the
+  declared serialization base; a flat-directory scan misses staged raw sources.
+  Preserve subject/session facts, and bind existing electrodes by channel plus
+  group name before adding signals or units. Reusing a channel name with a new
+  group can append duplicate rows or fail on a contiguous source electrode table.
+  Keep shared NWB helpers explicit process inputs in both entry points.

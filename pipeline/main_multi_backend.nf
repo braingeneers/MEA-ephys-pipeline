@@ -150,6 +150,7 @@ workflow {
     nwb_ecephys_out = nwb_ecephys(
         Channel.value(processOptions('nwb_ecephys', launch_settings)),
         Channel.value(file("${baseDir}/../capsules/nwb_ecephys/code")),
+        Channel.value(file("${baseDir}/../capsules/nwb_common/code/source_nwb.py")),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),
@@ -159,6 +160,7 @@ workflow {
     nwb_units(
         Channel.value(processOptions('nwb_units', launch_settings)),
         Channel.value(file("${baseDir}/../capsules/nwb_units/code")),
+        Channel.value(file("${baseDir}/../capsules/nwb_common/code/source_nwb.py")),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),

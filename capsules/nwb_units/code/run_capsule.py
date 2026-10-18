@@ -12,6 +12,8 @@ import time
 
 import probeinterface as pi
 import spikeinterface as si
+from source_nwb import (electrode_groups_for_recording, metadata_for_electrode_groups,
+                        apply_electrode_groups, devices_for_units)
 
 # needed to lead extensions
 import spikeinterface.postprocessing as spost
@@ -531,6 +533,7 @@ if __name__ == "__main__":
                                 else:
                                     recording = recording_list[0]
 
+                            source_groups = electrode_groups_for_recording(recording, nwbfile)
                             channel_groups = recording.get_channel_groups()
                             if group_str == "":
                                 # single shank probe
@@ -556,6 +559,12 @@ if __name__ == "__main__":
                                     for group in channel_groups_unique
                                 ]
                             electrode_metadata["Ecephys"]["ElectrodeGroup"] = electrode_groups_metadata
+                            if source_groups is not None:
+                                apply_electrode_groups(recording, source_groups)
+                                electrode_metadata = metadata_for_electrode_groups(nwbfile, source_groups)
+                                sorting_curated.set_property('device_name', devices_for_units(
+                                    analyzer, recording, nwbfile, source_groups))
+                                logging.info("\tPreserving source electrode groups and unit devices")
 
                             add_waveforms_with_uneven_channels(
                                 sorting_analyzer=analyzer,
