@@ -203,3 +203,14 @@ Omitting the prototype retains the original implicit sampling. Explicit `null`
 retains SI's Gaussian fallback; it is distinct from omission. No scientific default,
 threshold or localization method is changed. `check_prototype_parameters.py --output
 <check.json>` exercises the real pinned API and rejects malformed vectors.
+
+Motion diagnostics have a separate noise-estimation draw. For repeatable validation,
+provide the complete preprocessing map with
+`motion_correction.noise_levels = {"random_slices_kwargs": {"seed": 42}}`.
+The capsule calls the pinned `get_noise_levels` API in raw units before motion
+computation, which consumes its normal recording cache. It retains the actual
+vector as `motion_<recording>/noise_levels.npy` and the sampling options in the
+preprocessing process metadata. Omission keeps the original unseeded behavior.
+This controls diagnostic peak detection even when motion application is disabled;
+only `random_slices_kwargs` is accepted, preserving raw MAD estimation, the detection
+threshold and motion algorithm.

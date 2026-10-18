@@ -64,3 +64,7 @@
   postprocessing capsule sets OPENBLAS_NUM_THREADS=1 before importing NumPy, while
   scientific worker count remains separately controlled. Preserve that behavior
   and match it in capsule replays rather than inferring it from a startup probe.
+- Preprocessing motion diagnostics have their own unseeded noise draw, even when
+  motion is not applied. Use the optional motion noise sampling map for controlled
+  validation and retain the actual raw noise vector. Compare every saved motion
+  peak/location/displacement array; equal prepared samples do not cover diagnostics.

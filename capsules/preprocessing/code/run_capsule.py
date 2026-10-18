@@ -529,6 +529,23 @@ if __name__ == "__main__":
                             recording_bin_c = recording_bin
                             recording_processed_c = recording_processed
 
+                        # compute_motion otherwise estimates raw noise from an
+                        # unseeded draw. An explicit optional sampling map uses
+                        # SI's normal cache, without changing omitted defaults.
+                        motion_noise = None
+                        noise_kwargs = motion_params.get("noise_levels")
+                        if noise_kwargs is not None:
+                            if not isinstance(noise_kwargs, dict):
+                                raise ValueError("preprocessing.motion_correction.noise_levels must be an object")
+                            if set(noise_kwargs) - {"random_slices_kwargs"}:
+                                raise ValueError(
+                                    "preprocessing.motion_correction.noise_levels only accepts random_slices_kwargs; "
+                                    "compute_motion uses raw MAD noise"
+                                )
+                            motion_noise = si.get_noise_levels(
+                                recording_bin_c, return_in_uV=False, **noise_kwargs
+                            )
+
                         # use compute motion
                         motion = spre.compute_motion(
                             recording_bin_c,
@@ -540,6 +557,8 @@ if __name__ == "__main__":
                             estimate_motion_kwargs=estimate_motion_kwargs,
                             raise_error=False
                         )
+                        if motion_noise is not None:
+                            np.save(motion_folder / "noise_levels.npy", motion_noise)
                         if motion is not None:
                             logging.info(f"\tMotion computed successfully!")
                             if motion_params["apply"]:
