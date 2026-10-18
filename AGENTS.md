@@ -95,6 +95,10 @@
   belong in the workflow-owned image recipe with exact source/version guards.
   Zarr export must finalize consolidated metadata after caching specifications;
   verify both metadata views and preserve an explicit unconsolidated request.
+- HDMF `Data.data` is separate from container `.fields`. Metadata verification
+  must traverse both, including numeric/identifier/string columns and object
+  reference arrays. Schema validity, UUIDs and builder presence do not prove
+  payload values; retain real coordinate/ID/reference corruption controls.
 - Stage the owning NWB graph guard explicitly into both writer modules and both
   entry points. Preflight sources before export or any destination copy; old
   expanded-reference graphs may read successfully but cannot be written. Retain

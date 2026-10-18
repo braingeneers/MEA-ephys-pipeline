@@ -62,14 +62,15 @@ def metadata_graph(nwb):
                 for key, item in value.fields.items():
                     if value is nwb and key in ('acquisition', 'processing', 'units'):
                         continue
-                    # Newly authored HDMF columns start as lists; backend
-                    # configuration converts them to arrays before writing.
-                    # Compare the complete dataset values on either side.
-                    if isinstance(value, Data) and key == 'data':
-                        item = data(item)
-                        if isinstance(item, (list, tuple)):
-                            item = np.asarray(item)
                     fields[key] = normalize(item)
+                # HDMF stores Data.data outside .fields. Include every payload,
+                # including numeric columns and object-reference arrays. Fresh
+                # columns start as lists; readers/configuration expose arrays.
+                if isinstance(value, Data):
+                    payload = data(value.data)
+                    if isinstance(payload, (list, tuple)):
+                        payload = np.asarray(payload)
+                    fields['data'] = normalize(payload)
                 kind = getattr(value, 'neurodata_type', getattr(value, 'data_type', type(value).__name__))
                 nodes[identifier] = dict(name=value.name, namespace=value.namespace,
                                          neurodata_type=kind, fields=fields)
@@ -126,6 +127,30 @@ def add_probe(nwb, name):
 def arrays_equal(left, right):
     x, y = np.asarray(left), np.asarray(right)
     assert x.dtype == y.dtype and x.shape == y.shape and x.tobytes() == y.tobytes()
+
+
+def payload_corruption_controls():
+    """Field-only snapshots missed these real HDMF Data payload changes."""
+    fresh = NWBFile('Data payload controls', 'data-payload-controls',
+                    datetime(2026, 1, 1, tzinfo=timezone.utc))
+    add_probe(fresh, 'payload_control')
+    table = fresh.electrodes
+    alternative = fresh.create_electrode_group('alternative', 'Other group', 'Fixture',
+                                               next(iter(fresh.devices.values())))
+    baseline = metadata_graph(fresh)
+    coordinate = next(name for name in ('rel_x', 'x') if name in table.colnames)
+    cases = [('coordinate', table[coordinate], 1.0), ('identifier', table.id, 100),
+             ('reference', table['group'], alternative)]
+    rejected = []
+    for name, column, changed in cases:
+        values = data(column.data)
+        original = values[0]
+        values[0] = changed
+        assert metadata_graph(fresh) != baseline, 'Changed Data payload accepted: ' + name
+        values[0] = original
+        assert metadata_graph(fresh) == baseline
+        rejected.append(name)
+    return rejected
 
 
 def data(value):
@@ -232,6 +257,7 @@ def main():
             assert inventory(source) == before
         (args.output / 'result.json').write_text(json.dumps(dict(passed=True, expected_original_failures=failures), indent=2) + '\n')
         return
+    payload_controls = payload_corruption_controls()
     records = []
     for index, source in enumerate(args.native):
         full = roundtrip(source, 'native_' + str(index), 'zarr', args.output)
@@ -303,7 +329,8 @@ def main():
         assert inventory(args.stale) == before
     report = dict(passed=True, complete_roundtrips=records, in_memory_fallback=True,
                   two_invocation_managers_isolated=True, bad_graphs_rejected=rejected,
-                  patch_drift_controls=4, stale_cache_rejected=stale_rejected, scientific_producer_clis=0)
+                  patch_drift_controls=4, stale_cache_rejected=stale_rejected,
+                  data_payload_corruptions_rejected=payload_controls, scientific_producer_clis=0)
     (args.output / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps({key: value for key, value in report.items() if key != 'complete_roundtrips'}, indent=2))
 

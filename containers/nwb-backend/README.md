@@ -51,6 +51,10 @@ It also exercises in-memory fallback, two independent source managers, explicit
 unconsolidated export, stale-cache rejection and source/version patch-drift guards.
 Core collection getters and HDMF column lists are compared in consistent in-memory
 representations; no authored field is dropped and stored numeric types stay exact.
+The snapshot explicitly traverses `Data.data`, which HDMF stores outside `.fields`,
+so identifier, coordinate, text and object-reference payloads are included. Focused
+corruption controls change actual Data values and canonical targets; schema, UUID
+or builder checks alone do not establish their preservation.
 
 One normal positive MaxOne pilot at source `cfb6178` completes the real reported
 bundle verification, Ecephys export, Units append and final bundle publication.
