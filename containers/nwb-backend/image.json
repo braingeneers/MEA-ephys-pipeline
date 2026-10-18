@@ -55,7 +55,14 @@
     "old_unwritable_graphs_rejected": 2,
     "patch_drift_controls": 4,
     "actual_stale_cache_rejected": true,
-    "scientific_producer_pilot": false,
+    "scientific_producer_pilot": true,
+    "pilot_source_commit": "cfb617899bfff2cb2f4ab0e0f7280652952bec49",
+    "pilot_actual_tasks": 4,
+    "pilot_actual_nwb_outputs": 2,
+    "pilot_units": 15,
+    "pilot_spikes": 40264,
+    "independent_pilot_schema_model_header_clock_spikes": true,
+    "full_lfp_waveforms_metrics_independent": false,
     "full_writer_matrix_or_parent_acceptance": false
   }
 }

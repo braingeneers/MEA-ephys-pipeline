@@ -52,6 +52,13 @@ unconsolidated export, stale-cache rejection and source/version patch-drift guar
 Core collection getters and HDMF column lists are compared in consistent in-memory
 representations; no authored field is dropped and stored numeric types stay exact.
 
+One normal positive MaxOne pilot at source `cfb6178` completes the real reported
+bundle verification, Ecephys export, Units append and final bundle publication.
+Independent copied-output checks validate both schemas, the complete authored/model
+graph and references, default LFP selection and exact clocks, and all 40,264 spike
+times across 15 units. They account explicitly for the Units writer's existing
+default Device addition and materialize empty projection collections consistently.
+
 These focused checks do not replace real scientific producer acceptance, the full
 zero/nonempty/layout/raw-enabled matrix, independent model/scientific validation,
 or supported workflow/profile tests. The candidate stays inactive until those gates.
