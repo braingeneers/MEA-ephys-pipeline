@@ -43,7 +43,10 @@
   Keep the corrected collector vendored at its recorded pin with its MIT license.
 - A named report stage must stage the whole verified bundle, selecting its analyzer
   through `analyzer_subpath`, so lazy recording dependencies share its Docker mount.
-  Original direct callers may continue staging only the analyzer.
+  An analyzer-only direct report port can hide missing recording dependencies when
+  Docker infers a broad common mount. Test source/work in one bounded root and
+  supply raw/prepared dependencies explicitly; changing archive placement is not
+  the repair. Retain the original lazy recording instead of substituting a cache.
 - Preserve the real report capsule's empty statuses: zero analyzed units produce
   `no_detected_units`; a nonempty analyzer with no retained units produces
   `no_curated_units`. Both can legitimately feed burst `no_spikes`.

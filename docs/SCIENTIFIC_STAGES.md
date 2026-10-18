@@ -171,13 +171,28 @@ upgrade processing dependencies to obtain a compatible validation stack.
 base scientific stack. It reads every prepared/analyzer/published recording sample,
 all analyzer extension arrays and PCA model states, report tables, bursts and
 figures. `--phase nwb --source-nwb <input.nwb>` uses the isolated NWB reader stack
-to compare all final NWB datasets and authored source metadata/electrode rows.
+to compare both NWB producers' complete datasets and authored source metadata/
+electrode rows. `--phase producers --source-nwb <input.nwb>` retains the complete
+result/scratch file inventory (sizes and hashes) for every scientific process and compares all
+non-Zarr producer payloads, including motion diagnostics and collector metadata.
+Retained scratch includes the sorter recording/parameter/log JSON and LFP cache.
+The original KS4 capsule deletes its raw Phy directory after loading its sorting;
+those historical paths remain provenance, not emitted or retained artifacts.
+Run all three phases: the inventory phase deliberately requires the logical Zarr
+checks from the other two phases. It does not equate compression bytes with data.
 
 This is a strict diagnostic check: differences and incomplete-check errors both
 produce a nonzero exit and retained JSON. Generated IDs, named unit-column order,
 known creation dates and extension execution times are recorded separately. Plot
-sampling and sorter execution annotations may still differ; the tool reports those
-differences. A successful workflow or schema check alone does not establish exact
+sampling may still differ; the tool reports those differences. Sorter provenance
+retains all parameters, scientific log text/counts/shapes and success/error evidence,
+separating only known measured times, resources and relocation coordinates. Complete
+serializer graphs, all recording samples/properties and source headers must be
+checked together; filename normalization alone cannot prove source identity.
+The collector's generated fallback description dates are separated only when the
+supplied fixture directory lacks authored description/subject JSON. Its remaining
+fallback metadata is compared as produced; it is not inferred authored NWB metadata.
+A successful workflow or schema check alone does not establish exact
 scientific parity. Keep stochastic defaults and investigate numeric discrepancies
 at their owner before accepting a modular implementation.
 

@@ -17,8 +17,11 @@ from pathlib import Path
 import re
 import uuid
 import xml.etree.ElementTree as ET
+import pickle
+import traceback
 
 import numpy as np
+from science_provenance import canonical
 
 
 def normalized(value):
@@ -148,7 +151,7 @@ def compare_zarr(check, label, left, right, nwb=False):
                     return [references(val) for val in item]
                 return item
             value = references(value)
-        return value
+        return canonical(check, label + "/" + path, value) if not nwb else value
 
     def visit(a, b, path):
         check.same(label + "/" + path + ".attrs", attributes(a.attrs, path), attributes(b.attrs, path))
@@ -160,7 +163,11 @@ def compare_zarr(check, label, left, right, nwb=False):
                     assert all(uuid.UUID(str(value)).version == 4 for value in values)
                 check.execution_fields.append(label + "/units/unit_name (generated UUIDs)")
             else:
-                check.same(label + "/" + path, a[:], b[:])
+                first, second = a[:], b[:]
+                if not nwb:
+                    first = canonical(check, label + "/" + path, first)
+                    second = canonical(check, label + "/" + path, second)
+                check.same(label + "/" + path, first, second)
         else:
             check.same(label + "/" + path + ".keys", sorted(a.keys()), sorted(b.keys()))
             for key in sorted(set(a.keys()) & set(b.keys())):
@@ -185,7 +192,7 @@ def svg_content(path):
     return ET.tostring(root)
 
 
-def compare_products(check, label, left, right):
+def compare_products(check, label, left, right, skip_zarr=False, source_directory=None):
     def files(root):
         return {str(path.relative_to(root)): path for path in root.rglob("*") if path.is_file()}
     a, b = files(left), files(right)
@@ -193,6 +200,10 @@ def compare_products(check, label, left, right):
     for name in sorted(set(a) & set(b)):
         x, y = a[name], b[name]
         key = label + "/" + name
+        if skip_zarr and any(part.endswith((".zarr", ".nwb")) for part in Path(name).parts):
+            # Inventory still checks every format/chunk file. Logical datasets
+            # and attributes are checked by analyzers/nwb in their pinned stacks.
+            continue
         if x.suffix == ".log":
             assert x.stat().st_size and y.stat().st_size
             check.execution_fields.append(key + " (capsule log)")
@@ -209,7 +220,24 @@ def compare_products(check, label, left, right):
                 for record in (first, second):
                     for field in ("start_date_time", "end_date_time"):
                         check.execution_time(key + "." + field, record.pop(field))
-            check.same(key, first, second)
+            if x.name == "data_description.json" and source_directory is not None:
+                assert source_directory.is_dir()
+                if not any((source_directory / filename).exists() for filename in ("data_description.json", "subject.json")):
+                    for record in (first, second):
+                        assert record["subject_id"] == "000000" and record["source_data"] is None
+                        created = record.pop("creation_time")
+                        check.execution_time(key + ".creation_time", created)
+                        expected = "000000_" + datetime.fromisoformat(created).strftime("%Y-%m-%d_%H-%M-%S")
+                        assert record.pop("name") == expected
+                    check.execution_fields.append(key + ".name (proved generated fallback date; no authored description/subject)")
+            if x.name == "run_times.json" and (x.parent.name.startswith("motion_") or "motion" in x.parts):
+                assert first.keys() == second.keys() and all(value >= 0 for value in (*first.values(), *second.values()))
+                check.execution_fields.append(key + " (motion step runtimes)")
+            else:
+                check.same(key, canonical(check, key, first), canonical(check, key, second))
+        elif x.suffix == ".pkl":
+            with x.open("rb") as first, y.open("rb") as second:
+                check.same(key, canonical(check, key, pickle.load(first)), canonical(check, key, pickle.load(second)))
         elif x.suffix == ".npy":
             def read(path):
                 value = np.load(path, allow_pickle=True)
@@ -256,8 +284,7 @@ def analyzers(args, check):
     values = [si.load_sorting_analyzer(path) for path in paths]
     compare_sortings(check, "analyzed.sorting", *[value.sorting for value in values])
     compare_recordings(check, "analyzed.recording", *[value.recording for value in values])
-    for name in ("extensions", "sorting", "sparsity_mask", "recording_info"):
-        compare_zarr(check, "analyzed." + name, *[zarr.open(str(path), "r")[name] for path in paths])
+    compare_zarr(check, "analyzed", *[zarr.open(str(path), "r") for path in paths])
     collected = [only((task(run, "results_collector") / "postprocessed").glob("*.zarr")) for run in pairs]
     # API loading must read published recording dependencies, not just extension arrays.
     publication = [args.direct / "results/postprocessed" / collected[0].name,
@@ -265,12 +292,34 @@ def analyzers(args, check):
     loaded = [si.load_sorting_analyzer(path) for path in publication]
     compare_recordings(check, "published.recording", *[value.recording for value in loaded])
     compare_sortings(check, "published.sorting", *[value.sorting for value in loaded])
-    for name in ("extensions", "sorting", "sparsity_mask", "recording_info"):
-        compare_zarr(check, "published." + name, *[zarr.open(str(path), "r")[name] for path in publication])
-    for role in ("report_generation", "burst_detection", "visualization"):
+    compare_zarr(check, "published", *[zarr.open(str(path), "r") for path in publication])
+    for role in ("curation", "report_generation", "burst_detection", "visualization"):
         compare_products(check, role, *[task(run, role) for run in pairs])
     return {"frames": prepared[0].get_num_samples(), "channels": prepared[0].get_num_channels(),
             "units": sorting[0].get_num_units(), "spikes": len(sorting[0].to_spike_vector())}
+
+
+def producers(args, check):
+    roles = ("job_dispatch", "preprocessing", "spikesort_kilosort4", "postprocessing", "curation",
+             "report_generation", "burst_detection", "visualization", "results_collector", "nwb_ecephys", "nwb_units")
+    inventory = {}
+    for role in roles:
+        paths = [task(run, role) for run in (args.direct, args.grouped)]
+        inventory[role] = [{str(path.relative_to(root)): {"bytes": path.stat().st_size,
+                           "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+                           for path in sorted(root.rglob("*")) if path.is_file()} for root in paths]
+        if role in ("job_dispatch", "preprocessing", "spikesort_kilosort4", "postprocessing", "results_collector"):
+            compare_products(check, "producer." + role, *paths, skip_zarr=True,
+                             source_directory=args.source_nwb.parent if args.source_nwb else None)
+        else:
+            check.same("inventory." + role, sorted(inventory[role][0]), sorted(inventory[role][1]))
+        scratch = [root.parent / "scratch" for root in paths]
+        inventory[role + ".retained_scratch"] = [
+            {str(path.relative_to(root)): {"bytes": path.stat().st_size,
+             "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+             for path in sorted(root.rglob("*")) if path.is_file()} for root in scratch]
+        compare_products(check, "scratch." + role, *scratch)
+    return {"producer_inventory": inventory, "logical_zarr_checks_required": ["analyzers", "nwb"]}
 
 
 def nwb(args, check):
@@ -279,45 +328,48 @@ def nwb(args, check):
     from hdmf_zarr import NWBZarrIO
     from check_nwb_source_metadata import header
 
-    paths = [only(task(run, "nwb_units").glob("*.nwb")) for run in (args.direct, args.grouped)]
     with ExitStack() as stack:
         source = stack.enter_context(NWBHDF5IO(str(args.source_nwb), "r")).read()
         assert source.units is None, "This reference check excludes only newly generated unit UUIDs"
-        values = [stack.enter_context(NWBZarrIO(str(path), "r")).read() for path in paths]
-        for index, value in enumerate(values):
-            check.same("nwb.authored_header." + str(index), header(source), header(value))
-            assert not value.acquisition and len(value.electrodes) == len(source.electrodes)
-            for name in ("id", *source.electrodes.colnames):
-                a, b = source.electrodes[name][:], value.electrodes[name][:]
-                if name == "group":
-                    a, b = [item.name for item in a], [item.name for item in b]
-                check.same(f"nwb.authored_electrodes.{index}.{name}", a, b)
-        compare_zarr(check, "nwb", *[zarr.open(str(path), "r") for path in paths], nwb=True)
+        for role in ("nwb_ecephys", "nwb_units"):
+            paths = [only(task(run, role).glob("*.nwb")) for run in (args.direct, args.grouped)]
+            values = [stack.enter_context(NWBZarrIO(str(path), "r")).read() for path in paths]
+            for index, value in enumerate(values):
+                check.same(f"{role}.authored_header.{index}", header(source), header(value))
+                assert not value.acquisition and len(value.electrodes) == len(source.electrodes)
+                for name in ("id", *source.electrodes.colnames):
+                    a, b = source.electrodes[name][:], value.electrodes[name][:]
+                    if name == "group":
+                        a, b = [item.name for item in a], [item.name for item in b]
+                    check.same(f"{role}.authored_electrodes.{index}.{name}", a, b)
+            compare_zarr(check, role, *[zarr.open(str(path), "r") for path in paths], nwb=True)
     return {"authored_source_checked": True, "all_nwb_datasets_compared": True}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--phase", choices=("analyzers", "nwb"), required=True)
+    parser.add_argument("--phase", choices=("analyzers", "producers", "nwb"), required=True)
     for name in ("direct", "grouped", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-nwb", type=Path)
     args = parser.parse_args()
     check = Comparison()
-    detail, error = {}, None
+    detail, error, stack = {}, None, None
     try:
-        detail = analyzers(args, check) if args.phase == "analyzers" else nwb(args, check)
+        detail = {"analyzers": analyzers, "producers": producers, "nwb": nwb}[args.phase](args, check)
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
+        stack = traceback.format_exc()
     result = {"passed": not check.differences and error is None, "phase": args.phase, **detail,
               "checked": check.checked, "differences": check.differences,
               "incomplete_check_error": error,
+              "incomplete_check_traceback": stack,
               "execution_or_representation_fields": sorted(set(check.execution_fields)),
               "numeric_tolerance": 0}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps({key: value for key, value in result.items() if key not in
-                     ("checked", "differences", "execution_or_representation_fields")}, indent=2))
+                     ("checked", "differences", "execution_or_representation_fields", "producer_inventory")}, indent=2))
     print("Differences:", [value["field"] for value in check.differences])
     raise SystemExit(0 if result["passed"] else 1)
 
