@@ -106,7 +106,9 @@ relative to its **publication** directory. Its maintained capsule preserves the
 actual raw directory when pipeline data is explicit, while retaining the original
 standalone/AIND naming without that argument. Assembly supplies the declared base
 and retains the same lazy graph. Producer-side copies are bound only after comparing
-every byte, permitting canonical JSON formatting with unchanged values/types. A
+every byte, permitting JSON whitespace changes with unchanged values/types and
+dictionary order. Timeseries layer order determines visualization rows and must
+survive rebasing; only manifest hashes use canonical key sorting. A
 matching basename alone never establishes dependency identity.
 
 Stages check the exact dispatch recording set and owned artifact families. Sorted
@@ -195,6 +197,24 @@ fallback metadata is compared as produced; it is not inferred authored NWB metad
 A successful workflow or schema check alone does not establish exact
 scientific parity. Keep stochastic defaults and investigate numeric discrepancies
 at their owner before accepting a modular implementation.
+
+`check_bundle_layer_order.py --source <producer-preprocessedviz.json>
+--portable <bundle/data/preprocessedviz.json> --output <fresh-directory>` checks
+actual plot row order and rejects reordered dependency aliases while accepting
+whitespace changes. `replay_render_inputs.py` replays the unchanged report or
+visualization capsule in its original task image with test-only seeded waveform
+and color-limit draws. Mount original task/data directories read-only. It records
+draws, plotted arrays/styles, products and actual in-process thread settings.
+Its report assertions target the 15-unit reference fixture; it does not establish
+general fixture coverage or change production randomness. Compare its receipts
+and products along with all three strict scientific comparison phases.
+
+`check_science_corruption.py --phase arrays|nwb --run <named-run>
+--output <fresh-directory> [--source-nwb <input.nwb>]` alters private copies of
+real output. It requires rejection of a missing spike payload, changed metric,
+sorter settings/counts/terminal evidence and an authored NWB identifier. Run arrays
+in the report image and NWB in the isolated reader stack, with the whole source
+tree available for shared metadata helpers. Never mount the original run writable.
 
 For reproducible grid-convolution validation, supply the same explicit
 `postprocessing.spike_locations.method_kwargs.prototype` vector in the complete

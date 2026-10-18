@@ -75,3 +75,7 @@
   motion is not applied. Use the optional motion noise sampling map for controlled
   validation and retain the actual raw noise vector. Compare every saved motion
   peak/location/displacement array; equal prepared samples do not cover diagnostics.
+- Preserve JSON dictionary order when rebasing capsule serializations. The
+  visualization capsule iterates timeseries layers to choose plot rows; sorting
+  keys reverses raw/highpass and highpass/CMR rows. Keep canonical manifest hashes
+  separate, and reject dependency aliases whose JSON key order differs.

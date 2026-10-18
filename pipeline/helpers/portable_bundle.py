@@ -56,6 +56,12 @@ def encoded(value):
     return json.dumps(jsonable(value), sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
 
 
+def serialized_json(value):
+    # Capsule consumers iterate dictionaries to choose plot rows. Canonical key
+    # sorting belongs to manifest hashes, never executable serialization payloads.
+    return json.dumps(jsonable(value), separators=(",", ":"), allow_nan=False).encode()
+
+
 def sha256(path):
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -71,7 +77,7 @@ def read_serialization(path):
 
 
 def write_serialization(path, value):
-    path.write_bytes(pickle.dumps(value, protocol=4) if path.suffix in {".pkl", ".pickle"} else encoded(value) + b"\n")
+    path.write_bytes(pickle.dumps(value, protocol=4) if path.suffix in {".pkl", ".pickle"} else serialized_json(value) + b"\n")
 
 
 def array_identity(value):
@@ -152,8 +158,8 @@ def at_pointer(value, pointer):
 def register_alias(source, target, mappings):
     """Bind an explicitly declared input copy to verified existing bundle bytes.
 
-    Runtime JSON may have been canonically reserialized by an earlier bundle.
-    Only JSON formatting may differ; every other byte and JSON value must match.
+    Runtime JSON may have been reserialized by an earlier bundle. Only JSON
+    formatting may differ; key order, every value and other bytes must match.
     This supports copy staging without associating dependencies by basename alone.
     """
     source = Path(source).resolve(strict=True)
@@ -171,7 +177,7 @@ def register_alias(source, target, mappings):
         if not target.is_file():
             raise BundleError(f"Dependency alias lacks target: {source}")
         if sha256(source) != sha256(target):
-            if source.suffix != '.json' or encoded(json.loads(source.read_text())) != encoded(json.loads(target.read_text())):
+            if source.suffix != '.json' or serialized_json(json.loads(source.read_text())) != serialized_json(json.loads(target.read_text())):
                 raise BundleError(f"Dependency alias content differs: {source}")
     mappings[source] = target
 
