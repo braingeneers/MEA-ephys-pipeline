@@ -57,6 +57,10 @@
 - Preserve the real report capsule's empty statuses: zero analyzed units produce
   `no_detected_units`; a nonempty analyzer with no retained units produces
   `no_curated_units`. Both can legitimately feed burst `no_spikes`.
+- Declare curation masks with `dtype=bool`, including zero units. NumPy infers
+  float64 from an empty comprehension even when nonempty values are boolean.
+  Repair this at the pinned producer; retain strict stage mask validation and
+  preserve scientific queries, labels and the separate report selection.
 - Resolve a nested NWB recording's authored header from executable kwargs and the
   declared serialization base; a flat-directory scan misses staged raw sources.
   Preserve subject/session facts, and bind existing electrodes by channel plus
@@ -85,7 +89,7 @@
 - Kilosort's total-runtime clock pads hours/minutes but uses unpadded rounded
   seconds, including possible 60. Validation may separate that measured duration;
   retain scientific counts/shapes, parameters and terminal evidence in its log.
-- Mount validation hooks explicitly for every Docker task. Remote-cloned curation
-  can infer only a work-directory mount; an unavailable BASH_ENV hook may silently
+- Mount validation hooks explicitly for every Docker task. A capsule cloned inside
+  its work directory can infer only that mount; an unavailable BASH_ENV hook may silently
   produce no receipt. Count actual in-container evidence separately from bounded
   mount requests, including after an unrelated workflow failure.

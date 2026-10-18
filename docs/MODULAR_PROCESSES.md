@@ -34,6 +34,12 @@ preserves recording references to explicit pipeline data; it does not rename the
 canonical `ecephys_session` directory into a session label. Collection no longer
 performs a runtime Git checkout. Other still-external capsules retain their pins.
 
+Curation is also maintained locally at its original Varda pin, with the same
+explicit code input in both callers. Its [documented correction](../capsules/curation/UPSTREAM.md)
+declares boolean QC masks for zero units while preserving the original nonempty
+values, query, disabled model classifiers, labels and metadata. The original
+runner/parameters/license are retained; curation no longer clones code at task time.
+
 All explicit settings and capsule identities participate in task caching. The cache
 check now invokes the actual preprocessing/KS4 modules with tiny argument-recording
 capsules, covering changed and unchanged settings and pins. These probes establish

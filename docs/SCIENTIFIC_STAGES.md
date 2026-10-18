@@ -232,6 +232,16 @@ gain/geometry property, spike, analyzer extension/PCA payload and curation mask,
 requires a missing recording dependency to fail. This collects retained science;
 fresh independent stage execution remains a separate acceptance check.
 
+`check_curation_masks.py --empty-task <curation-task>
+--nonempty-task <curation-task> --original-code <pinned-curation-code>
+--original-license <pinned-LICENSE> --output <fresh-directory>` runs four actual
+old/fixed curation CLIs in the pinned base image, with original task trees read-only.
+It reproduces the old float64 empty mask, requires the repaired bool `(0,)` mask,
+compares all nonempty outputs and verifies input analyzers/metrics unchanged.
+The source-delta guard retains the original runner, parameters and license. Both
+entry points stage this maintained curation code explicitly; scientific queries,
+labels and the report capsule's separate selection remain unchanged.
+
 `check_bundle_layer_order.py --source <producer-preprocessedviz.json>
 --portable <bundle/data/preprocessedviz.json> --output <fresh-directory>` checks
 actual plot row order and rejects reordered dependency aliases while accepting

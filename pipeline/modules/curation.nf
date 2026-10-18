@@ -6,6 +6,7 @@ process curation {
 
     input:
     val task_settings
+    path local_code, stageAs: 'capsule-source'
     val max_duration_minutes
     path postprocessing_results, stageAs: 'capsule/data/*'
 
@@ -33,9 +34,9 @@ process curation {
         export N_JOBS_EXT=${task.cpus}
     fi
 
-    echo "[${task.tag}] cloning git repo..."
-    ${task_settings.clone_script}
-    clone_repo "https://github.com/Varda006/aind-ephys-curation.git" "${task_settings.capsule_pin}"
+    echo "[${task.tag}] staging local capsule code..."
+    cp -rL capsule-source capsule/code
+    # Vendored at the original pin; see capsules/curation/UPSTREAM.md.
 
     echo "[${task.tag}] running capsule..."
     cd capsule/code

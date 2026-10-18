@@ -100,6 +100,7 @@ workflow {
     // Curation
     curation_out = curation(
         Channel.value(processOptions('curation', launch_settings)),
+        Channel.value(file("${baseDir}/../capsules/curation/code")),
         max_duration_minutes,
         postprocessing_out.results
     )

@@ -31,30 +31,13 @@ def main():
                     "-v",f"{source}:{source}:ro","-v",f"{root}:{root}","-e","HOME=/tmp",
                     "-e","OMP_NUM_THREADS=1","-e","OPENBLAS_NUM_THREADS=1",images["nwb"],
                     "python",str(fixture_script),"--fixture",str(root / "data")], check=True)
-    roles = ("job_dispatch","preprocessing","kilosort4","postprocessing","visualization","nwb_ecephys","nwb_units","results_collector")
-    for role in roles + ("curation",):
-        code = snapshot / "capsules" / role / "code" if role in roles else root / "cloned-stubs" / role / "code"
+    roles = ("job_dispatch","preprocessing","kilosort4","postprocessing","curation","visualization","nwb_ecephys","nwb_units","results_collector")
+    for role in roles:
+        code = snapshot / "capsules" / role / "code"
         code.mkdir(parents=True, exist_ok=True)
         shutil.copy2(fixture_script, code / "stage_probe_capsule.py")
         (code / "run").write_text(f'#!/usr/bin/env bash\nexec python stage_probe_capsule.py {role} "$@"\n')
         (code / "get_max_recording_duration_min.py").write_text("print('0.041666666666666664')\n")
-    shim = root / "bin"
-    shim.mkdir()
-    # Only the unchanged curation clone caller uses this test-only shim. Checkouts are
-    # still checked against the real pinned hashes; no task reaches the network.
-    pins = dict(line.split("=",1) for line in (source / "pipeline/capsule_versions.env").read_text().splitlines() if "=" in line)
-    git = shim / "git"
-    git.write_text('#!/usr/bin/env python\nimport json,shutil,sys\nfrom pathlib import Path\n'
-        + 'a=sys.argv[1:]\n'
-        + f'root=Path("/mea-probe")\npins={pins!r}\n'
-        + 'if a[0]=="clone":\n'
-        + ' role="curation"\n'
-        + ' assert a[-2]=="https://github.com/Varda006/aind-ephys-curation.git"\n'
-        + ' shutil.copytree(root/"cloned-stubs"/role, a[-1])\n'
-        + 'elif "checkout" in a:\n'
-        + ' assert a[a.index("checkout")+1] in pins.values(), a\n'
-        + 'else: raise RuntimeError(a)\n')
-    git.chmod(0o755)
     resources = {name:{"cpus":1,"memory":"2 GB","time":"10 min"} for name in
                  ("job_dispatch","preprocessing","spikesort_kilosort4","postprocessing","curation","visualization",
                   "results_collector","report_generation","burst_detection","nwb_ecephys","nwb_units","bundle_stage")}
@@ -96,7 +79,7 @@ workflow {{
 ''')
     overlay = root / "probe.config"
     overlay.write_text("executor.queueSize=8\nexecutor.pollInterval='1 sec'\n"
-        + f"docker.runOptions='--user 1000:1000 -e HOME=/tmp -e MPLBACKEND=Agg -v {root}:/mea-probe:ro -e PATH=/mea-probe/bin:/opt/conda/bin:/home/miniconda3/bin:/usr/local/bin:/usr/bin:/bin'\n")
+        + "docker.runOptions='--user 1000:1000 -e HOME=/tmp -e MPLBACKEND=Agg'\n")
     command = ["nextflow"]
     env = os.environ.copy()
     if args.legacy_runtime:

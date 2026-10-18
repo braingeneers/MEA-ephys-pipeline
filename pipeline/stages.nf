@@ -135,7 +135,8 @@ workflow MEA_ANALYSIS {
         calls.map{ cfg,path -> family(path,'spikesorted_') + family(path,'data_process_spikesorting_') })
     post = keyedProducers(postprocessing.out.unit_results).join(keyedUnits(verified),failOnDuplicate:true,failOnMismatch:true)
     cur_calls = post.map{ id,p,prior -> tuple(taskOptions('curation',settings,context,prior.meta),p,prior) }
-    curation(cur_calls.map{ cfg,p,prior -> cfg },cur_calls.map{ cfg,p,prior -> duration(prior.path) },cur_calls.map{ cfg,p,prior -> children(p.results) })
+    curation(cur_calls.map{ cfg,p,prior -> cfg },channel.value(file("${moduleDir}/../capsules/curation/code")),
+        cur_calls.map{ cfg,p,prior -> duration(prior.path) },cur_calls.map{ cfg,p,prior -> children(p.results) })
     curated = keyedProducers(curation.out.unit_results).join(post,failOnDuplicate:true,failOnMismatch:true)
     viz_calls = curated.map{ id,c,p,prior -> tuple(taskOptions('visualization',settings,context,prior.meta),c,p,prior) }
     visualization(viz_calls.map{ cfg,c,p,prior -> cfg },channel.value(file("${moduleDir}/../capsules/visualization/code")),
