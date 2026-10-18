@@ -47,6 +47,10 @@
   Docker infers a broad common mount. Test source/work in one bounded root and
   supply raw/prepared dependencies explicitly; changing archive placement is not
   the repair. Retain the original lazy recording instead of substituting a cache.
+  The report input tuple is `(recording_id, analyzer, recording_dependencies)`;
+  keep dependencies attached to their recording, stage duplicate basenames in
+  numbered directories, sort dependency inputs for stable caching after out-of-order
+  producers, and preserve the declared-value broadcast to fan-out.
 - Preserve the real report capsule's empty statuses: zero analyzed units produce
   `no_detected_units`; a nonempty analyzer with no retained units produces
   `no_curated_units`. Both can legitimately feed burst `no_spikes`.

@@ -134,9 +134,14 @@ workflow {
     analyzer_ch = postprocessing_out.results.flatten()
         .filter { it.name.startsWith('postprocessed_') && it.name.endsWith('.zarr') }
         .map { analyzer -> tuple(analyzer.name.replaceFirst(/^postprocessed_/, '').replaceFirst(/\.zarr$/, ''), analyzer) }
+    // A reusable value broadcasts all recording dependencies to every report.
+    // Include both raw and prepared paths for the capsule's lazy/binary fallbacks.
+    report_dependencies = ecephys_ch.concat(preprocessing_out.results.flatten()).collect()
+    report_inputs = analyzer_ch.combine(report_dependencies)
+        .map { fields -> tuple(fields[0], fields[1], fields.drop(2).sort { it.toString() }) }
     report_generation_out = report_generation(
         Channel.value(processOptions('report_generation', launch_settings)),
-        analyzer_ch,
+        report_inputs,
         Channel.value(file("${baseDir}/../capsules/report_generation"))
     )
     burst_detection(

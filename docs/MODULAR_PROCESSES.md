@@ -45,6 +45,23 @@ The eleven active processes also emit `unit_results`. Stage callers add a stable
 `unit_id` to each task's settings and join independent producers by that key.
 The original named result ports remain available to the direct graph.
 
+Report generation receives `(recording_id, analyzer, recording_dependencies)`.
+The dependency collection declares every referenced raw/prepared recording path;
+direct callers broadcast it in stable path order to all analyzers. Named callers provide the complete
+verified bundle, retaining their `analyzer_subpath`. Inputs are staged in separate
+numbered directories under `capsule/recording-dependencies/` and are excluded from
+report publication. An analyzer's serialized references alone do not declare the
+files that the container needs.
+
+`scripts/modular/check_report_dependencies.py` checks this port using real empty
+analyzers/reports and two external binary dependencies with duplicate basenames.
+Run it in the pinned driver with Docker and equal absolute source/evidence mounts;
+give `--output` and a separate `--dependencies-root` outside that output. It reads
+every recording frame, tests two-report fan-out and all publication/resume policies,
+reverses dependency arrival order on resume, and requires omitted dependencies to
+fail under a bounded task mount. `--legacy-runtime` selects the cached NERSC
+Nextflow runtime for local Docker checks; it does not execute Shifter or sorting.
+
 | Process | `unit_results` tuple |
 | --- | --- |
 | Job dispatch | `(task_settings, execution_record, results_directory, input_layout, duration_file)` |

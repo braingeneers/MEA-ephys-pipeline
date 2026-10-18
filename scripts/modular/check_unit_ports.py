@@ -98,7 +98,7 @@ workflow PROBE_STAGE {
     spikesort_kilosort4(calls.map{ cfg, prepared -> cfg }, channel.value(file(@SORT_CODE@)),
         channel.value('1'), calls.map{ cfg, prepared -> prepared })
     reports = spikesort_kilosort4.out.unit_results.map { cfg, execution, results, layout ->
-        tuple(processOptions('report_generation', launch) + [unit_id:cfg.unit_id], tuple(cfg.unit_id, results)) }
+        tuple(processOptions('report_generation', launch) + [unit_id:cfg.unit_id], tuple(cfg.unit_id, results, [layout])) }
     report_generation(reports.map{ cfg, analyzer -> cfg }, reports.map{ cfg, analyzer -> analyzer }, channel.value(file(@REPORT_CODE@)))
     emit:
     units = report_generation.out.unit_results
@@ -203,6 +203,10 @@ workflow {
             assert output["unit"] == unit and output["params"]["sorter"]["probe_marker"] == alias
             assert output["report_threads"] == {key: str(report_cpus) for key in THREAD_KEYS}
     assert job["unit"] == "job-probe" and job["duration"] == "7.5" and job["execution"]["container"] == images["base"]
+    for alias in ("alpha", "beta"):
+        published = root / "published" / alias
+        assert {str(path.relative_to(published)) for path in published.rglob("*") if path.is_file()} == {
+            "reports/slow/probe.json", "reports/fast/probe.json"}
     assert (Path(job["layout"]) / "ecephys_session/sentinel.txt").read_text() == "job-probe"
     assert json.loads((Path(job["results"]) / "job_0.json").read_text())["recording_name"] == "job-probe"
     with (root / "trace.tsv").open() as stream:

@@ -10,7 +10,7 @@ process report_generation {
 
     input:
     val task_settings
-    tuple val(recording_id), path(analyzer, stageAs: 'capsule/data/analyzer.zarr')
+    tuple val(recording_id), path(analyzer, stageAs: 'capsule/data/analyzer.zarr'), path(recording_dependencies, stageAs: 'capsule/recording-dependencies/input??/*')
     path report_code, stageAs: 'capsule/code'
 
     output:
@@ -22,7 +22,8 @@ process report_generation {
         memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
         accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
     // Named stages stage the whole verified bundle so lazy recording dependencies
-    // remain in the same Docker mount. Direct callers still pass the analyzer.
+    // remain in the same Docker mount. Direct callers declare every raw/prepared
+    // dependency too; analyzer serialization alone is not a container path input.
     def analyzer_dir = 'capsule/data/analyzer.zarr' + (task_settings.analyzer_subpath ? "/${task_settings.analyzer_subpath}" : '')
     """
     #!/usr/bin/env bash

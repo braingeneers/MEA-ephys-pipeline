@@ -167,7 +167,7 @@ workflow MEA_REPORTING {
     VERIFY_ANALYZED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
     verified = VERIFY_ANALYZED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     calls = verified.flatMap{ meta,path -> bundleRecord(path).recording_ids.collect{ id ->
-        tuple(taskOptions('report_generation',settings,context,meta,[analyzer_subpath:"data/postprocessed_${id}.zarr".toString()]),tuple(id,path)) } }
+        tuple(taskOptions('report_generation',settings,context,meta,[analyzer_subpath:"data/postprocessed_${id}.zarr".toString()]),tuple(id,path,[path])) } }
     report_generation(calls.map{ cfg,analyzer -> cfg },calls.map{ cfg,analyzer -> analyzer },channel.value(file("${moduleDir}/../capsules/report_generation")))
     reports = report_generation.out.unit_results.map{ cfg,execution,id,results,inputs -> tuple(cfg.unit_id,id,producer(cfg,execution,results,inputs)) }
     burst_calls = reports.map{ unit,id,p -> tuple(taskOptions('burst_detection',settings,context,p.settings.unit_meta),tuple(id,p.results.resolve("${id}/spike_times.npy"))) }
