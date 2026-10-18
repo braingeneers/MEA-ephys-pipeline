@@ -94,6 +94,12 @@
   private namespace maps and permit valid reference links, including core aliases.
   Zarr export controls must use the capsule's `link_data=False` policy, and each
   fixture file needs a fresh NWB container instance.
+- Native control generation retains the zero-centered float signal and biased ADC
+  acquisition as distinct identities; preserve quantization/calibration and never
+  claim generated ground truth as a KS4 outcome. SI injected-template recordings
+  are not JSON serializable, so retain the complete reference signal and recipe.
+  Neo numeric channel strings and NWB `chN elecM` names map through the explicit
+  channel/electrode table; compare that mapping instead of assuming identical labels.
 - SI 0.103.2's localization node builder silently samples a 5,000-spike prototype
   separately from the analyzer's random-spike/noise extensions. For exact validation,
   pass one verified explicit prototype through the existing method kwargs; convert
