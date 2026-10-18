@@ -19,6 +19,12 @@ execution order and preserves the original algorithms. Source NWBs remain under
 `data/ecephys_session/`; final derived exports are under `data/derived-nwb/`.
 Conversion from vendor acquisitions is separate.
 
+The complete maintained native Maxwell converter is available as a
+[generated source component](CONVERTER_SOURCE.md). It has its own standalone
+Nextflow 26 entry and verified native artifact outputs. The named MEA conversion
+bridge and acquisition entry are separate integration work; the existing five
+exports and their Nextflow 23/NERSC path retain their current interface.
+
 ## Local execution
 
 Build the [report image](../containers/analysis/README.md), install Docker and

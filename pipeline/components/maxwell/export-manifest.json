@@ -1,0 +1,463 @@
+{
+  "applicable_notice_files": [],
+  "content_sha256": "91bda42b034497b981d3ffda8d2118f65f1908112f5352248b57a6aa2f3ce89d",
+  "files": {
+    "Dockerfile": {
+      "bytes": 964,
+      "mode": "100644",
+      "role": "distribution",
+      "sha256": "e457ac48150cf970160648756493ec68ed7d0389cc7e0962c5db0561cfb7face",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/Dockerfile",
+      "source_sha256": "67a68d32d5402f06fc08d8199f2c3f4e612402b784029ba910150768220d8c0b",
+      "transform": "relocate-five-Docker-COPY-prefixes"
+    },
+    "README.md": {
+      "bytes": 3325,
+      "mode": "100644",
+      "role": "distribution",
+      "sha256": "a9ae4a9b49682aee26b878a238aac43dda4de9037048419213945dd80b192dc4",
+      "source_path": null,
+      "source_sha256": null,
+      "transform": "generated-portable-instructions"
+    },
+    "component.nf": {
+      "bytes": 8621,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "029b9ac11174a9b1eaff2cbfb5197d6962cb2e28e4fe3f404f82f0d09e6aaa75",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/component.nf",
+      "source_sha256": "029b9ac11174a9b1eaff2cbfb5197d6962cb2e28e4fe3f404f82f0d09e6aaa75",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/__init__.py": {
+      "bytes": 297,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "3ee10d2ea24a805237598777e0aa490a09fd371bbe4ce4c678211e8056b4b133",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/__init__.py",
+      "source_sha256": "3ee10d2ea24a805237598777e0aa490a09fd371bbe4ce4c678211e8056b4b133",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/__main__.py": {
+      "bytes": 1158,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "655bb5f0e3fd2d6f1c1dada8de44201450b50f61fda889294397d68f84c461f5",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/__main__.py",
+      "source_sha256": "655bb5f0e3fd2d6f1c1dada8de44201450b50f61fda889294397d68f84c461f5",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/contracts.py": {
+      "bytes": 17379,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "4cc0d6d68e98e77db6bd1d08c817c56e9e785822ac9ad7e14713ba1698e1b630",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/contracts.py",
+      "source_sha256": "4cc0d6d68e98e77db6bd1d08c817c56e9e785822ac9ad7e14713ba1698e1b630",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/local.py": {
+      "bytes": 12436,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "f904c1f2b73405ee6c2a7b85e20d139d28d98e6d119971b5d95cf917a781d66c",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/local.py",
+      "source_sha256": "f904c1f2b73405ee6c2a7b85e20d139d28d98e6d119971b5d95cf917a781d66c",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/publication.py": {
+      "bytes": 5089,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "5b4960cc6ea054ef74abc5f91f375b331abadd5e315a86b4d49ebc24d3a7cbba",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/publication.py",
+      "source_sha256": "5b4960cc6ea054ef74abc5f91f375b331abadd5e315a86b4d49ebc24d3a7cbba",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/s3.py": {
+      "bytes": 27668,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "5ebff8b82dff2c20a4b84e0e1a100d493122dbd5bebdbd39cc8eda984cbca805",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/s3.py",
+      "source_sha256": "5ebff8b82dff2c20a4b84e0e1a100d493122dbd5bebdbd39cc8eda984cbca805",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/schemas/artifacts-v1.schema.json": {
+      "bytes": 6082,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "749a95a9cb6c3e0780da63c93eb9b9ee07c7d66ec4349d9b09fa3cca81a42122",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/schemas/artifacts-v1.schema.json",
+      "source_sha256": "749a95a9cb6c3e0780da63c93eb9b9ee07c7d66ec4349d9b09fa3cca81a42122",
+      "transform": "copy"
+    },
+    "components/common/runtime.config": {
+      "bytes": 3982,
+      "mode": "100644",
+      "role": "deployment",
+      "sha256": "c892646a70a834a2f4802547329c43f5cf1433ddac67d5cf85e483b42537adfb",
+      "source_path": "workflow-sources/ephys-modular-common/runtime.config",
+      "source_sha256": "c892646a70a834a2f4802547329c43f5cf1433ddac67d5cf85e483b42537adfb",
+      "transform": "copy"
+    },
+    "defaults.json": {
+      "bytes": 496,
+      "mode": "100644",
+      "role": "scientific-image-metadata",
+      "sha256": "e0aa10895fdc61d9aa65e7240b37372d2dd63d029d358ae59c4c48e440007b56",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/defaults.json",
+      "source_sha256": "e0aa10895fdc61d9aa65e7240b37372d2dd63d029d358ae59c4c48e440007b56",
+      "transform": "copy"
+    },
+    "export_component.py": {
+      "bytes": 16942,
+      "mode": "100644",
+      "role": "distribution",
+      "sha256": "fc7f55740677af4efa74c2af172aca1a4d2e1f7ca8a738defd6a91f628abe99b",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/export_component.py",
+      "source_sha256": "fc7f55740677af4efa74c2af172aca1a4d2e1f7ca8a738defd6a91f628abe99b",
+      "transform": "copy"
+    },
+    "extraction.json": {
+      "bytes": 16253,
+      "mode": "100644",
+      "role": "scientific-image-metadata",
+      "sha256": "05eb10fe2fbb4c45057069c0e47b2e8a22511ae2a4abe187e22af35ff0c2cfa5",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/extraction.json",
+      "source_sha256": "05eb10fe2fbb4c45057069c0e47b2e8a22511ae2a4abe187e22af35ff0c2cfa5",
+      "transform": "copy"
+    },
+    "image.json": {
+      "bytes": 1098,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "88f85bad006f530adc00e8fb8b742d8f3a0220e7aae476c67b0d5d41515d0b1e",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/image.json",
+      "source_sha256": "88f85bad006f530adc00e8fb8b742d8f3a0220e7aae476c67b0d5d41515d0b1e",
+      "transform": "copy"
+    },
+    "lib/MaxwellTaskRetry.groovy": {
+      "bytes": 2368,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "103fe3e376d80e76bcef71cf91061eee2517f5429b274d34eee4856972a9516e",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/lib/MaxwellTaskRetry.groovy",
+      "source_sha256": "103fe3e376d80e76bcef71cf91061eee2517f5429b274d34eee4856972a9516e",
+      "transform": "copy"
+    },
+    "main.nf": {
+      "bytes": 1978,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "b443bfa8f780c707d5522372aec96ce7491702535d852edf1539623eef6f013e",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/main.nf",
+      "source_sha256": "b443bfa8f780c707d5522372aec96ce7491702535d852edf1539623eef6f013e",
+      "transform": "copy"
+    },
+    "nextflow.config": {
+      "bytes": 558,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "5938b0d90fc53a8e294361fdbc7784fea51657f7c71abf8eee73da55702bf79f",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/nextflow.config",
+      "source_sha256": "5938b0d90fc53a8e294361fdbc7784fea51657f7c71abf8eee73da55702bf79f",
+      "transform": "copy"
+    },
+    "process-policy.json": {
+      "bytes": 688,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "350cdc4bc7759b4f460ce618174c0d6586f517964910fc6fc0fc87e2130327ae",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/process-policy.json",
+      "source_sha256": "350cdc4bc7759b4f460ce618174c0d6586f517964910fc6fc0fc87e2130327ae",
+      "transform": "copy"
+    },
+    "runtime-lock.json": {
+      "bytes": 535,
+      "mode": "100644",
+      "role": "scientific-image-metadata",
+      "sha256": "e09437ee7290fecaf4bf00fcbf363da9f34e892f1fa68919037e8b0e9fd7829a",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime-lock.json",
+      "source_sha256": "e09437ee7290fecaf4bf00fcbf363da9f34e892f1fa68919037e8b0e9fd7829a",
+      "transform": "copy"
+    },
+    "runtime/allocation-policy.json": {
+      "bytes": 598,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "f6ef4908d6d10a010607d33f580eb5b01e119e6e48ed8d44c753289f4b09084d",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/allocation-policy.json",
+      "source_sha256": "f6ef4908d6d10a010607d33f580eb5b01e119e6e48ed8d44c753289f4b09084d",
+      "transform": "copy"
+    },
+    "runtime/conversion_allocation.py": {
+      "bytes": 8680,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "8a829085e3a84f57895869ea2c14c88d3d144b6010e620de4951e5ea37bc9ee8",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/conversion_allocation.py",
+      "source_sha256": "8a829085e3a84f57895869ea2c14c88d3d144b6010e620de4951e5ea37bc9ee8",
+      "transform": "copy"
+    },
+    "runtime/conversion_worker.py": {
+      "bytes": 26219,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "98d55f5713085678e6c28bda509b5f906e37ee95394ae6f20411854efc84d047",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/conversion_worker.py",
+      "source_sha256": "98d55f5713085678e6c28bda509b5f906e37ee95394ae6f20411854efc84d047",
+      "transform": "copy"
+    },
+    "runtime/frozen_s3_file.py": {
+      "bytes": 6324,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "0d98eec9395ec4d14ab701eb0e755c1cb11eec601d60853feb636257c631b523",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/frozen_s3_file.py",
+      "source_sha256": "0d98eec9395ec4d14ab701eb0e755c1cb11eec601d60853feb636257c631b523",
+      "transform": "copy"
+    },
+    "runtime/inspect_maxwell_input.py": {
+      "bytes": 15369,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "ccd48694a721bb425ba92f05b8f1127680ee40c6d6df528c27b669dba7d9d93f",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/inspect_maxwell_input.py",
+      "source_sha256": "ccd48694a721bb425ba92f05b8f1127680ee40c6d6df528c27b669dba7d9d93f",
+      "transform": "copy"
+    },
+    "runtime/metadata_volume.py": {
+      "bytes": 7539,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "ceb39554cc46bb0416f4671c2a4371d7323519cdf78ef02c69fc3b6ac0bd55d3",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/metadata_volume.py",
+      "source_sha256": "ceb39554cc46bb0416f4671c2a4371d7323519cdf78ef02c69fc3b6ac0bd55d3",
+      "transform": "copy"
+    },
+    "runtime/native_task.py": {
+      "bytes": 3216,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "922b890120f2237df057219d43eca2759da179e92540571d61e7f67457f812ae",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/native_task.py",
+      "source_sha256": "922b890120f2237df057219d43eca2759da179e92540571d61e7f67457f812ae",
+      "transform": "copy"
+    },
+    "runtime/raw_selection.py": {
+      "bytes": 16686,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "938a44fcdf11de24109a25aa4a54553089c7b943159239a7c13a4455caf6a572",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/raw_selection.py",
+      "source_sha256": "938a44fcdf11de24109a25aa4a54553089c7b943159239a7c13a4455caf6a572",
+      "transform": "copy"
+    },
+    "runtime/task_preparation.py": {
+      "bytes": 10765,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "4d5011113fed4e43fd9832273a5779562c92863ef686742a60cf69518671a55f",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/task_preparation.py",
+      "source_sha256": "4d5011113fed4e43fd9832273a5779562c92863ef686742a60cf69518671a55f",
+      "transform": "copy"
+    },
+    "runtime/verify_outputs.py": {
+      "bytes": 5577,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "96a659a6a078eb511958083b42fa52d635d4ca621c23acda6faf213b1554f35e",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/verify_outputs.py",
+      "source_sha256": "96a659a6a078eb511958083b42fa52d635d4ca621c23acda6faf213b1554f35e",
+      "transform": "copy"
+    },
+    "scripts/cell_culture_projection.py": {
+      "bytes": 22918,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "a1d80d9c217d7a150079db0b1176c418200c00e88c051ffbb3221cb01df1536c",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/cell_culture_projection.py",
+      "source_sha256": "a1d80d9c217d7a150079db0b1176c418200c00e88c051ffbb3221cb01df1536c",
+      "transform": "copy"
+    },
+    "scripts/convert_maxone_to_nwb.py": {
+      "bytes": 19134,
+      "mode": "100755",
+      "role": "scientific-image-source",
+      "sha256": "37763d9dea726707c598cbb0b777f6a22b1903b908a4f865e0913561b2b51d67",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/convert_maxone_to_nwb.py",
+      "source_sha256": "37763d9dea726707c598cbb0b777f6a22b1903b908a4f865e0913561b2b51d67",
+      "transform": "copy"
+    },
+    "scripts/create_legacy_maxwell_companion.py": {
+      "bytes": 7193,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "0dcb62272815aa22b63ffddddca50ff04706a5dde4e23a2607c413638a3f9ad7",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/create_legacy_maxwell_companion.py",
+      "source_sha256": "0dcb62272815aa22b63ffddddca50ff04706a5dde4e23a2607c413638a3f9ad7",
+      "transform": "copy"
+    },
+    "scripts/create_multiwell_maxwell_companion.py": {
+      "bytes": 4325,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "b5c84eb2e46d3cd743537555442f4edcf3ecb42110f5cc0bc78db5e2da5b7d87",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/create_multiwell_maxwell_companion.py",
+      "source_sha256": "b5c84eb2e46d3cd743537555442f4edcf3ecb42110f5cc0bc78db5e2da5b7d87",
+      "transform": "copy"
+    },
+    "scripts/generate_lindi_metadata.py": {
+      "bytes": 9515,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "fa484495b913eec86b1d621ded22e99c3c6c123b4f9921eede90f076a1632410",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/generate_lindi_metadata.py",
+      "source_sha256": "fa484495b913eec86b1d621ded22e99c3c6c123b4f9921eede90f076a1632410",
+      "transform": "copy"
+    },
+    "scripts/install_maxwell_hdf5_plugin.py": {
+      "bytes": 2247,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "0c50ecaaad13ea6105ca7aeeead75fff4932332a63664c418d8a7a2e7655dfc2",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/install_maxwell_hdf5_plugin.py",
+      "source_sha256": "0c50ecaaad13ea6105ca7aeeead75fff4932332a63664c418d8a7a2e7655dfc2",
+      "transform": "copy"
+    },
+    "scripts/legacy_cell_culture.py": {
+      "bytes": 29900,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "b716cdf30ed84465dc609a6285bc9ae57cd11066c306bd9a62950ec6ae2fa567",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/legacy_cell_culture.py",
+      "source_sha256": "b716cdf30ed84465dc609a6285bc9ae57cd11066c306bd9a62950ec6ae2fa567",
+      "transform": "copy"
+    },
+    "scripts/maxwell_companion_graph.py": {
+      "bytes": 8421,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "f5684549550fb448c58f0616a92fdbb1db0139fdd500eb3ebfacb7b62f47f5d4",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/maxwell_companion_graph.py",
+      "source_sha256": "f5684549550fb448c58f0616a92fdbb1db0139fdd500eb3ebfacb7b62f47f5d4",
+      "transform": "copy"
+    },
+    "scripts/maxwell_h5_utils.py": {
+      "bytes": 16883,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "372d8967ff210613f2cc9a91b739c5cb6fd65a14b1e80e2f862a007549e811ba",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/maxwell_h5_utils.py",
+      "source_sha256": "372d8967ff210613f2cc9a91b739c5cb6fd65a14b1e80e2f862a007549e811ba",
+      "transform": "copy"
+    },
+    "scripts/maxwell_lindi_codec.py": {
+      "bytes": 5656,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "0acb028cab3466f8941695d9d76e7b6e5df6422da194ecf4062c9fa7b4c5439d",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/maxwell_lindi_codec.py",
+      "source_sha256": "0acb028cab3466f8941695d9d76e7b6e5df6422da194ecf4062c9fa7b4c5439d",
+      "transform": "copy"
+    },
+    "scripts/repack_nwb_channel_major.py": {
+      "bytes": 8556,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/repack_nwb_channel_major.py",
+      "source_sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
+      "transform": "copy"
+    },
+    "scripts/runtime_identity.py": {
+      "bytes": 2316,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "97f9c5a5e9f6997ced737140f3ca62a5f0ab93614312536ba95fd796523d5a92",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/runtime_identity.py",
+      "source_sha256": "97f9c5a5e9f6997ced737140f3ca62a5f0ab93614312536ba95fd796523d5a92",
+      "transform": "copy"
+    },
+    "scripts/update_nwb_metadata.py": {
+      "bytes": 8310,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "414877e61e1a629666a694d7cb939cd34fca3e29d9b36a8e02381b58c3c8c6fe",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/update_nwb_metadata.py",
+      "source_sha256": "414877e61e1a629666a694d7cb939cd34fca3e29d9b36a8e02381b58c3c8c6fe",
+      "transform": "copy"
+    },
+    "scripts/validate_conversion_outputs.py": {
+      "bytes": 18635,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "4c40d79389c29974f581d129da093625339ba60d87cd220423505dae569017cb",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/validate_conversion_outputs.py",
+      "source_sha256": "4c40d79389c29974f581d129da093625339ba60d87cd220423505dae569017cb",
+      "transform": "copy"
+    },
+    "scripts/validate_maxwell_input.py": {
+      "bytes": 8871,
+      "mode": "100755",
+      "role": "scientific-image-source",
+      "sha256": "545c19582b87527d5fa1f1e1d6ae8c6836bd1ef207795d3e8dd431b8c3f0bdd4",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/validate_maxwell_input.py",
+      "source_sha256": "545c19582b87527d5fa1f1e1d6ae8c6836bd1ef207795d3e8dd431b8c3f0bdd4",
+      "transform": "copy"
+    },
+    "scripts/validate_nwb_metadata.py": {
+      "bytes": 3207,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "ea7d01731b8af683d76788cd83e869a7aca57dfad217dbe3cf38e8ba8b5dd768",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/validate_nwb_metadata.py",
+      "source_sha256": "ea7d01731b8af683d76788cd83e869a7aca57dfad217dbe3cf38e8ba8b5dd768",
+      "transform": "copy"
+    },
+    "scripts/workflow_defaults.py": {
+      "bytes": 392,
+      "mode": "100644",
+      "role": "scientific-image-source",
+      "sha256": "b9dbefc6af44d3e2d8d536f1680b6f0480e4701f9fde4762a47d20a9b55677e8",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/scripts/workflow_defaults.py",
+      "source_sha256": "b9dbefc6af44d3e2d8d536f1680b6f0480e4701f9fde4762a47d20a9b55677e8",
+      "transform": "copy"
+    }
+  },
+  "generator": {
+    "path": "workflow-sources/modular-maxwell-to-nwb/export_component.py",
+    "sha256": "fc7f55740677af4efa74c2af172aca1a4d2e1f7ca8a738defd6a91f628abe99b"
+  },
+  "owner_version": "0.1.19",
+  "regeneration": [
+    "python3.11",
+    "export_component.py",
+    "export",
+    "--source-repository",
+    "/path/to/workflows",
+    "--source-revision",
+    "01487885b17e8138f3b87c04bfe077f95bdb5ced",
+    "--output",
+    "/path/to/new-component"
+  ],
+  "schema_version": 1,
+  "scientific_image": {
+    "base_image": "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf",
+    "local_image_id": "sha256:9a4340bcb58f98d3c9c5a72c1191f442622adba0748f7af8ecd77567f93265cb",
+    "local_reference": "braingeneers/modular-maxwell-to-nwb:0.1.3",
+    "note": "Scientific runtime 0.1.3 preserves native filter-401 references and actual chunks for small arrays and retains an explicit templates map. Numerical tools, defaults, metadata helpers and dependencies retain the verified 0.1.2 contract. Guarded adoption is uncommitted local evidence; durable publication remains 03c2c and native integration 03c3. Source finalization remains stage 08.",
+    "parent_03a_complete": true,
+    "pinned_reference": "braingeneers/modular-maxwell-to-nwb@sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed",
+    "published": true,
+    "registry_digest": "sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed",
+    "source_revision_label": "52ed7246fe84915354eaa624eece2eb50771f2e4",
+    "status": "published_scientific_runtime",
+    "version": "0.1.3"
+  },
+  "scientific_source_transformed": false,
+  "source_commit": "01487885b17e8138f3b87c04bfe077f95bdb5ced",
+  "source_replacement_supported": false,
+  "source_repository": "https://github.com/braingeneers/workflows"
+}

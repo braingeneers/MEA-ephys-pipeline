@@ -1,0 +1,13 @@
+{
+  "version": "0.1.3",
+  "status": "published_scientific_runtime",
+  "local_reference": "braingeneers/modular-maxwell-to-nwb:0.1.3",
+  "local_image_id": "sha256:9a4340bcb58f98d3c9c5a72c1191f442622adba0748f7af8ecd77567f93265cb",
+  "source_revision_label": "52ed7246fe84915354eaa624eece2eb50771f2e4",
+  "base_image": "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf",
+  "registry_digest": "sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed",
+  "published": true,
+  "parent_03a_complete": true,
+  "note": "Scientific runtime 0.1.3 preserves native filter-401 references and actual chunks for small arrays and retains an explicit templates map. Numerical tools, defaults, metadata helpers and dependencies retain the verified 0.1.2 contract. Guarded adoption is uncommitted local evidence; durable publication remains 03c2c and native integration 03c3. Source finalization remains stage 08.",
+  "pinned_reference": "braingeneers/modular-maxwell-to-nwb@sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed"
+}

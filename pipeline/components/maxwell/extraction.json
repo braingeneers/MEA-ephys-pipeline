@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/braingeneers/workflows",
+  "source_commit": "66c5d82c3812b985b0ddc1cccc069f54e2e5297a",
+  "source_directory": "workflow-sources/maxwell-to-nwb-conversion",
+  "source_tree": "b3b5f4232cb1022dc455484af7fe0b2b7a848665",
+  "source_manifest_version": "0.1.21",
+  "source_config_sha256": "a7f52dddd7bf76631aa2d5dc3819653ceda2383cfbadb8a8b24927f62c283842",
+  "base_image": "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf",
+  "scripts": {
+    "cell_culture_projection.py": {
+      "source_sha256": "a1d80d9c217d7a150079db0b1176c418200c00e88c051ffbb3221cb01df1536c",
+      "extracted_sha256": "a1d80d9c217d7a150079db0b1176c418200c00e88c051ffbb3221cb01df1536c",
+      "scientific_ast_sha256": "4badadd2f10b4f6a304498241d4cdf0bb618a741aa9a6d39afeaa999a117fdb4",
+      "cli_default_bindings": {}
+    },
+    "convert_maxone_to_nwb.py": {
+      "source_sha256": "933a3c2a2b8aa69dc27b35cc7f21727566cfde15b7f01e3b156ca34566a301aa",
+      "extracted_sha256": "37763d9dea726707c598cbb0b777f6a22b1903b908a4f865e0913561b2b51d67",
+      "scientific_ast_sha256": "70bae18d056eb1160356e77a663db4d0d5c55268df4c58107f0c5f5d212b9530",
+      "cli_default_bindings": {
+        "--session-description": {
+          "key": "session_description",
+          "coercion": null,
+          "baseline_value": "Maxwell Max One recording converted with NeuroConv"
+        },
+        "--session-identifier-prefix": {
+          "key": "session_identifier_prefix",
+          "coercion": null,
+          "baseline_value": "maxone"
+        },
+        "--session-start-time": {
+          "key": "session_start_time",
+          "coercion": null,
+          "baseline_value": ""
+        },
+        "--subject-id": {
+          "key": "subject_id",
+          "coercion": null,
+          "baseline_value": ""
+        },
+        "--subject-species": {
+          "key": "subject_species",
+          "coercion": null,
+          "baseline_value": ""
+        },
+        "--subject-description": {
+          "key": "subject_description",
+          "coercion": null,
+          "baseline_value": ""
+        },
+        "--nwb-chunk-duration-ms": {
+          "key": "nwb_chunk_duration_ms",
+          "coercion": "float",
+          "baseline_value": 1000.0
+        },
+        "--nwb-chunk-channels": {
+          "key": "nwb_chunk_channels",
+          "coercion": null,
+          "baseline_value": 1
+        },
+        "--nwb-buffer-chunks": {
+          "key": "nwb_buffer_chunks",
+          "coercion": null,
+          "baseline_value": 10
+        },
+        "--maxwell-raw-dataset-path": {
+          "key": "maxwell_raw_dataset_path",
+          "coercion": null,
+          "baseline_value": "auto"
+        }
+      }
+    },
+    "create_legacy_maxwell_companion.py": {
+      "source_sha256": "ada19f311282450727115dec07f9d97bb639c6e8e70bad48f93ac36e23cbdbb2",
+      "extracted_sha256": "0dcb62272815aa22b63ffddddca50ff04706a5dde4e23a2607c413638a3f9ad7",
+      "scientific_ast_sha256": "a267c4b3dddbe6a223389b5ffcbfd22f56d3d643d403bfe1737bfa624e8925fd",
+      "cli_default_bindings": {
+        "--maxwell-raw-dataset-path": {
+          "key": "maxwell_raw_dataset_path",
+          "coercion": null,
+          "baseline_value": "auto"
+        }
+      },
+      "reviewed_companion_adapter": {
+        "functions": [
+          "main",
+          "_remap_reference_value",
+          "_copy_attrs",
+          "_copy_dataset_dimension_scales",
+          "_copy_tree_except_target"
+        ],
+        "imports_changed": true,
+        "source_function_ast_sha256": {
+          "main": "7f3aa15629eabdce717331f7008eb334237a7eff0802c804149cdf502e26bbc1",
+          "_remap_reference_value": "f95679ad45e4bed5c427177ab5b70d8009225f2539644f2492723e5e49f5207c",
+          "_copy_attrs": "1155f3a75893fb5a8fba79b439492dc5777994234aa49522342925acea5d2674",
+          "_copy_dataset_dimension_scales": "4763a4d256caac58f32ab391a29e4a7777c5277538d38a01da45d3d28b719322",
+          "_copy_tree_except_target": "1ad11711176fa374b385fd29b43d89d52a08689a7f363dec8fb06de72631d730"
+        },
+        "owned_function_ast_sha256": {
+          "main": "4a9fe9ba3c2aa084889ba46d7b009db50573bae5a506957b83dcd7671809351b",
+          "_remap_reference_value": null,
+          "_copy_attrs": null,
+          "_copy_dataset_dimension_scales": null,
+          "_copy_tree_except_target": null
+        },
+        "ast_interpreter": "3.11.15"
+      },
+      "unaffected_ast_sha256": "66698c57cd6054fd17a55c54af7f2579b6eace5d2bd960448f4b516eb05a5426"
+    },
+    "create_multiwell_maxwell_companion.py": {
+      "source_sha256": "437a91a75795ce72fa33d2823df6544b685ac0f48a6581bd1bf2af7695f12a20",
+      "extracted_sha256": "b5c84eb2e46d3cd743537555442f4edcf3ecb42110f5cc0bc78db5e2da5b7d87",
+      "scientific_ast_sha256": "474df76080f477cb9f06b1fbf3b25d0c896b901dec2cdde02d52fe860f0571af",
+      "cli_default_bindings": {},
+      "reviewed_companion_adapter": {
+        "functions": [
+          "main",
+          "copy_tree"
+        ],
+        "imports_changed": true,
+        "source_function_ast_sha256": {
+          "main": "675304c2db56a2badf480d875d13013c53dc70622361b63330c740191c01293b",
+          "copy_tree": "bf54c12711a2d2240d4f862adc851dbd4ff3b04db6f844b1863c4bfb48f8fe6c"
+        },
+        "owned_function_ast_sha256": {
+          "main": "379a653e66656caf0773f7c449cb1d40b2a14fed5e6aabe9f3c00bb4bb45ceee",
+          "copy_tree": null
+        },
+        "ast_interpreter": "3.11.15"
+      },
+      "unaffected_ast_sha256": "bd874a989bac3ebce442f9b6fa6b0d5037a7408c2da46a6d7777fe0bb102714d"
+    },
+    "generate_lindi_metadata.py": {
+      "source_sha256": "3f6d8c5e7e172be80d2e7b9073666bd8ec50fabc1bb57d32b1cbcdf7086a6c3b",
+      "extracted_sha256": "fa484495b913eec86b1d621ded22e99c3c6c123b4f9921eede90f076a1632410",
+      "scientific_ast_sha256": "977280450d5303f6f8424cc9859adfd2683cbf72cd3c28446800f94bf1845483",
+      "cli_default_bindings": {
+        "--num-dataset-chunks-threshold": {
+          "key": "lindi_num_dataset_chunks_threshold",
+          "coercion": null,
+          "baseline_value": "none"
+        },
+        "--contiguous-dataset-max-chunk-size": {
+          "key": "lindi_contiguous_dataset_max_chunk_size",
+          "coercion": "str",
+          "baseline_value": "20000000"
+        }
+      },
+      "unaffected_ast_sha256": "5ab662576430ff60986bab2b46be3054349e199d40ddb8d7d131981eb185e121",
+      "reviewed_reference_adapter": {
+        "functions": [
+          "_patch_lindi_filter_mapping_for_maxwell"
+        ],
+        "reason": "Keep filter-401 datasets native below the LINDI inline threshold; retain the explicit templates map for fewer than five native references",
+        "prior_extracted_sha256": "eb392a2dee34ea1a5ece9f64ff27aec4561c063441a7943377a3d210ea22834b",
+        "before_functions": {
+          "_patch_lindi_filter_mapping_for_maxwell": "521d8b4a04af757ab9dba43d4c97cf20299427dc23b4350fd7daf351c96dfe1a"
+        },
+        "after_functions": {
+          "_patch_lindi_filter_mapping_for_maxwell": "0320ea07da8c2ebd38b710e116ee5b8f2ff75229bff7dda6e245658a2082a60a"
+        }
+      }
+    },
+    "install_maxwell_hdf5_plugin.py": {
+      "source_sha256": "0c50ecaaad13ea6105ca7aeeead75fff4932332a63664c418d8a7a2e7655dfc2",
+      "extracted_sha256": "0c50ecaaad13ea6105ca7aeeead75fff4932332a63664c418d8a7a2e7655dfc2",
+      "scientific_ast_sha256": "0e166ca541c1ca2fbe926b8c8809b10f6a49484ae8d6815118debb8ebeda118c",
+      "cli_default_bindings": {}
+    },
+    "legacy_cell_culture.py": {
+      "source_sha256": "6631b1293ef255bfedbde5b7eafa3b42689786d0a5cc4df7395c9d8b9c82dabf",
+      "extracted_sha256": "b716cdf30ed84465dc609a6285bc9ae57cd11066c306bd9a62950ec6ae2fa567",
+      "scientific_ast_sha256": "57e9558f216908229002691a46bea269aac5e2be25626bf3c1b9ad24d0b4b7bf",
+      "cli_default_bindings": {},
+      "unaffected_ast_sha256": "e599dd64bae2ece690e06ced7d717eca380dfa3120f268de16f000f649823d25",
+      "reviewed_reference_adapter": {
+        "functions": [
+          "metadata_graph_paths",
+          "reject_external_metadata_references",
+          "extract_legacy",
+          "migrate_legacy_copy"
+        ],
+        "reason": "Recognize and remove only HDF5 expand_refs root hard aliases with their selected biological model; reject foreign links/references and unmodeled legacy subject attributes before replacement.",
+        "source_functions_ast_sha256": {
+          "metadata_graph_paths": null,
+          "reject_external_metadata_references": "456a4659bbb770b988caa38e75250ebc99ef8960a18043b6a29ec7839680d1c1",
+          "extract_legacy": "eff17205ff2d18cfa8c094ed329e2933ef57f47c98fd8c9211ea5ba8ddd9e688",
+          "migrate_legacy_copy": "1c82fea746dda2cdc88b44bba8d083c3bbf87236d4715aa88be415603b2aa974"
+        },
+        "owned_functions_ast_sha256": {
+          "metadata_graph_paths": "45fc2ba4c80fe5cbd78c842e2d7073731a74bab3ee1d31743a0895c96c541317",
+          "reject_external_metadata_references": "a83b2bbd6afe45e87e455116658029bddb8703d34d5528890b90acd08f4a7120",
+          "extract_legacy": "33fa1200e81d19f1cb3f14b1ec1a61b8af9870640cceaa7d35f7528339807f98",
+          "migrate_legacy_copy": "e18463bb656f80aa055ba1f603b7b2f19aa120c407d50ae38e309ce6a864eda0"
+        }
+      }
+    },
+    "maxwell_h5_utils.py": {
+      "source_sha256": "636f4aa8ad3cce16db3c78756ff590c65f5ba43339c40a413f5ca5f362ad6151",
+      "extracted_sha256": "372d8967ff210613f2cc9a91b739c5cb6fd65a14b1e80e2f862a007549e811ba",
+      "scientific_ast_sha256": "fdc0c911a6cc39a1f454af2cf7b55cfabd5de0b44768ff6a62c00855b7c2c9ca",
+      "cli_default_bindings": {},
+      "reviewed_compatibility_fix": "well_link_lookup"
+    },
+    "maxwell_lindi_codec.py": {
+      "source_sha256": "0acb028cab3466f8941695d9d76e7b6e5df6422da194ecf4062c9fa7b4c5439d",
+      "extracted_sha256": "0acb028cab3466f8941695d9d76e7b6e5df6422da194ecf4062c9fa7b4c5439d",
+      "scientific_ast_sha256": "0dd5d0aea0e67e0c3f67478b41991c54f44fb697037729f3660012a155bd456e",
+      "cli_default_bindings": {}
+    },
+    "repack_nwb_channel_major.py": {
+      "source_sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
+      "extracted_sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
+      "scientific_ast_sha256": "491bbc6f8b17fd563b63d750434695d803acc96193e11d052c0a4a6e8a378b88",
+      "cli_default_bindings": {}
+    },
+    "update_nwb_metadata.py": {
+      "source_sha256": "982e82226f3e36c7dd40ae09859a74af6231e1220a4a88d92dd1beea92a2661c",
+      "extracted_sha256": "414877e61e1a629666a694d7cb939cd34fca3e29d9b36a8e02381b58c3c8c6fe",
+      "scientific_ast_sha256": "ff19e50c9982660cf1a341dc3c29df7a866414efc40787c124335e80398520cc",
+      "cli_default_bindings": {},
+      "unaffected_ast_sha256": "65d6824583436c87ed58edf36e065420a1ea24005312b62d0f2f6951d04d8f63",
+      "reviewed_reference_adapter": {
+        "functions": [
+          "main"
+        ],
+        "reason": "Validate foreign graph references before replacing current biology; remove only reserved root aliases to that exact model along with its canonical roots.",
+        "source_functions_ast_sha256": {
+          "main": "b63ddd93c1d8829481ea0ced212def2e2a6f9074539a781c4ae9f90a1cdb15d7"
+        },
+        "owned_functions_ast_sha256": {
+          "main": "383233d19114c5725031082a6af111dc57b93c741464337e1c88f455570b8fb6"
+        }
+      }
+    },
+    "validate_conversion_outputs.py": {
+      "source_sha256": "abe6a134508e88013ef15c1b373e55acd78f048730af407e5efe7cb42880e644",
+      "extracted_sha256": "4c40d79389c29974f581d129da093625339ba60d87cd220423505dae569017cb",
+      "scientific_ast_sha256": "90f93f8837b9b99653244c71d9bf84bc0928e0d71ff5f8a1d20f2859e4aff0d3",
+      "cli_default_bindings": {
+        "--maxwell-raw-dataset-path": {
+          "key": "maxwell_raw_dataset_path",
+          "coercion": null,
+          "baseline_value": "auto"
+        }
+      }
+    },
+    "validate_maxwell_input.py": {
+      "source_sha256": "906501469d2afa34492de56b082478a7a95b5b22a15ac516d8df44d4f5738c55",
+      "extracted_sha256": "545c19582b87527d5fa1f1e1d6ae8c6836bd1ef207795d3e8dd431b8c3f0bdd4",
+      "scientific_ast_sha256": "32baf222ef166cabec36318e6f5cd5be97e6dea63ae0a5fd84604ccfb236c58c",
+      "cli_default_bindings": {
+        "--maxwell-raw-dataset-path": {
+          "key": "maxwell_raw_dataset_path",
+          "coercion": null,
+          "baseline_value": "auto"
+        }
+      }
+    },
+    "validate_nwb_metadata.py": {
+      "source_sha256": "ea7d01731b8af683d76788cd83e869a7aca57dfad217dbe3cf38e8ba8b5dd768",
+      "extracted_sha256": "ea7d01731b8af683d76788cd83e869a7aca57dfad217dbe3cf38e8ba8b5dd768",
+      "scientific_ast_sha256": "f68e8e0b3f702dcb04e15af91f2709005ec81b5fa976da596956f19001bb5476",
+      "cli_default_bindings": {}
+    }
+  },
+  "unchanged_tests": {
+    "fixtures/README.md": "8ab7c98343801a92f15b3c0748959e835842aefd9d20489982edec6588fce298",
+    "fixtures/legacy_rc2/ndx-cell-culture.extensions.yaml": "743bdb77a73ea7c99f6fc589ac8627e9f1a81819a11b0afe2bd3612668cc5931",
+    "fixtures/legacy_rc2/ndx-cell-culture.namespace.yaml": "2c48264c41e4ae7ef33696c7b2c6a1b95e542660b5fbe2f85fa06a7776370fa0",
+    "fixtures/legacy_rc3/ndx-cell-culture.extensions.yaml": "478d48c0c7111782e1fa39d8d6c3a090191ba625626a28fce6d2fe2ada5acd88",
+    "fixtures/legacy_rc3/ndx-cell-culture.namespace.yaml": "73900d236b14f91d7cca8065fdcec1927d41e29b04de99ec54e24017359261e5",
+    "fused_parity.py": "152ecfe2bdea2bc1c346ca5493a97c092d6ff628f8346fda1d8f15544123383d",
+    "legacy_fixture.py": "91ab309485346dffc42bad430c4de16bcfa63253c299172cfe5f85603284b543",
+    "test_bundled_plugin.py": "8f3d806e69e7501ab7d6761b5b88c5c9a249eada56258ba6294f812e2ad1777e",
+    "test_lindi_filter401.py": "1d7a0e1e57650094c76775de8521fe0f8392ad8db52a0c568d855a680cc10864",
+    "test_multi_recording_well.py": "d7abf51a122d4ce7b617160084fd6319c0d67616468babc1fb758eba460e5f67",
+    "test_nwb_metadata_projection.py": "a8452ca3b29649eed315c532be8420ac1bcd7ddac91ebde4fbe554f563ea1945",
+    "test_rc3_migration.py": "98b615b48b85b9c0e9e01c949db2efc71659cf8104f00d99d9a1a8cba180a631",
+    "test_shared_channel_mapping.py": "58a2e75c9c1d0d7bb3a058d1e610f21450a7c7e7d4dbf40071fd6dbbafc4cbba",
+    "test_update_nwb_metadata.py": "a5bd6b0542ae1af1a992ea88aa25661a9b3ea7c92ee2d1d4de4cb3c3af7a67a0"
+  },
+  "adapter_changes": [
+    "CLI scientific defaults resolve from defaults.json; preserve original CLI value types.",
+    "Compatibility views always resolve the selected well through HDF5 recording links; store numbers are not well IDs.",
+    "Companion adapters preserve original paths and copy one HDF5 object graph, translating references after allocation, retaining native attribute types and atomic local output; selected-unit and whole-recording scopes remain distinct."
+  ],
+  "not_copied": [
+    "Nextflow shell transport/cache/replacement stages",
+    "truncate_maxone_file.py"
+  ],
+  "numerical_algorithms_changed": false,
+  "input_routing_behavior_changed": true,
+  "baseline_limitations": [
+    "The frozen converter drops the wells group for well002/data0001 when that well has only one recording. Numerical comparison uses an independently materialized selected-table reference view; owned conversion uses the untouched original."
+  ],
+  "owned_helpers": {
+    "workflow_defaults.py": {
+      "extracted_sha256": "b9dbefc6af44d3e2d8d536f1680b6f0480e4701f9fde4762a47d20a9b55677e8",
+      "role": "fresh owning scientific defaults"
+    },
+    "runtime_identity.py": {
+      "extracted_sha256": "97f9c5a5e9f6997ced737140f3ca62a5f0ab93614312536ba95fd796523d5a92",
+      "role": "exact owned imports and dependency/plugin lock"
+    },
+    "maxwell_companion_graph.py": {
+      "extracted_sha256": "f5684549550fb448c58f0616a92fdbb1db0139fdd500eb3ebfacb7b62f47f5d4",
+      "role": "reference-aware compact companion adapter"
+    }
+  },
+  "companion_contract": {
+    "version": 1,
+    "owner_version": "0.1.1",
+    "original_store_and_well_paths_preserved": true,
+    "temporary_conversion_view_is_not_persistent_layout": true,
+    "scopes": [
+      "selected_unit",
+      "whole_recording"
+    ],
+    "preparation_only": true
+  },
+  "metadata_reference_behavior_changed": true
+}

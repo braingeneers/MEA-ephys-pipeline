@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://braingeneers.org/schemas/ephys-modular/artifacts-v1.schema.json",
+  "oneOf": [
+    {"$ref": "#/definitions/envelope"},
+    {"$ref": "#/definitions/stage_result"}
+  ],
+  "definitions": {
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "contract": {"enum": ["braingeneers.ephys-artifacts/v1", "braingeneers.braindance-artifacts/v1"]},
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,239}$"},
+    "kind": {"enum": ["selection", "split", "conversion", "sorting", "curation", "overview", "unit_figures", "finalization", "braindance_sort", "braindance_nwb", "braindance_finalization"]},
+    "object_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uri", "size", "etag"],
+      "properties": {
+        "uri": {"type": "string", "minLength": 8},
+        "size": {"type": "integer", "minimum": 0},
+        "etag": {"type": "string", "minLength": 1, "pattern": "^[^\"\r\n]+$"},
+        "sha256": {"$ref": "#/definitions/digest"},
+        "version_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "manifest_ref": {
+      "allOf": [{"$ref": "#/definitions/object_ref"}, {"required": ["sha256"]}]
+    },
+    "owner": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflow_id", "workflow_version", "interface_version", "image", "maintainer"],
+      "properties": {
+        "workflow_id": {"type": "string", "minLength": 1},
+        "workflow_version": {"type": "string", "minLength": 1},
+        "interface_version": {"type": "string", "minLength": 1},
+        "image": {"type": "string", "pattern": "^.+@sha256:[a-f0-9]{64}$"},
+        "maintainer": {"type": "string", "minLength": 1}
+      }
+    },
+    "stage_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "variant", "manifest"],
+      "properties": {
+        "id": {"$ref": "#/definitions/digest"},
+        "kind": {"$ref": "#/definitions/kind"},
+        "variant": {"$ref": "#/definitions/identifier"},
+        "manifest": {"$ref": "#/definitions/manifest_ref"}
+      }
+    },
+    "unit_input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unit_id", "recording_id", "sources", "metadata"],
+      "properties": {
+        "unit_id": {"$ref": "#/definitions/identifier"},
+        "recording_id": {"$ref": "#/definitions/identifier"},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/object_ref"}},
+        "projection": {"$ref": "#/definitions/manifest_ref"},
+        "target": {"$ref": "#/definitions/manifest_ref"},
+        "metadata": {"type": "object"}
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "object"],
+      "properties": {
+        "kind": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+        "object": {"$ref": "#/definitions/object_ref"}
+      }
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unit_id", "status", "artifacts"],
+      "properties": {
+        "unit_id": {"$ref": "#/definitions/identifier"},
+        "status": {"enum": ["complete", "skipped", "no_data"]},
+        "artifacts": {"type": "array", "items": {"$ref": "#/definitions/artifact"}},
+        "reason": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,79}$"},
+        "evidence": {"$ref": "#/definitions/manifest_ref"}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "complete"}}}, "then": {"properties": {"artifacts": {"minItems": 1}}}},
+        {"if": {"properties": {"status": {"enum": ["skipped", "no_data"]}}}, "then": {"required": ["reason", "evidence"]}}
+      ]
+    },
+    "envelope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "document_type", "contract", "dataset_uri", "selection", "stages", "selected"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "document_type": {"const": "envelope"},
+        "contract": {"$ref": "#/definitions/contract"},
+        "dataset_uri": {"type": "string"},
+        "selection": {"$ref": "#/definitions/manifest_ref"},
+        "parent": {"$ref": "#/definitions/manifest_ref"},
+        "stages": {"type": "array", "items": {"$ref": "#/definitions/stage_ref"}},
+        "selected": {"type": "object", "additionalProperties": {"$ref": "#/definitions/digest"}}
+      }
+    },
+    "stage_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "document_type", "contract", "id", "signature", "kind", "variant", "dataset_uri", "selection", "owner", "settings", "execution", "inputs", "unit_inputs", "outcomes"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "document_type": {"const": "stage_result"},
+        "contract": {"$ref": "#/definitions/contract"},
+        "id": {"$ref": "#/definitions/digest"},
+        "signature": {"$ref": "#/definitions/digest"},
+        "kind": {"$ref": "#/definitions/kind"},
+        "variant": {"$ref": "#/definitions/identifier"},
+        "dataset_uri": {"type": "string"},
+        "selection": {"$ref": "#/definitions/manifest_ref"},
+        "owner": {"$ref": "#/definitions/owner"},
+        "settings": {
+          "type": "object", "additionalProperties": false, "required": ["submitted", "effective"],
+          "properties": {"submitted": {"type": "object"}, "effective": {"type": "object"}}
+        },
+        "execution": {
+          "type": "object", "additionalProperties": false, "required": ["run_id", "step_id"],
+          "properties": {"run_id": {"$ref": "#/definitions/identifier"}, "step_id": {"$ref": "#/definitions/identifier"}}
+        },
+        "inputs": {"type": "array", "items": {"$ref": "#/definitions/stage_ref"}},
+        "unit_inputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/unit_input"}},
+        "outcomes": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/outcome"}}
+      }
+    }
+  }
+}

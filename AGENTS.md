@@ -3,6 +3,10 @@
 - Keep scientific defaults and CLI precedence in `pipeline/settings.nf`. Processes
   receive explicit invocation settings; do not read global scientific `params` from
   imported modules or use `include ... addParams` for per-instance settings.
+- Treat `pipeline/components/maxwell` as generated source. Fix its maintained
+  upstream owner and regenerate from an exact commit; do not hand-edit a second
+  converter. Preserve its native version/image ownership separately from MEA's
+  wrapper version and keep its Nextflow 26 config scoped to conversion callers.
 - Keep process names stable unless changing and testing the backend selectors and
   trace consumers together. Test both Nextflow 26.04.6 and the NERSC 23.08.0-edge path.
 - Report dependencies must be installed globally in the derived image. NRP changes
