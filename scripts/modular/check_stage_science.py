@@ -88,7 +88,7 @@ def task(run, role):
     prefix, suffix = rows[0]["hash"].split("/")
     paths = list((run / "work" / prefix).glob(suffix + "*"))
     assert len(paths) == 1
-    return paths[0] / "capsule/results"
+    return paths[0].resolve() / "capsule/results"
 
 
 def only(pattern):
@@ -287,8 +287,11 @@ def analyzers(args, check):
     compare_zarr(check, "analyzed", *[zarr.open(str(path), "r") for path in paths])
     collected = [only((task(run, "results_collector") / "postprocessed").glob("*.zarr")) for run in pairs]
     # API loading must read published recording dependencies, not just extension arrays.
-    publication = [args.direct / "results/postprocessed" / collected[0].name,
+    left_publication = ("results/postprocessed" if args.direct_layout == "direct" else
+                        "results/export/bundles/reference.exported/data/collected/postprocessed")
+    publication = [args.direct / left_publication / collected[0].name,
                    args.grouped / "results/export/bundles/reference.exported/data/collected/postprocessed" / collected[1].name]
+    publication = [path.resolve() for path in publication]
     loaded = [si.load_sorting_analyzer(path) for path in publication]
     compare_recordings(check, "published.recording", *[value.recording for value in loaded])
     compare_sortings(check, "published.sorting", *[value.sorting for value in loaded])
@@ -352,6 +355,8 @@ def main():
     for name in ("direct", "grouped", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--source-nwb", type=Path)
+    parser.add_argument("--direct-layout", choices=("direct", "staged"), default="direct",
+                        help="Published analyzer layout of the left run; staged also accepts independent-stage trace views")
     args = parser.parse_args()
     check = Comparison()
     detail, error, stack = {}, None, None

@@ -200,6 +200,25 @@ archive timestamps and workbook styling are outside that helper's logical-table
 scope. Keep stochastic defaults and investigate numeric discrepancies
 at their owner before accepting a modular implementation.
 
+For a named-stage baseline, add `--direct-layout staged` to the science comparator.
+It compares the same complete scientific scope; the left published analyzer then
+uses the final exported bundle, just like the right. Trace views may join independent
+stage executions through symlinked task directories; the comparator resolves those
+declared task and published analyzer paths before loading their recording graphs.
+
+`python scripts/modular/check_stage_isolation.py --session <raw-NWB-directory>
+--params <complete-control.json> --output <fresh-directory> --forbid <original-path>
+[--forbid <another-original-path>]` runs the five stages as separate real Nextflow
+invocations. It physically copies each newly emitted bundle into the next stage
+root, freezes the explicit runtime closure, makes copied inputs read-only in Docker,
+rejects broader/original/symlink-escaping task mounts, and checks original-path
+unavailability inside every actual task container. The host needs Docker access;
+scientific execution uses the pinned driver/task images. Keep the output outside
+all forbidden roots. Mount/launch success alone does not establish scientific parity;
+run the complete comparisons and original validators over the resulting chain.
+The tool currently targets the controlled single-recording CPU fixture and uses
+the locally built report image digest; it is not an S3 or production launch wrapper.
+
 `check_bundle_layer_order.py --source <producer-preprocessedviz.json>
 --portable <bundle/data/preprocessedviz.json> --output <fresh-directory>` checks
 actual plot row order and rejects reordered dependency aliases while accepting
