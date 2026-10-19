@@ -1,13 +1,13 @@
 {
-  "version": "0.1.5",
+  "version": "0.1.6",
   "status": "published_scientific_runtime",
-  "local_reference": "braingeneers/modular-maxwell-to-nwb:0.1.5",
-  "local_image_id": "sha256:7639f878fe584c5bee368e60f9229f193592a03af8928b112a31e7d45c2c861a",
-  "source_revision_label": "03ef797c40ce8263b0f7799680ec47fbb7b7f260",
+  "local_reference": "braingeneers/modular-maxwell-to-nwb:0.1.6",
+  "local_image_id": "sha256:d3ddc444a591f595f86c0ae4d7f573fd849f30c1f6cf8b84d1b4f81c51d2c388",
+  "source_revision_label": "6cf59a70492873fa315937d2d054d008f7e3524d",
   "base_image": "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf",
-  "registry_digest": "sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce",
+  "registry_digest": "sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
   "published": true,
   "parent_03a_complete": true,
-  "note": "Published 0.1.5 preserves physical NWB reference topology and exact channel-major encoded chunks; runtime identity v2 binds all owned tool bytes and the extraction record. Numerical defaults, dependencies and plugin retain the verified baseline. The wrapper stages read-only graph admission before copy/output success; full consumer producer acceptance remains separate.",
-  "pinned_reference": "braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce"
+  "note": "Published 0.1.6 disables HDF5 file-space reuse during repacking so tiny compressed partial chunks retain physical channel-major order. Encoded bytes/masks, complete modeled graph, numerical defaults, 71 distributions, plugin and 16 other owned tools retain their verified identities. Local scientific CLI and read-only consumer checks pass; complete artifact/caller and scientific producer acceptance remain separate.",
+  "pinned_reference": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d"
 }

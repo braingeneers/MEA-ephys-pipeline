@@ -130,7 +130,8 @@ def selection(source):
         selected[OWNER + '/scripts/' + name] = ('scripts/' + name, 'scientific-image-source')
     fixed = ('main.nf', 'component.nf', 'nextflow.config', 'Dockerfile', 'defaults.json',
              'image.json', 'process-policy.json', 'runtime-lock.json', 'extraction.json',
-             'runtime/allocation-policy.json', 'lib/MaxwellTaskRetry.groovy', 'export_component.py')
+             'runtime/allocation-policy.json', 'runtime/owner-runtime-policy.json',
+             'lib/MaxwellTaskRetry.groovy', 'export_component.py')
     for name in fixed:
         role = ('distribution' if name in ('Dockerfile', 'export_component.py') else
                 'scientific-image-metadata' if name in ('defaults.json', 'extraction.json', 'runtime-lock.json')

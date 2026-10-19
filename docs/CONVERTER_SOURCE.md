@@ -2,14 +2,14 @@
 
 [`pipeline/components/maxwell`](../pipeline/components/maxwell/README.md) contains
 the complete maintained fresh converter, generated from Workflows commit
-`beaa98304999034d28867ca218ff08ea0305820e`. The exporter was introduced at `e7d1813`.
+`855cb3c17a85e7fd995e97118eec6dc348d3f6f6`. The exporter was introduced at `e7d1813`.
 Its [manifest](../pipeline/components/maxwell/export-manifest.json) records original
 paths/hashes, the exact generator, image pin, transformations and content identity.
 Generated code retains upstream headers and observed notices; its source ownership
 remains independent of the surrounding MEA code.
 
-The native owner is `braingeneers-modular-maxwell-to-nwb` 0.1.24, common contracts
-are 0.1.8, and the scientific image is the immutable 0.1.5 reference recorded in
+The native owner is `braingeneers-modular-maxwell-to-nwb` 0.1.30, common contracts
+are 0.1.9, and the scientific image is the immutable 0.1.6 reference recorded in
 `image.json`. Native outputs are verified artifact references after complete
 publication. Source validation, conversion, channel-major repacking, compact
 companion, LINDI, final validation and verification are included. Source replacement
@@ -35,9 +35,10 @@ generated scientific code or copy an unpinned live branch. The packaged verifier
 checks bytes, modes and the complete file inventory against the generated manifest;
 bind its content digest to the reviewed source revision as well.
 
-This snapshot has 48 manifest entries (49 regular files), including the explicitly
-staged `runtime/nwb_graph.py` guard. Its exact content digest is
-`79a0490983091635d65a5e86021cd34a33a93b5b56fa3a81c05a88ecc60fed6b`.
+This snapshot has 50 manifest entries (51 regular files), including the explicitly
+staged `runtime/nwb_graph.py` guard, shared `runtime/owner_runtime.py` image guard
+and its authoritative `runtime/owner-runtime-policy.json`. Its exact content digest is
+`ba6d10f19e0e288d41a2d8973e61ff696d35caf5067be0d88bfd7548d70c029f`.
 The native image preserves physical reference topology, while runtime identity v2
 binds all verified scientific tool hashes and the extraction record. Both MEA
 writers stage the same owning guard before export or source-copy/append. Historical
@@ -63,11 +64,29 @@ closure. That export changed only its config version and generated
 README/manifest provenance. Deterministic regeneration and bounded real caller
 checks are separate from complete original-versus-exported scientific parity.
 
-The current 0.1.24 fresh component includes a strict Jackson JSON decoder to preserve integer/float
-encodings, signed zero and large integers at the owned input boundary. The distinct version retains concurrent adoption changes outside this fresh
-component. Scientific tools, defaults, dependencies and the scientific image are unchanged. See
+The historical 0.1.24 fresh component introduced a strict Jackson JSON decoder to preserve integer/float
+encodings, signed zero and large integers at the owned input boundary. Its distinct version retained concurrent adoption changes outside that fresh
+component; scientific tools, defaults, dependencies and image were unchanged at that update. The current component retains the decoder. See
 [MAXWELL_CONVERSION.md](MAXWELL_CONVERSION.md) for supported numeric semantics
 and the distinction from Nextflow's earlier parameter parsing.
+
+The 0.1.30 import includes image 0.1.6's reviewed physical allocation repair:
+repacking disables HDF5 file-space reuse so tiny compressed final chunks retain
+physical channel-major order. Encoded chunk bytes/masks, the numerical copy loop,
+all other scientific tools, defaults and dependency/plugin locks are unchanged.
+The fresh controller shares maintained task/science/report helpers and additionally
+checks each outcome's unit identity. Its image guard measures installed science
+against the two recorded historical fingerprints; fresh exports include its policy
+without copying reuse/adoption coordination. Common 0.1.9 adds opt-in publication
+observations and independently reviewed upload-source identities while preserving
+existing calls. Native entry points, process declarations and retry library are
+byte-identical to the preceding 0.1.24 import.
+
+Earlier 0.1.24 source/content provenance remains historical:
+`beaa98304999034d28867ca218ff08ea0305820e`, digest
+`79a0490983091635d65a5e86021cd34a33a93b5b56fa3a81c05a88ecc60fed6b`.
+Import and interface regressions do not establish complete original/native/MEA
+scientific graph acceptance at 0.1.30; that acceptance remains a separate gate.
 
 The native shared dependency is publicly pinned. MEA source and consumer image
 publication remain phase 05. Full original-versus-exported converter parity, refreshed pipeline-boundary

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "runtime_contracts": {
+    "braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce": "099b2161adbd8a8c7d383314d47a34cc12886cff7779908dc2cbcb580e845119",
+    "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619"
+  }
+}

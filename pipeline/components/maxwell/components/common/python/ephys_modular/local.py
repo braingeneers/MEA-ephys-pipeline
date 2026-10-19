@@ -12,7 +12,7 @@ import uuid
 
 from .contracts import (ContractError, MAX_JSON_BYTES, assert_within, canonical_json,
                         decode_json, object_ref, parse_file, parse_s3, validate_ref, validate_root)
-from .s3 import IntegrityError, ImmutableConflict, ObjectMissing, S3Error, S3Store
+from .s3 import IntegrityError, ImmutableConflict, ObjectMissing, S3Error, S3Store, _expected_source
 
 
 def _stamp(value):
@@ -22,12 +22,21 @@ def _stamp(value):
 class LocalStore:
     transport = "local"
 
-    def __init__(self, output_root=None, s3_store=None, endpoint=None, profile=None):
+    def __init__(self, output_root=None, s3_store=None, endpoint=None, profile=None,
+                 *, publication_observer=None):
         if output_root is not None:
             validate_root(output_root, self.transport)
         self.output_root = output_root
         self._s3_store = s3_store
         self._s3_options = {"endpoint": endpoint, "profile": profile}
+        # Opt-in accounting, not a transport/retry replacement. Announce empty
+        # temporaries before the writer can consume bytes; retain observations
+        # after interruption so the caller can census surviving files.
+        self.publication_observer = publication_observer
+
+    def _observe_publication(self, event, path, destination):
+        if self.publication_observer is not None:
+            self.publication_observer(dict(event=event, path=str(path), destination=destination))
 
     @property
     def _remote(self):
@@ -55,7 +64,9 @@ class LocalStore:
         flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
         try:
             descriptor = os.open("/", flags)
+            current = Path('/')
             for part in path.parent.parts[1:]:
+                current = current / part
                 if create:
                     try:
                         os.mkdir(part, dir_fd=descriptor)
@@ -63,6 +74,8 @@ class LocalStore:
                         pass
                     else:
                         os.fsync(descriptor)
+                        if publication:
+                            self._observe_publication('directory', current, uri)
                 child = os.open(part, flags, dir_fd=descriptor)
                 os.close(descriptor)
                 descriptor = child
@@ -227,11 +240,15 @@ class LocalStore:
 
     def _publish(self, uri, writer):
         with self._parent(uri, create=True) as (parent, name):
+            # A replay can hold an existing target and a full temporary at once.
+            # This observation makes no claim that the target has valid bytes.
+            self._observe_publication('destination', parse_file(uri), uri)
             temporary = ".ephys-" + uuid.uuid4().hex + ".partial"
             descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                                  0o666, dir_fd=parent)
             try:
                 with os.fdopen(descriptor, "wb") as output:
+                    self._observe_publication('temporary', parse_file(uri).parent / temporary, uri)
                     size, checksum = writer(output)
                     output.flush()
                     os.fsync(output.fileno())
@@ -244,6 +261,7 @@ class LocalStore:
                         self._read_local(uri, expected=ref)
                     except S3Error:
                         raise ImmutableConflict("Existing local object differs or is not a regular file") from None
+                self._observe_publication('installed', parse_file(uri), uri)
                 os.fsync(parent)
                 return ref
             finally:
@@ -256,9 +274,12 @@ class LocalStore:
             return len(data), hashlib.sha256(data).hexdigest()
         return self._publish(uri, writer)
 
-    def upload_file(self, uri, source):
+    def upload_file(self, uri, source, *, expected_source=None):
+        _expected_source(expected_source)
         source_uri = Path(source).resolve().as_uri()
+        expected = (object_ref(source_uri, expected_source['size'], 'sha256-' + expected_source['sha256'],
+            sha256=expected_source['sha256'], transport=self.transport) if expected_source is not None else None)
         def writer(output):
-            _, ref = self._read_local(source_uri, sink=output)
+            _, ref = self._read_local(source_uri, expected=expected, sink=output)
             return ref["size"], ref["sha256"]
         return self._publish(uri, writer)

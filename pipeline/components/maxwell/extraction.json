@@ -212,7 +212,7 @@
     },
     "repack_nwb_channel_major.py": {
       "source_sha256": "f578964a3fcf758e5b8a4f7bb73481359d9b4d731e5448b90d73019d030f5b4c",
-      "extracted_sha256": "550af7b5ea995839f6d65a95c73eba6932f8e35ef1d58953b903aedfec35a933",
+      "extracted_sha256": "0dc116832fb8fe7dc370b067f59fd011b67aa2d85a1d345206c6cbb7e1277956",
       "scientific_ast_sha256": "491bbc6f8b17fd563b63d750434695d803acc96193e11d052c0a4a6e8a378b88",
       "cli_default_bindings": {},
       "unaffected_ast_sha256": "2177ce750ef66a1f57c46b1e0a38557cb34ba9a853719794ab3e28eabc2f58cf",
@@ -228,7 +228,7 @@
           "_remap_reference_value",
           "main"
         ],
-        "reason": "Allocate the complete NWB graph once and translate internal references without expanded-reference root aliases; publish local output only after success. Numerical chunk bytes/order, target creation properties and CLI defaults retain the original baseline.",
+        "reason": "Allocate the complete NWB graph once and translate internal references without expanded-reference root aliases; publish only after success. Disable file-space reuse so tiny compressed tails retain physical channel-major order. Encoded bytes/masks, target creation properties and CLI defaults remain unchanged.",
         "source_functions_ast_sha256": {
           "_copy_dataset_attrs_and_scales": "7f19db0d18078035373b0c2a09c2090b2dc247fc1ad52b6c288a0a3b1ec821ab",
           "_copy_dataset_attrs_with_ref_remap": "727ad6974e36a45ea5af4ed8ff5b19ab829086d700762b8009e5b6d2684900cd",
@@ -241,7 +241,7 @@
           "_copy_nwb_graph": "7f0587786d7cc84b8b2bc485f3870f3d8695c4adf6110cfdcee88b31776e0ece",
           "_has_references": "a83e8eb4c8955ceccb9f940c22aaa957f72d9a46c1c7d87a0c8bc29ac16a68aa",
           "_object_key": "39fd5e8afd7feadcbb3de7a64a0451eda3b64e712f7941ffb1ed385ae47349d3",
-          "main": "09e4b873e173b8cf7b8257e425770436803e170195ba6dee2b5c42afd266aa3f"
+          "main": "2839216c9f41cc09c631189620ea4d936a79d3b4f10be3a209abea666ffc3a4f"
         },
         "preserved_function_ast_sha256": {
           "_copy_chunks_channel_major": "7fd76493845adb2b85124b0805b326b3efd2208f3ab515379d41ae4bd75e29ed",
@@ -250,6 +250,14 @@
           "parse_args": "2d2257a8da3b281e33bf459c35b18fc1e2429dd6897e71f412ae4f787b6c457a"
         },
         "ast_python": "3.11.15"
+      },
+      "reviewed_allocation_repair": {
+        "previous_extracted_sha256": "550af7b5ea995839f6d65a95c73eba6932f8e35ef1d58953b903aedfec35a933",
+        "file_space_strategy": "none",
+        "changed_function": "main",
+        "owned_main_ast_sha256": "2839216c9f41cc09c631189620ea4d936a79d3b4f10be3a209abea666ffc3a4f",
+        "numerical_chunk_loop_unchanged": true,
+        "regression": "Mixed full/tiny filter401 chunks with modeled metadata, repeated parent IDs and pharmacology."
       }
     },
     "update_nwb_metadata.py": {

@@ -143,6 +143,17 @@ def _sha256_file(path):
     return digest.hexdigest()
 
 
+def _expected_source(value):
+    """Optional independently reviewed local payload identity, before claiming output."""
+    if value is None:
+        return
+    if (not isinstance(value, dict) or set(value) != {'size', 'sha256'}
+            or type(value['size']) is not int or value['size'] < 0
+            or not isinstance(value['sha256'], str) or len(value['sha256']) != 64
+            or any(c not in '0123456789abcdef' for c in value['sha256'])):
+        raise ContractError('Malformed independently reviewed upload source identity')
+
+
 def _stamp(path):
     stat = Path(path).stat()
     return stat.st_size, stat.st_mtime_ns, stat.st_ino
@@ -454,9 +465,10 @@ class S3Store:
         # Also protect previously published objects that predate this protocol.
         return self.policy.call("verify_existing_output", lambda: self._existing_file(uri, size, sha256))
 
-    def upload_file(self, uri, source, part_bytes=PART_BYTES):
+    def upload_file(self, uri, source, part_bytes=PART_BYTES, *, expected_source=None):
         """Create-only output; accepted multipart parts are retained across retries."""
         args = self._destination(uri)
+        _expected_source(expected_source)
         if type(part_bytes) is not int or part_bytes < MIN_PART_BYTES:
             raise ValueError("Multipart part size must be at least 5 MiB")
         source = Path(source)
@@ -467,6 +479,8 @@ class S3Store:
         sha256 = _sha256_file(source)
         if _stamp(source) != stamp:
             raise IntegrityError("Local source changed while hashing")
+        if expected_source is not None and expected_source != {'size': size, 'sha256': sha256}:
+            raise IntegrityError('Upload source differs from its independently reviewed identity')
         existing = self._claim(uri, size, sha256)
         if existing is not None:
             return existing

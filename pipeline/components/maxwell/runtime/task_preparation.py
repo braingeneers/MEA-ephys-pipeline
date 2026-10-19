@@ -47,6 +47,46 @@ def _projection_metadata_size(value):
         return path.stat().st_size
 
 
+def _prepare_fresh_task(store, unit, source, selector, output, effective, signature,
+                        context, *, metadata_read_budget_bytes, read_budgets):
+    """Construct the maintained physical-source task after caller graph admission.
+
+    The source can be independently verified raw/cache/recovery bytes. This
+    internal constructor neither asserts a source transition nor publishes it;
+    the owning plan validator must establish its actual logical source binding.
+    """
+    transport = getattr(store, 'transport', 's3')
+    root = context['output_base_uri']
+    run_id, step_id = context['run_id'], context['step_id']
+    for reference in unit['sources']:
+        store.verify(reference)
+    projection_size = projection_nwb_size = 0
+    if 'projection' in unit:
+        projection = unit['projection']
+        value, _ = store.read_json(projection['uri'], expected=projection)
+        projection_size = projection['size']
+        projection_nwb_size = _projection_metadata_size(value)
+    if 'target' in unit:
+        store.read_json(unit['target']['uri'], expected=unit['target'])
+    header = inspect_input(store, source, [selector], read_budgets=read_budgets,
+                           metadata_read_budget_bytes=metadata_read_budget_bytes)
+    allocation = conversion_allocation(source, header['header'], effective,
+        projection_bytes=projection_size, projection_nwb_metadata_bytes=projection_nwb_size,
+        minimum_disk_gib=context.get('runtime', {}).get('minimum_disk_gib', 0),
+        publication_transport=transport)
+    destination = stage_output_uri(output, 'conversion', signature, run_id, step_id, transport=transport)
+    paths = {'nwb': destination + 'output.nwb', 'lindi': destination + 'output.nwb.lindi.json',
+             'validation': destination + 'output.nwb.validation.json',
+             'verification': destination + 'conversion-verification.json'}
+    if effective['create_linked_maxwell_companion']:
+        paths['companion'] = destination + 'output.linked.raw.h5'
+    for uri in paths.values():
+        assert_within(uri, root, transport=transport)
+    return {'unit': copy.deepcopy(unit), 'raw': source,
+        'raw_dataset_path': header['header']['selected'][0]['raw_dataset_path'],
+        'header': header, 'allocation': allocation, 'outputs': paths}
+
+
 def prepare_conversion(store, artifacts, submitted, context, owner, *,
                        metadata_read_budget_bytes=64 * 1024 * 1024, read_budgets=None):
     """Validate input graph and return plans; perform no durable mutation or science.
@@ -71,6 +111,8 @@ def prepare_conversion(store, artifacts, submitted, context, owner, *,
         raise ContractError('Task plans require the owning Maxwell workflow identity')
     if context.get('workflow_version', owner['workflow_version']) != owner['workflow_version']:
         raise ContractError('Context version differs from the owning workflow')
+    from owner_runtime import validate_owner_runtime
+    validate_owner_runtime(owner)
     effective = scientific_settings(submitted)
     if effective['session_start_time']:
         from convert_maxone_to_nwb import parse_iso8601
@@ -112,33 +154,9 @@ def prepare_conversion(store, artifacts, submitted, context, owner, *,
     # Validate every binding before mutation; this API only reads verified inputs
     # and a temporary metadata-only NWB used by the existing projection writer.
     for unit, source, selector, output in bindings:
-        for reference in unit['sources']:
-            store.verify(reference)
-        projection_size = projection_nwb_size = 0
-        if 'projection' in unit:
-            projection = unit['projection']
-            value, _ = store.read_json(projection['uri'], expected=projection)
-            projection_size = projection['size']
-            projection_nwb_size = _projection_metadata_size(value)
-        if 'target' in unit:
-            store.read_json(unit['target']['uri'], expected=unit['target'])
-        header = inspect_input(store, source, [selector], read_budgets=read_budgets,
-                               metadata_read_budget_bytes=metadata_read_budget_bytes)
-        allocation = conversion_allocation(source, header['header'], effective,
-            projection_bytes=projection_size, projection_nwb_metadata_bytes=projection_nwb_size,
-            minimum_disk_gib=context.get('runtime', {}).get('minimum_disk_gib', 0),
-            publication_transport=transport)
-        destination = stage_output_uri(output, 'conversion', signature, run_id, step_id, transport=transport)
-        paths = {'nwb': destination + 'output.nwb', 'lindi': destination + 'output.nwb.lindi.json',
-                 'validation': destination + 'output.nwb.validation.json',
-                 'verification': destination + 'conversion-verification.json'}
-        if effective['create_linked_maxwell_companion']:
-            paths['companion'] = destination + 'output.linked.raw.h5'
-        for uri in paths.values():
-            assert_within(uri, root, transport=transport)
-        tasks.append({'unit': copy.deepcopy(unit), 'raw': source,
-            'raw_dataset_path': header['header']['selected'][0]['raw_dataset_path'],
-            'header': header, 'allocation': allocation, 'outputs': paths})
+        tasks.append(_prepare_fresh_task(store, unit, source, selector, output, effective,
+            signature, context, metadata_read_budget_bytes=metadata_read_budget_bytes,
+            read_budgets=read_budgets))
     plan = {'schema_version': 1, 'document_type': 'maxwell_conversion_plan',
             'parent': parent, 'semantic': semantic, 'stage_signature': signature,
             'execution': {'run_id': run_id, 'step_id': step_id}, 'tasks': tasks,

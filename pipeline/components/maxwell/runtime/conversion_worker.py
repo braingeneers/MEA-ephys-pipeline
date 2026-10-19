@@ -15,7 +15,6 @@ from ephys_modular.contracts import (ContractError, MAX_JSON_BYTES,
 from ephys_modular.local import LocalStore
 from ephys_modular.publication import load_envelope, publish_stage
 from ephys_modular.s3 import IntegrityError, S3Error, S3Store
-from task_preparation import prepare_conversion
 
 TOOLS = Path('/opt/ephys-modular/maxwell/scripts')
 FAILURE_LOG_TAIL_BYTES = 16 * 1024
@@ -32,6 +31,7 @@ class ScratchExceeded(ScientificFailure):
 
 def validate_plan(store, plan):
     """Rebuild bindings/allocation from frozen graph; diagnostics may vary by read."""
+    from task_preparation import prepare_conversion
     if (not isinstance(plan, dict) or plan.get('document_type') != 'maxwell_conversion_plan'
             or plan.get('schema_version') != 1 or plan.get('scientific_execution_complete') is not False
             or plan.get('plan_digest') != digest({k: v for k, v in plan.items() if k != 'plan_digest'})):
@@ -219,44 +219,13 @@ def _source_basename(task):
     return name
 
 
-def execute_unit(store, plan, unit_id, directory, *, public_endpoint=None):
-    """Publish a task outcome only after unchanged science and all object checks."""
-    validate_plan(store, plan)
-    tasks = [task for task in plan['tasks'] if task['unit']['unit_id'] == unit_id]
-    if len(tasks) != 1:
-        raise ContractError('Requested unit is not unique in the frozen conversion plan')
-    task = tasks[0]
-    transport = getattr(store, 'transport', 's3')
-    output_reader_url = reader_url(task['outputs']['nwb'], transport, public_endpoint)
-    source_name = _source_basename(task)
-    from runtime_identity import identity
-    scientific_runtime = identity()
-    directory = Path(os.path.abspath(directory))
-    # Never silently reuse or replace another attempt's scratch/cache.
-    directory.mkdir(parents=True, exist_ok=False)
-    guard = ScratchGuard(directory, task['allocation'])
-    guard.preflight()
-    inputs = directory / 'inputs'
-    inputs.mkdir()
-    source = inputs / source_name
-    observed = store.download(task['raw'], source)
-    guard.check('source_staged')
-    projection = None
-    projection_ref = None
-    if 'projection' in task['unit']:
-        projection = inputs / 'projection.json'
-        projection_ref = store.download(task['unit']['projection'], projection)
-        decode_json(projection.read_bytes())
-        guard.check('projection_staged')
-    # Keep a content identity after staging even for S3 refs that only had ETag/size.
-    local = LocalStore()
-    staged_source = local.stat(source.as_uri())
-    if staged_source['sha256'] != observed['sha256'] or staged_source['size'] != task['raw']['size']:
-        raise IntegrityError('Staged source differs from the frozen full download')
+def _run_fresh_science(plan, task, directory, source, projection, output_reader_url, guard, *, run_phase=None):
+    """Maintained conversion phases, shared by both strictly admitted entry points."""
     effective = plan['semantic']['settings']['effective']
     phases = []
+    run_phase = (lambda name, command: _run(guard, name, command)) if run_phase is None else run_phase
     def call(name, script, *args):
-        phases.append(_run(guard, name, [sys.executable, TOOLS / script, *args]))
+        phases.append(run_phase(name, [sys.executable, TOOLS / script, *args]))
     raw_path_file = directory / 'raw-path.txt'
     call('validate_input', 'validate_maxwell_input.py', '--input-file', source,
         '--maxwell-raw-dataset-path', task['raw_dataset_path'], '--verify-all-raw-chunks',
@@ -297,11 +266,50 @@ def execute_unit(store, plan, unit_id, directory, *, public_endpoint=None):
         check_request['companion'] = str(files['companion'])
     request_file, check_file = directory / 'checks-request.json', directory / 'checks.json'
     request_file.write_bytes(canonical_json(check_request))
-    phases.append(_run(guard, 'validate_outputs', [sys.executable,
+    phases.append(run_phase('validate_outputs', [sys.executable,
         Path(__file__).with_name('verify_outputs.py'), request_file, check_file]))
     checks = decode_json(check_file.read_bytes())
     if checks.get('complete') is not True:
         raise ScientificFailure('Output checks did not complete')
+    return files, checks, phases
+
+
+def execute_unit(store, plan, unit_id, directory, *, public_endpoint=None):
+    """Publish a task outcome only after unchanged science and all object checks."""
+    validate_plan(store, plan)
+    tasks = [task for task in plan['tasks'] if task['unit']['unit_id'] == unit_id]
+    if len(tasks) != 1:
+        raise ContractError('Requested unit is not unique in the frozen conversion plan')
+    task = tasks[0]
+    transport = getattr(store, 'transport', 's3')
+    output_reader_url = reader_url(task['outputs']['nwb'], transport, public_endpoint)
+    source_name = _source_basename(task)
+    from runtime_identity import identity
+    scientific_runtime = identity()
+    directory = Path(os.path.abspath(directory))
+    # Never silently reuse or replace another attempt's scratch/cache.
+    directory.mkdir(parents=True, exist_ok=False)
+    guard = ScratchGuard(directory, task['allocation'])
+    guard.preflight()
+    inputs = directory / 'inputs'
+    inputs.mkdir()
+    source = inputs / source_name
+    observed = store.download(task['raw'], source)
+    guard.check('source_staged')
+    projection = None
+    projection_ref = None
+    if 'projection' in task['unit']:
+        projection = inputs / 'projection.json'
+        projection_ref = store.download(task['unit']['projection'], projection)
+        decode_json(projection.read_bytes())
+        guard.check('projection_staged')
+    # Keep a content identity after staging even for S3 refs that only had ETag/size.
+    local = LocalStore()
+    staged_source = local.stat(source.as_uri())
+    if staged_source['sha256'] != observed['sha256'] or staged_source['size'] != task['raw']['size']:
+        raise IntegrityError('Staged source differs from the frozen full download')
+    files, checks, phases = _run_fresh_science(
+        plan, task, directory, source, projection, output_reader_url, guard)
     local.verify(staged_source)
     if projection:
         # Exact staged bytes are also checked after all scientific tools have read them.
@@ -338,6 +346,93 @@ def execute_unit(store, plan, unit_id, directory, *, public_endpoint=None):
     return {'unit_id': unit_id, 'status': 'complete', 'artifacts': artifacts, 'evidence': evidence}
 
 
+def _validate_fresh_report(plan, task, outcome, scientific_runtime, report, *, transport):
+    """Complete maintained fresh report semantics; performs no storage substitution."""
+    unit_id = task['unit']['unit_id']
+    kinds = {'nwb': 'nwb', 'lindi': 'nwb_lindi', 'validation': 'nwb_validation',
+             'companion': 'maxwell_companion'}
+    expected_bindings = {'document_type': 'maxwell_conversion_evidence',
+        'scientific_execution_complete': True, 'plan_digest': plan['plan_digest'],
+        'task_digest': digest(task), 'stage_signature': plan['stage_signature'],
+        'unit_id': unit_id, 'owner': plan['semantic']['owner'], 'settings': plan['semantic']['settings'],
+        'source': task['raw'], 'projection': task['unit'].get('projection'),
+        'artifacts': outcome['artifacts']}
+    if any(report.get(key) != value for key, value in expected_bindings.items()):
+        raise ContractError('Task evidence differs from the frozen conversion invocation')
+    expected = {kinds[name]: uri for name, uri in task['outputs'].items() if name in kinds}
+    artifacts = outcome['artifacts']
+    if (not isinstance(artifacts, list) or len(artifacts) != len(expected)
+            or {item['kind']: item['object']['uri'] for item in artifacts} != expected):
+        raise ContractError('Task artifact coverage or destinations differ from the plan')
+    checks = report.get('checks', {})
+    shape = task['header']['header']['selected'][0]['shape']
+    expected_checks = {'complete': True, 'signal_shape': [shape[1], shape[0]],
+        'signal_values_checked': shape[0] * shape[1], 'all_signal_values_equal': True,
+        'all_lindi_signal_ranges_equal': True,
+        'all_linked_values_equal': True if 'companion' in task['outputs'] else None,
+        'modeled_projection_verified': 'projection' in task['unit']}
+    if (any(checks.get(key) != value for key, value in expected_checks.items())
+            or type(checks.get('lindi_signal_ranges_checked')) is not int
+            or checks['lindi_signal_ranges_checked'] <= 0):
+        raise ContractError('Task lacks complete scientific output verification')
+    expected_phases = ['validate_input', 'convert', 'repack']
+    if 'companion' in task['outputs']:
+        expected_phases += ['companion']
+    expected_phases += ['lindi', 'validate_metadata', 'validate_outputs']
+    if ([item.get('phase') for item in report.get('phases', [])] != expected_phases
+            or any(type(item.get('exit_code')) is not int or item['exit_code'] != 0
+                   for item in report['phases'])
+            or report.get('scientific_runtime') != scientific_runtime):
+        raise ContractError('Task scientific phases/runtime do not match the owning execution')
+    observed = report.get('staged_source')
+    validate_ref(observed, strong=True, transport=transport)
+    if any(observed.get(key) != value for key, value in task['raw'].items()):
+        raise ContractError('Task lacks the full frozen source verification')
+    if 'projection' in task['unit']:
+        observed_projection = report.get('staged_projection')
+        validate_ref(observed_projection, strong=True, transport=transport)
+        if any(observed_projection.get(key) != value for key, value in task['unit']['projection'].items()):
+            raise ContractError('Task lacks the full frozen projection verification')
+    if report.get('reader_url') != reader_url(task['outputs']['nwb'], transport,
+                                             report.get('public_reader_endpoint')):
+        raise ContractError('Task reader URL differs from its durable NWB destination')
+    scratch = report.get('scratch', {})
+    allocation = task['allocation']
+    if (scratch.get('requested_bytes') != allocation['requested_bytes']
+            or scratch.get('minimum_free_bytes') != allocation['minimum_free_bytes']
+            or any(type(scratch.get(key)) is not int or scratch[key] < 0
+                   for key in ('observed_peak_apparent_bytes', 'observed_peak_allocated_bytes',
+                               'observed_minimum_free_bytes', 'checks'))
+            or scratch['checks'] == 0
+            or max(scratch['observed_peak_apparent_bytes'], scratch['observed_peak_allocated_bytes'])
+               > allocation['requested_bytes'] - allocation['minimum_free_bytes']
+            or scratch['observed_minimum_free_bytes'] < allocation['minimum_free_bytes']):
+        raise ContractError('Task lacks valid bounded scratch usage evidence')
+    return report
+
+
+def _validate_fresh_task(store, plan, task, outcome, scientific_runtime):
+    """Apply the complete maintained fresh outcome checks to one planned task.
+
+    The caller validates the actual plan and freezes the installed runtime first.
+    This helper neither accepts other proof kinds nor publishes a stage/envelope.
+    """
+    transport = getattr(store, 'transport', 's3')
+    unit_id = task['unit']['unit_id']
+    if outcome.get('unit_id') != unit_id:
+        raise ContractError('Fresh outcome belongs to another planned unit')
+    if outcome.get('status') != 'complete' or set(outcome) != {'unit_id', 'status', 'artifacts', 'evidence'}:
+        raise ContractError('Conversion outcomes must be complete owned task outcomes')
+    if outcome['evidence']['uri'] != task['outputs']['verification']:
+        raise ContractError('Task evidence has a different reviewed destination')
+    report, _ = store.read_json(outcome['evidence']['uri'], expected=outcome['evidence'])
+    _validate_fresh_report(plan, task, outcome, scientific_runtime, report, transport=transport)
+    artifacts = outcome['artifacts']
+    for artifact in artifacts:
+        store.verify(artifact['object'])
+    return outcome
+
+
 def commit_conversion(store, plan, outcomes):
     """Return the next envelope only after every planned task has verified evidence."""
     validate_plan(store, plan)
@@ -347,79 +442,12 @@ def commit_conversion(store, plan, outcomes):
             or any(not isinstance(outcome, dict) for outcome in outcomes)
             or {outcome.get('unit_id') for outcome in outcomes} != set(tasks)):
         raise ContractError('Conversion commit requires exactly every planned unit once')
-    kinds = {'nwb': 'nwb', 'lindi': 'nwb_lindi', 'validation': 'nwb_validation',
-             'companion': 'maxwell_companion'}
     from runtime_identity import identity
     scientific_runtime = identity()
     by_id = {outcome['unit_id']: outcome for outcome in outcomes}
     ordered = []
     for unit_id, task in tasks.items():
-        outcome = by_id[unit_id]
-        if outcome.get('status') != 'complete' or set(outcome) != {'unit_id', 'status', 'artifacts', 'evidence'}:
-            raise ContractError('Conversion outcomes must be complete owned task outcomes')
-        if outcome['evidence']['uri'] != task['outputs']['verification']:
-            raise ContractError('Task evidence has a different reviewed destination')
-        report, _ = store.read_json(outcome['evidence']['uri'], expected=outcome['evidence'])
-        expected_bindings = {'document_type': 'maxwell_conversion_evidence',
-            'scientific_execution_complete': True, 'plan_digest': plan['plan_digest'],
-            'task_digest': digest(task), 'stage_signature': plan['stage_signature'],
-            'unit_id': unit_id, 'owner': plan['semantic']['owner'], 'settings': plan['semantic']['settings'],
-            'source': task['raw'], 'projection': task['unit'].get('projection'),
-            'artifacts': outcome['artifacts']}
-        if any(report.get(key) != value for key, value in expected_bindings.items()):
-            raise ContractError('Task evidence differs from the frozen conversion invocation')
-        expected = {kinds[name]: uri for name, uri in task['outputs'].items() if name in kinds}
-        artifacts = outcome['artifacts']
-        if (not isinstance(artifacts, list) or len(artifacts) != len(expected)
-                or {item['kind']: item['object']['uri'] for item in artifacts} != expected):
-            raise ContractError('Task artifact coverage or destinations differ from the plan')
-        checks = report.get('checks', {})
-        shape = task['header']['header']['selected'][0]['shape']
-        expected_checks = {'complete': True, 'signal_shape': [shape[1], shape[0]],
-            'signal_values_checked': shape[0] * shape[1], 'all_signal_values_equal': True,
-            'all_lindi_signal_ranges_equal': True,
-            'all_linked_values_equal': True if 'companion' in task['outputs'] else None,
-            'modeled_projection_verified': 'projection' in task['unit']}
-        if (any(checks.get(key) != value for key, value in expected_checks.items())
-                or type(checks.get('lindi_signal_ranges_checked')) is not int
-                or checks['lindi_signal_ranges_checked'] <= 0):
-            raise ContractError('Task lacks complete scientific output verification')
-        expected_phases = ['validate_input', 'convert', 'repack']
-        if 'companion' in task['outputs']:
-            expected_phases += ['companion']
-        expected_phases += ['lindi', 'validate_metadata', 'validate_outputs']
-        if ([item.get('phase') for item in report.get('phases', [])] != expected_phases
-                or any(type(item.get('exit_code')) is not int or item['exit_code'] != 0
-                       for item in report['phases'])
-                or report.get('scientific_runtime') != scientific_runtime):
-            raise ContractError('Task scientific phases/runtime do not match the owning execution')
-        observed = report.get('staged_source')
-        validate_ref(observed, strong=True, transport=transport)
-        if any(observed.get(key) != value for key, value in task['raw'].items()):
-            raise ContractError('Task lacks the full frozen source verification')
-        if 'projection' in task['unit']:
-            observed_projection = report.get('staged_projection')
-            validate_ref(observed_projection, strong=True, transport=transport)
-            if any(observed_projection.get(key) != value for key, value in task['unit']['projection'].items()):
-                raise ContractError('Task lacks the full frozen projection verification')
-        if report.get('reader_url') != reader_url(task['outputs']['nwb'], transport,
-                                                 report.get('public_reader_endpoint')):
-            raise ContractError('Task reader URL differs from its durable NWB destination')
-        scratch = report.get('scratch', {})
-        allocation = task['allocation']
-        if (scratch.get('requested_bytes') != allocation['requested_bytes']
-                or scratch.get('minimum_free_bytes') != allocation['minimum_free_bytes']
-                or any(type(scratch.get(key)) is not int or scratch[key] < 0
-                       for key in ('observed_peak_apparent_bytes', 'observed_peak_allocated_bytes',
-                                   'observed_minimum_free_bytes', 'checks'))
-                or scratch['checks'] == 0
-                or max(scratch['observed_peak_apparent_bytes'], scratch['observed_peak_allocated_bytes'])
-                   > allocation['requested_bytes'] - allocation['minimum_free_bytes']
-                or scratch['observed_minimum_free_bytes'] < allocation['minimum_free_bytes']):
-            raise ContractError('Task lacks valid bounded scratch usage evidence')
-        for artifact in artifacts:
-            store.verify(artifact['object'])
-        ordered.append(outcome)
+        ordered.append(_validate_fresh_task(store, plan, task, by_id[unit_id], scientific_runtime))
     semantic = plan['semantic']
     stage = make_stage(semantic['contract'], semantic['kind'], semantic['variant'],
         semantic['dataset_uri'], semantic['selection'], semantic['owner'],

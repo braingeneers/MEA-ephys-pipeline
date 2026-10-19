@@ -240,7 +240,10 @@ def main() -> None:
         # Existing output and input remain intact on an invalid reference.
         with tempfile.TemporaryDirectory(prefix='.' + output_file.name + '-', dir=output_file.parent) as scratch:
             temporary = Path(scratch) / output_file.name
-            with h5py.File(temporary, "w") as dst_file:
+            # Free-space reuse can place tiny compressed tails in earlier holes,
+            # even when writes are channel-major. Append allocations so physical
+            # offsets retain that order without changing encoded chunk bytes.
+            with h5py.File(temporary, "w", fs_strategy="none") as dst_file:
                 dst_dataset = _copy_nwb_graph(src_file, dst_file, dataset_path)
                 _copy_chunks_channel_major(src_dataset=src_dataset, dst_dataset=dst_dataset)
                 dst_file.flush()

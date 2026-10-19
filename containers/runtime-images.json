@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "integrated_local_defaults_registry_publication_pending",
-  "workflow_version": "0.2.19",
+  "workflow_version": "0.2.20",
   "defaults": "pipeline/container_images.json",
   "images": {
     "base": {

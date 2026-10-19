@@ -3,7 +3,7 @@ FROM davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e
 ARG SOURCE_REVISION=development
 LABEL org.opencontainers.image.source="https://github.com/braingeneers/workflows" \
     org.opencontainers.image.revision="$SOURCE_REVISION" \
-    org.opencontainers.image.version="0.1.5"
+    org.opencontainers.image.version="0.1.6"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

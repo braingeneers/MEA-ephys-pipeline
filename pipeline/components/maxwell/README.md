@@ -1,7 +1,7 @@
 # Generated Maxwell conversion component
 
-Generated from https://github.com/braingeneers/workflows at `beaa98304999034d28867ca218ff08ea0305820e`.
-Owning workflow version: `0.1.24`. Scientific task image: `braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`.
+Generated from https://github.com/braingeneers/workflows at `855cb3c17a85e7fd995e97118eec6dc348d3f6f6`.
+Owning workflow version: `0.1.30`. Scientific task image: `braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d`.
 Generated scientific/controller files retain their upstream bytes and headers.
 Only Docker COPY source paths are relocated. No license is inferred or reassigned;
 consult the recorded upstream notices/headers and source provenance.
@@ -53,13 +53,13 @@ Regenerate from the exact committed exporter, with Python 3.11+ and Git:
 
 ```bash
 python3.11 export_component.py export --source-repository /path/to/workflows \
-  --source-revision beaa98304999034d28867ca218ff08ea0305820e --output /path/to/new-component
+  --source-revision 855cb3c17a85e7fd995e97118eec6dc348d3f6f6 --output /path/to/new-component
 ```
 
 For a local development rebuild (not a published image or replacement release pin):
 
 ```bash
-docker build --network none --build-arg SOURCE_REVISION=beaa98304999034d28867ca218ff08ea0305820e \
+docker build --network none --build-arg SOURCE_REVISION=855cb3c17a85e7fd995e97118eec6dc348d3f6f6 \
   -t maxwell-export-check:development /path/to/component
 docker run --rm --network none --entrypoint python maxwell-export-check:development \
   scripts/runtime_identity.py
