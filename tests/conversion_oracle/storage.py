@@ -128,6 +128,8 @@ def native_chunks(handle, nwb_path, expected, selected, settings, refs, reader_u
             key = SIGNAL + '/' + str(t // chunks[0]) + '.' + str(c // channels)
             ref = refs[key]
             require(isinstance(ref,list) and len(ref) == 3, key + ': native byte reference required')
+            require(isinstance(ref[0],str) and type(ref[1]) is int and type(ref[2]) is int,
+                    key + ': native byte reference field types')
             url = ref[0]
             if url.startswith('{{'):
                 require(url.endswith('}}') and url[2:-2] in templates, key + ': known URL template')

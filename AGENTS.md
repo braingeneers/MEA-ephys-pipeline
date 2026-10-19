@@ -38,8 +38,10 @@
 - Use `trash` for local file deletion. Do not create a PR; the operator handles it.
 - Keep fixtures and execution evidence outside Git. Tiny process probes establish
   binding/cache behavior, not scientific parity or NERSC/Shifter execution.
-- Check artifact format versions with exact JSON integer types. Python equality
-  accepts `true` and `1.0` as `1`; preserve real malformed-sidecar controls.
+- Check artifact format versions and native byte-range offsets/lengths with exact
+  JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
+  reference reader cannot fetch floating byte fields. Preserve real malformed-
+  sidecar controls and reject rather than coerce those representations.
   Inventory native chunk metadata with one `chunk_iter` traversal before checking
   every encoded range, sample, mask and physical offset.
 - A NumPy object dtype can be an HDF5 variable-length string. Compare its native

@@ -245,3 +245,22 @@ The wrong recorded-culture alias uses an explicit soft link to an existing canon
 parent. Soft links are allowed by the physical alias contract; an ambiguous new
 hard link can instead become owned storage during HDMF readback. The control must
 reach canonical object identity, without accepting an earlier constructor failure.
+
+
+`artifact_controls.py` separately tests native chunk dimensions/filter/mask/order/
+padding/ranges, sidecar metadata and inline values, cached schemas, selected-unit
+companions, explicit options, publication identities and final report bindings. Use
+the same `prepare`, `check` and read-only mount pattern as `controls.py`. Each copied
+negative has an explicitly synthetic receipt; changed artifact identities and final
+NWB hashes can be resealed to expose semantic comparisons instead of stale checksums.
+Original producer receipts and every input fact remain unchanged. Every restored tree
+must match its original baseline byte-for-byte. The complete unchanged positives and
+independent unchanged neural/model truth must pass alongside intended negative failures.
+
+Native reference URLs require strings and byte offsets/lengths require literal JSON
+integers. Numerically equal floats do not establish byte-range validity: the pinned
+reference reader cannot fetch such fields. Never coerce them or rely on Python's
+integer/float equality. Single-range filesystem-path probes are labelled structural
+checks; they do not establish original file-URI or generic LINDI numeric compatibility.
+These tests do not replace actual runtime malformed-input/codec/plugin/projection
+rejection controls, original/native/MEA workflow runs or live S3 acceptance.
