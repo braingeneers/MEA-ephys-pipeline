@@ -228,9 +228,11 @@ def current_sidecar(handle, nwb_path, sidecar, receipt, decoder, truth, selected
     return storage.sidecar_contents(handle,nwb_path,sidecar,truth,rows,padding)
 
 
-def compare(scope, row, output, schema_reference, *, copy_root=None):
+def compare(scope, row, output, schema_reference, *, copy_root=None, input_root=None):
     require(sha(schema_reference) == SCHEMA_REFERENCE_SHA256, 'Trusted independent schema reference')
-    folder = scope.root/'inputs'/row['case'];facts = scope.read(folder/'facts.json')
+    folder = (Path(input_root) if input_root is not None else scope.root/'inputs')/row['case']
+    require(folder.is_relative_to(scope.root), 'Explicit input facts stay in the scoped evidence root')
+    facts = scope.read(folder/'facts.json')
     receipt = observations(scope,row,facts);paths = publication(scope,row)
     label = row['kind']+'-'+row['alias']+'-'+row['case']+('-bridge-copy' if copy_root else '')
     if copy_root:
@@ -251,7 +253,7 @@ def compare(scope, row, output, schema_reference, *, copy_root=None):
     report = scope.read(paths['validation'])
     final_path = artifacts.argument(next(p for p in receipt['phases'] if p['phase']=='repack')['command'],'--output-file')
     artifacts.report_contents(report,artifacts.expected_report(folder,facts,receipt,final_path))
-    linked = artifacts.companion(scope.frozen(folder/'recording.raw.h5'),paths['companion'],paths['nwb'],facts,folder) if 'companion' in paths else None
+    linked = artifacts.companion(scope.frozen(folder/facts['source']['file']),paths['companion'],paths['nwb'],facts,folder) if 'companion' in paths else None
     result = dict(label=label,science=science,schema_cache_nodes=schema_nodes,sidecar=sidecar,companion=linked,
         final_report_complete_fields_findings_and_duplicates_verified=True,actual_final_report_nwb_argument=final_path,
         complete_publication_verified=True,complete_actual_current_invocation_verified=True,

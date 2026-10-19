@@ -140,18 +140,19 @@ def describe_array(directory,name,array):
 def electrode_contract(directory,prefix,mapping):
  # Values originate in the acquisition mapping. Column rules are the pinned
  # NeuroConv0.9.3 public input-interface ABI, not a converted NWB observation.
+ count=len(mapping)
  columns={
-  'id':describe_array(directory,prefix+'-electrode-ids.npy',np.arange(4,dtype='<i8')),
+  'id':describe_array(directory,prefix+'-electrode-ids.npy',np.arange(count,dtype='<i8')),
   'electrode':describe_array(directory,prefix+'-electrode-numbers.npy',mapping['electrode']),
   'rel_x':describe_array(directory,prefix+'-electrode-x.npy',mapping['x']),
   'rel_y':describe_array(directory,prefix+'-electrode-y.npy',mapping['y']),
-  'channel_name':dict(kind='utf8',shape=[4],values=['ch'+str(c)+' elec'+str(e) for c,e in zip(mapping['channel'],mapping['electrode'])]),
-  'group_name':dict(kind='utf8',shape=[4],values=['0']*4),
-  'location':dict(kind='utf8',shape=[4],values=['unknown']*4),
-  'group':dict(kind='canonical_reference',shape=[4],targets=['electrode_groups/0']*4)}
- return dict(columns=columns,column_inventory_exact=True,rows=4,
+  'channel_name':dict(kind='utf8',shape=[count],values=['ch'+str(c)+' elec'+str(e) for c,e in zip(mapping['channel'],mapping['electrode'])]),
+  'group_name':dict(kind='utf8',shape=[count],values=['0']*count),
+  'location':dict(kind='utf8',shape=[count],values=['unknown']*count),
+  'group':dict(kind='canonical_reference',shape=[count],targets=['electrode_groups/0']*count)}
+ return dict(columns=columns,column_inventory_exact=True,rows=count,
   table=dict(name='electrodes',namespace='core',kind='ElectrodesTable'),
-  signal_region=dict(kind='DynamicTableRegion',name='electrodes',dtype='<i8',rows=[0,1,2,3],table='electrodes'),
+  signal_region=dict(kind='DynamicTableRegion',name='electrodes',dtype='<i8',rows=list(range(count)),table='electrodes'),
   probe_electrode_name_column=False,
   gain_offset_and_physical_unit_properties='Represented in signal calibration, not duplicate table columns.',
   geometry_units='micrometers',all_VectorData_payloads_required=True)

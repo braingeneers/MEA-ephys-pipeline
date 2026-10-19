@@ -475,3 +475,50 @@ I/O exit76; retain that exact outer status and inner HDF5 cause. It is not succe
 conversion or evidence of an S3 outage. Skipped-filter fixture construction closes
 and reopens HDF5 before checking the persisted mask and every unchanged sample.
 Retain failed fixture/expectation attempts separately from scientific outcomes.
+
+## Long converter-to-consumer controls
+
+The small oracle inputs have 2,003/2,407 frames at20kHz. They are shorter than
+the maintained120-second preprocessing minimum. Keep their routing and typed
+metadata evidence; use full180-second controls for downstream scientific branches.
+
+Generate with the unchanged
+[`prepare_native_controls.py`](../../scripts/modular/prepare_native_controls.py),
+using complete authored projection templates with truthful180-second duration and
+`2026-01-01T00:00:00+00:00` session start. Record explicit template changes and the
+generator's documented dataset/recording/session identity changes. Then run in the
+pinned Python3.11 converter image:
+
+```bash
+python /code/long_controls.py --controls /evidence/controls \
+  --template /evidence/small-inputs --output /evidence/facts
+```
+
+`long_controls.py` checks every raw value in all three stores against the retained
+ADC input, complete source clock/calibration/geometry and hard routing aliases. It
+derives full input-only model/Data/reference/electrode facts with32channels. The
+four-channel electrode contract remains identical. The generator repeats its
+signal in both MaxTwo wells; the small oracle's different store signals remain
+the independent wrong-routing discriminator. Generated spikes are input ground
+truth. Earlier positive/zero sorting runs keep their original conversion/model
+scope even when the new generator's neural reference bytes match exactly.
+
+`long_graph.py` validates an actual completed current four-unit conversion campaign
+and all four bridge copies. Supply its reviewed `runtime-freeze.json` SHA explicitly:
+
+```bash
+python /code/long_graph.py --root /evidence \
+  --trusted-freeze-sha256 REVIEWED_RUNTIME_SEAL_SHA256 \
+  --schema-reference /reference/installed-schema-reference.nwb \
+  --output /reports/new-artifact-check
+```
+
+The seal inventories selected completed source/input/work/publication/port trees.
+The owning execution report must prove18 real tasks,26 successful scientific
+subprocesses and typed output ports. The verifier retains the complete canonical,
+schema, encoded chunk/range/order/filter, companion and final report checks. Input
+facts and their declared source/projection files can occupy separate explicit
+directories; verified hashes still bind every lookup. Historical fixture code,
+seals and scientific guards remain independently pinned. This conversion check
+does not establish preprocessing, sorting, either derived NWB writer or GPU/S3
+acceptance on the new current inputs.

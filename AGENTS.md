@@ -67,6 +67,9 @@
   the file before checking its persisted filter mask and every sample. The writer's
   chunk cache can retain the old mask even when the stored skipped-filter control
   is correct. Keep such failed fixture checks separate from runtime rejection.
+- Bind oracle source/projection lookups to their declared verified fact paths.
+  Long controls can keep references separately from acquisitions; a hardcoded
+  adjacent `projection.json` can fail a full comparison after the science passes.
 - Check artifact format versions and native byte-range offsets/lengths with exact
   JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
   reference reader cannot fetch floating byte fields. Preserve real malformed-

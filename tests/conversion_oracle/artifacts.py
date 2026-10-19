@@ -193,7 +193,7 @@ def expected_report(folder, facts, receipt, nwb_argument):
                     value=str(value), allowed_values=tuple(sorted(allowed))).message))
         if node.kind == 'GeneticVariant':
             require(node.fields.get('origin') == 'unknown', 'Reviewed fixture variant origin')
-    projection = json.loads((folder / 'projection.json').read_text())
+    projection = json.loads((folder / facts['projection']['file']).read_text())
     return dict(report_schema_version=1, nwb_file='output.nwb', schema_valid=True, pynwb_schema_errors=[],
                 nwb_inspector=dict(issue_count=len(issues), counts_by_importance=dict(Counter(x['importance'] for x in issues)), issues=issues),
                 ndx_cell_culture_recommendations=recommendations,
