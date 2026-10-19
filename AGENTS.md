@@ -210,3 +210,9 @@
   scientific command running. Define all preflight constants and explicitly exit
   on failed checks. Verify the failure prevents a following command, retain missing
   receipts honestly, and rerun corrected hooks in a fresh evidence directory.
+- Render replays declare the report's expected draw count and terminal status;
+  genuine zero reports make no waveform draws. Bind each role to its actual image
+  (base for visualization, analysis for reports) and original final threading.
+  Retain original unseeded products and mark unobserved original draws honestly.
+  Equal rendered bytes do not prove equal motion artist data; preserve both full
+  artist inputs and products without rounding or silently accepting differences.

@@ -174,6 +174,16 @@ the default engine behavior without adding a changing resume flag to task inputs
   inputs. It compares recording fingerprints, all spikes, metric/extension files
   and curation masks; it identifies the original dangling path despite exit zero.
   It performs collection only, with no new sorting or analysis computation.
+- `scripts/modular/replay_render_inputs.py --role visualization|report_generation
+  --task <original-task> --output <new-directory> --seed 42`: run unchanged plotting
+  code in its original image with explicit test-only draws. Mount original tasks
+  and science read-only. The helper retains complete draw indices, artist data,
+  products and actual CLI/thread receipts; original unseeded draws stay unobserved.
+  Positive report controls default to fifteen waveform draws and status `ok`.
+  Declare genuine empty reports with `--expected-report-choices 0
+  --expected-report-status no_detected_units` (or `no_curated_units` for a nonempty
+  analyzer whose report selection is empty). These expectations validate the
+  supplied control; they never change production seeds, thresholds or defaults.
 
 The runtime checks use `SOURCE_DIR` and `TEST_ROOT` for source/evidence locations,
 as described in [README_NRP.md](../README_NRP.md). Evidence and generated acquisitions
