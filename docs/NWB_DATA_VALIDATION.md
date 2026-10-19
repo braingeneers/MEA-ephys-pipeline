@@ -67,3 +67,68 @@ Float32 spike times are a separately recorded schema-invalid control because the
 pinned Units schema requires float64; they cannot prove scientific-guard coverage.
 Run both Maxwell layouts, actual positive/zero outcomes and both writer roles for
 the full current matrix. No small guard test alone establishes pipeline acceptance.
+
+## Complete generated metadata
+
+`nwb_metadata_guard.py` and `check_nwb_metadata.py` add complete decoded model and
+physical attribute checks. A parent Units getter can hide a different waveform SD
+unit by returning the mean's unit. Schema validation also misses some fixed-value
+violations in the pinned runtime. Checking every physical mapping is necessary.
+
+Compile with original inputs and independent facts only, in the pinned writer
+image. Supply the original executable recording job, its sorter log (omit only
+when the producer had no sorter log), and fresh scratch/output paths:
+
+```bash
+python scripts/modular/check_nwb_metadata.py compile \
+  --source /inputs/data/ecephys_session/output.nwb \
+  --job /inputs/data/job_0.json \
+  --sorter-log /inputs/data/spikesorted_RECORDING/spikeinterface_log.json \
+  --facts /facts/unit/facts.json --arrays /facts \
+  --scratch /scratch/unit --output /expected/unit-metadata.json
+```
+
+The compiler reads source metadata with its owning manager and independently
+constructs the declared signal and Units graph from the input arrays. PyNWB's
+pinned constructors supply schema defaults; explicit producer descriptions,
+sorter provenance and NeuroConv's declared property descriptions supply the
+remaining metadata. It never calls a producer CLI or reads a produced store.
+Temporary expected Zarr stores expose all backend mappings, and are read back
+for complete fields, parents, references and type inventories. Their signal
+payloads are input-derived; the separate data manifest remains the exact payload
+oracle. The supported contract is the reviewed single-recording, metadata-only
+Maxwell input path. Unsupported hardware annotation/AIND paths fail explicitly
+rather than inheriting a fixture's default-device assumption.
+
+Verify copied outputs with the original inputs unavailable:
+
+```bash
+python scripts/modular/check_nwb_metadata.py verify \
+  --nwb /outputs/units.nwb --expected /expected/unit-metadata.json \
+  --expected-data /expected/unit-storage.json \
+  --role nwb_units --report /reports/complete-metadata.json
+```
+
+Add `--write-raw` for a raw-enabled producer or select `--role nwb_ecephys` for
+the intermediate. Both roles use the same maintained checks. Historical artifacts
+can use `--helpers /exact-original-helper-closure` before the subcommand; current
+helpers must not replace an older artifact's schema/extension adapter.
+
+Every scientific `.zattrs` and group outside the declared schema cache is compared,
+including waveform unit/rate, Units and column descriptions/resolution, signal
+calibration and clocks, processing/interfaces, source fields and canonical links.
+Every decoded object, field, parent and Data storage binding is compared. New
+object IDs must be unique UUID4 values; source identities stay exact. New Units
+column order may vary because NeuroConv iterates a set; membership and the actual
+stored-to-decoded order binding remain exact. Numeric `zarr_dtype` labels use
+NumPy's exact dtype equivalence (`int16`/`<i2`, for example), reflecting the pinned
+backend's array/iterator branches. The array's actual dtype and values remain exact.
+No scientific unit, default, numeric type or extra/missing field is normalized.
+
+`check_nwb_metadata_controls.py` makes fresh copies, changes only metadata, checks
+actual encoded/decoded effects and requires the intended metadata rejection while
+the complete data guard still passes. It separates declared variable-field changes
+from fixed-unit/clock violations missed by the validator, and checks unchanged and
+column-order positives. Constructor/schema failures never count as scientific
+comparison rejections. These tools supplement the original logical/schema checks;
+representative checks do not close the complete producer/profile acceptance matrix.

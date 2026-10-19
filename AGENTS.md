@@ -176,6 +176,15 @@
   Resolve model control targets through declared subject/reference identities,
   not a historical culture-name prefix. Keep source/metadata comparisons typed so
   Python's bool/int and int/float equality cannot hide a change.
+- Complete stored Data checks do not cover generated scientific metadata. Derive
+  complete source/generated model fields and physical attributes from original
+  inputs, pinned constructors, schemas and producer rules. Check every physical
+  mapping: UnitsMap can return the mean's waveform unit while hiding a conflicting
+  SD unit. Keep variable-field controls separate from fixed-unit/clock violations
+  missed by the validator. Only explicit backend numeric-dtype spellings and new
+  Units column ordering may canonicalize; source IDs, science and all bindings stay
+  exact. The QA metadata compiler must never read measured producer output or call
+  its producer CLI to manufacture expectations.
 - Stage the owning NWB graph guard explicitly into both writer modules and both
   entry points. Preflight sources before export or any destination copy; old
   expanded-reference graphs may read successfully but cannot be written. Retain
