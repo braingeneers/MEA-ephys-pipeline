@@ -148,6 +148,12 @@ Each unit contains the unchanged NWB, original LINDI sidecar, validation sidecar
 and declared compact companion. `conversion/` retains the complete uploaded
 selection, native envelope/stage/unit/evidence, and supplied projection bytes.
 `conversion-unit.json` binds the complete file inventory and both owner versions.
+Bridge plans, local receipts and their `maxwell_conversion` metadata use integer
+`schema_version: 1`. Boolean, floating, missing or unsupported versions are rejected.
+Frozen claims retain key presence and encoded JSON values, including integer/float/
+boolean distinctions, large integers, nulls and signed zero. Native phase exits
+must be integers. These checks preserve valid authored metadata and do not change
+scientific normalization or conversion settings.
 The original LINDI URL retains its native published NWB identity; it is preserved
 as native artifact evidence. Local NWB/companion execution uses the declared local
 pair. The bridge's relocation check does not claim a new LINDI URL or full
@@ -178,3 +184,9 @@ separate requirements.
 Bridge plans and completed result JSON use this same decoder. The emitted
 Nextflow unit tuple preserves original metadata types and signs; validating the
 persisted JSON alone does not prove that downstream port value.
+
+`scripts/modular/check_bridge_claims.py` checks real format1 units against their
+original plans/bindings, including type/version drift and the independent verifier's
+authority. Run it in the pinned converter runtime with `--unit`, `--plan`,
+`--bindings` and a fresh `--output` directory. Real Nextflow publication/port tests
+and the full native/source-protection matrix are separate acceptance evidence.

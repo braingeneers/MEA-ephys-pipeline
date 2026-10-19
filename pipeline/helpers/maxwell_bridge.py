@@ -37,16 +37,37 @@ def require(condition, message):
         raise ContractError(message)
 
 
+def json_equal(left, right):
+    """Compare frozen JSON claims without Python's numeric coercion."""
+    return canonical_json(left) == canonical_json(right)
+
+
+def schema_one(value, description, document_type=None):
+    require(isinstance(value, dict) and type(value.get('schema_version')) is int
+            and value['schema_version'] == 1
+            and (document_type is None or value.get('document_type') == document_type),
+            'Unsupported ' + description)
+
+
 def expected_phases(settings):
     return [phase for phase in PHASES
             if phase != 'companion' or settings['effective']['create_linked_maxwell_companion']]
+
+
+def completed_phases(report, settings):
+    """Native phase status is an integer exit code, never a JSON boolean/float."""
+    phases = report.get('phases') if isinstance(report, dict) else None
+    return (isinstance(phases, list) and all(isinstance(p, dict) for p in phases)
+            and report.get('scientific_execution_complete') is True
+            and json_equal([p.get('phase') for p in phases], expected_phases(settings))
+            and all(type(p.get('exit_code')) is int and p['exit_code'] == 0 for p in phases))
 
 
 class PublishedOnly(LocalStore):
     """The owning commit code may confirm existing JSON, never create/repair it."""
     def put_json(self, uri, value):
         existing, observed = self.read_json(uri)
-        require(canonical_json(existing) == canonical_json(value),
+        require(json_equal(existing, value),
                 'Native publication is absent or differs; the bridge cannot repair it')
         return observed
 
@@ -62,8 +83,7 @@ def read_json(path):
 
 
 def checked_plan(plan):
-    require(plan.get('schema_version') == 1 and plan.get('document_type') == 'mea_maxwell_bridge_plan',
-            'Unsupported conversion bridge plan')
+    schema_one(plan, 'conversion bridge plan', 'mea_maxwell_bridge_plan')
     require(plan.get('digest') == digest({k: v for k, v in plan.items() if k != 'digest'}),
             'Changed conversion bridge plan')
     return plan
@@ -105,19 +125,20 @@ def prepare(reference, request):
     store = PublishedOnly(root)
     envelope, envelope_ref = load_envelope(store, reference, root)
     records, _ = store.read_json(envelope['selection']['uri'], expected=envelope['selection'])
-    require(canonical_json(records) == canonical_json(request['recordings']),
+    require(json_equal(records, request['recordings']),
             'Native selection differs from the submitted complete recordings')
     stage_ref = selected_stage(envelope, 'conversion', transport='local')
     stage = load_stage(store, stage_ref, EPHYS, root, envelope['selection'])
-    require(stage['owner'] == native['owner'] and stage['settings']['submitted'] == request['settings'],
+    require(json_equal(stage['owner'], native['owner'])
+            and json_equal(stage['settings']['submitted'], request['settings']),
             'Native scientific ownership/settings differ from the invocation')
-    require(stage['execution'] == {k: context[k] for k in ('run_id', 'step_id')},
+    require(json_equal(stage['execution'], {k: context[k] for k in ('run_id', 'step_id')}),
             'Native conversion belongs to another run or step')
     # Reconstruct the exact owning plan, including routing, projections, source
     # hashes, allocations and destinations. Reuse its complete commit validation.
     plan = prepare_conversion(store, envelope['parent'], request['settings'], context, native['owner'])
     confirmed = commit_conversion(store, plan, stage['outcomes'])
-    require(confirmed == envelope_ref, 'Native completion does not bind the supplied artifact envelope')
+    require(json_equal(confirmed, envelope_ref), 'Native completion does not bind the supplied artifact envelope')
     prepared = {task['unit']['unit_id']: task for task in plan['tasks']}
     outcomes = {outcome['unit_id']: outcome for outcome in stage['outcomes']}
     units, seen = [], set()
@@ -129,8 +150,7 @@ def prepare(reference, request):
         seen.add(key)
         outcome = outcomes[unit['unit_id']]
         report, _ = store.read_json(outcome['evidence']['uri'], expected=outcome['evidence'])
-        require([p['phase'] for p in report['phases']] == expected_phases(stage['settings'])
-                and all(p['exit_code'] == 0 for p in report['phases']), 'Incomplete native scientific phases')
+        require(completed_phases(report, stage['settings']), 'Incomplete native scientific phases')
         artifacts = {a['kind']: a['object'] for a in outcome['artifacts']}
         kinds = set(NAMES) if stage['settings']['effective']['create_linked_maxwell_companion'] else set(NAMES) - {'maxwell_companion'}
         require(set(artifacts) == kinds, 'Missing or unexpected native dependency siblings')
@@ -181,19 +201,21 @@ def verify_local(root, expected=None):
     """Verify a relocated unit using only its declared local dependencies."""
     root = Path(root).absolute()
     receipt = read_json(root/'conversion-unit.json')
+    schema_one(receipt, 'local conversion receipt', 'mea_maxwell_local_unit')
     require(receipt.get('digest') == digest({k: v for k, v in receipt.items() if k != 'digest'}),
             'Invalid local conversion receipt')
     require(receipt.get('document_type') == 'mea_maxwell_local_unit' and receipt.get('complete') is True,
             'Local conversion is incomplete')
     actual = inventory(root)
     actual.pop('conversion-unit.json')
-    require(actual == receipt['files'], 'Local conversion dependency inventory changed')
+    require(json_equal(actual, receipt['files']), 'Local conversion dependency inventory changed')
     details = receipt['unit_meta']['maxwell_conversion']
+    schema_one(details, 'local conversion metadata')
     for kind, ref in details['artifacts'].items():
-        require(actual.get(NAMES[kind]) == dict(size=ref['size'], sha256=ref['sha256']),
+        require(json_equal(actual.get(NAMES[kind]), dict(size=ref['size'], sha256=ref['sha256'])),
                 'Local sibling differs from its native published object')
     def frozen(relative, ref):
-        require(actual.get(relative) == dict(size=ref['size'], sha256=ref['sha256']),
+        require(json_equal(actual.get(relative), dict(size=ref['size'], sha256=ref['sha256'])),
                 'Local provenance differs from its native published object')
         return read_json(root/relative)
     envelope = frozen('conversion/native-artifacts.json', details['native_artifacts'])
@@ -201,29 +223,29 @@ def verify_local(root, expected=None):
     native_ref = selected_stage(envelope, 'conversion', transport='local')
     stage = frozen('conversion/native-stage.json', native_ref['manifest'])
     validate_stage(stage, transport='local')
-    require(stage['owner'] == details['native_owner'] and stage['settings'] == details['settings'],
+    require(json_equal(stage['owner'], details['native_owner'])
+            and json_equal(stage['settings'], details['settings']),
             'Local native ownership or settings changed')
-    require(details['native_unit'] in stage['unit_inputs'], 'Local unit lost its explicit native binding')
+    require(any(json_equal(details['native_unit'], unit) for unit in stage['unit_inputs']),
+            'Local unit lost its explicit native binding')
     frozen('conversion/recordings.json', envelope['selection'])
-    require(read_json(root/'conversion/native-unit.json') == details['native_unit'], 'Native unit provenance changed')
-    outcomes = [o for o in stage['outcomes'] if o['unit_id'] == details['native_unit']['unit_id']]
+    require(json_equal(read_json(root/'conversion/native-unit.json'), details['native_unit']), 'Native unit provenance changed')
+    outcomes = [o for o in stage['outcomes'] if json_equal(o['unit_id'], details['native_unit']['unit_id'])]
     require(len(outcomes) == 1 and outcomes[0]['status'] == 'complete'
-            and outcomes[0]['evidence'] == details['native_evidence']
-            and {a['kind']: a['object'] for a in outcomes[0]['artifacts']} == details['artifacts'],
+            and json_equal(outcomes[0]['evidence'], details['native_evidence'])
+            and json_equal({a['kind']: a['object'] for a in outcomes[0]['artifacts']}, details['artifacts']),
             'Local conversion lost its complete native outcome')
     report = frozen('conversion/native-evidence.json', details['native_evidence'])
-    require(report.get('scientific_execution_complete') is True
-            and [p['phase'] for p in report['phases']] == expected_phases(details['settings'])
-            and all(p['exit_code'] == 0 for p in report['phases']), 'Local native science is incomplete')
+    require(completed_phases(report, details['settings']), 'Local native science is incomplete')
     if 'projection' in details['native_unit']:
         frozen('conversion/projection.json', details['native_unit']['projection'])
     if expected is not None:
-        require(receipt['plan_digest'] == expected[0] and receipt['unit_meta'] == expected[1]['unit_meta'],
+        require(receipt['plan_digest'] == expected[0] and json_equal(receipt['unit_meta'], expected[1]['unit_meta']),
                 'Local unit differs from its frozen bridge plan')
         row = expected[1]
         require(set(actual) == set(row['files']) | set(row['evidence']), 'Local dependency coverage differs from the plan')
         for relative, ref in row['files'].items():
-            require(actual[relative] == dict(size=ref['size'], sha256=ref['sha256']), 'Changed frozen local dependency')
+            require(json_equal(actual[relative], dict(size=ref['size'], sha256=ref['sha256'])), 'Changed frozen local dependency')
         for relative, value in row['evidence'].items():
             require((root/relative).read_bytes() == canonical_json(value), 'Changed native provenance copy')
     # Read the actual modeled NWB and external-link companion in isolation.
@@ -265,7 +287,7 @@ def verify_local(root, expected=None):
 
 def materialize(plan, unit_id, output, requested_bytes):
     checked_plan(plan)
-    rows = [u for u in plan['units'] if u['unit_meta']['unit_id'] == unit_id]
+    rows = [u for u in plan['units'] if json_equal(u['unit_meta']['unit_id'], unit_id)]
     require(len(rows) == 1, 'Unknown or conflicting bridge unit')
     row = rows[0]
     require(requested_bytes >= row['requested_bytes'], 'Insufficient requested materialization scratch')
@@ -311,10 +333,10 @@ def commit(plan, paths):
         require(unit_id in rows and unit_id not in observed, 'Conflicting materialized units')
         observed.add(unit_id)
         row = rows[unit_id]
-        require(local['plan_digest'] == plan['digest'] and local['unit_meta'] == row['unit_meta'],
+        require(local['plan_digest'] == plan['digest'] and json_equal(local['unit_meta'], row['unit_meta']),
                 'Materialized unit differs from its bridge invocation')
         published = parse_file(row['publication_root'], prefix=True)
-        require(verify_local(published, (plan['digest'], row)) == local,
+        require(json_equal(verify_local(published, (plan['digest'], row)), local),
                 'Published unit differs from its verified materialization')
         units.append(dict(metadata=local['unit_meta'], input=str(published),
             receipt=LocalStore().stat((published/'conversion-unit.json').as_uri())))

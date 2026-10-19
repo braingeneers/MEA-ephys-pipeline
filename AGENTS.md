@@ -24,6 +24,12 @@
 - Apply that decoder to bridge result/plan files too. Correct persisted unit JSON
   does not prove the emitted Nextflow tuple retains its metadata. Capture actual
   output-port values before downstream consumers and compare against original inputs.
+- Compare frozen bridge JSON through the common canonical encoding. Python equality
+  accepts integer/float and signed-zero changes and treats booleans as integers.
+  Require exact integer schema versions for plans, local receipts and conversion
+  metadata, and integer phase exits. Independent local verification has no external
+  authority for unknown caller metadata; materialization and commit retain the exact
+  frozen plan row. Keep scientific model normalization at its declared boundary.
 - Use `pipeline/json_values.nf` for portable stage units, prior bundle metadata and
   user scientific JSON. Its Jackson reader works on both supported Nextflow releases;
   keep the converter's separate runtime requirements scoped. Snapshot imported
