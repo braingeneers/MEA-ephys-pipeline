@@ -86,3 +86,42 @@ normalize expanded baseline aliases without an independent complete within-file
 proof. Chunk/filter/range, companion, sidecar, publication/report identity and full
 schema-cache storage checks remain separate. Positive acceptance does not establish
 meaningful corruption coverage, original/bridge caller parity or actual S3 execution.
+
+`storage.py` is in progress: the old pinned image's outputs fail its strict physical
+allocation-order check for tiny final chunks. An owning repair and fresh immutable
+image acceptance remain required. Private repacker candidate references are labelled
+in reports; their success does not establish production-image acceptance.
+
+The checker runs the canonical checker first, then verifies every allocated signal
+chunk's filter pipeline/mask, dimensions, channel-major physical allocation, file
+range and native decoded values against the input arrays, including zero padding.
+It also checks every schema-cache object against an independent metadata-only
+reference from the installed pinned catalog. Every LINDI group, dataset, attribute,
+reference, codec, inline payload and reader URL has an explicit comparison. Physical
+HDF5 metadata supplies representation facts only after canonical science passes;
+it never supplies expected neural/model values.
+
+Create the reference without scientific artifact mounts, then keep it read-only:
+
+```bash
+mkdir -p /absolute/test-results/reference /absolute/test-results/reports
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/test-results/reference:/reference --entrypoint python "$image" \
+  /code/schema_reference.py --output /reference/installed-schema-reference.nwb
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/test-results/inputs:/inputs:ro \
+  -v /absolute/test-results/published:/artifacts:ro \
+  -v /absolute/test-results/receipts:/receipts:ro \
+  -v /absolute/test-results/reference:/reference:ro \
+  -v /absolute/test-results/reports:/reports --entrypoint python "$image" \
+  /code/storage.py --inputs /inputs --artifacts /artifacts --receipts /receipts \
+  --schema-reference /reference/installed-schema-reference.nwb \
+  --report /reports/storage.json
+```
+
+The generic LINDI0.4.6 numeric-padding limitation remains. Passing exact native
+ranges and ordinary inline Zarr reads does not establish generic LINDI numeric
+client compatibility. Companion, publication/report identities, meaningful
+corruption controls and full caller acceptance remain separate checks.
