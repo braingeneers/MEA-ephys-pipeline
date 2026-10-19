@@ -127,6 +127,9 @@
   must traverse both, including numeric/identifier/string columns and object
   reference arrays. Schema validity, UUIDs and builder presence do not prove
   payload values; retain real coordinate/ID/reference corruption controls.
+  Counterexamples must actually change a target/value and retain valid acyclic
+  ownership. Run negative oracle checks in fresh bounded processes; OOM, timeout
+  and unrelated constructor failures never prove the intended scientific comparison.
 - Stage the owning NWB graph guard explicitly into both writer modules and both
   entry points. Preflight sources before export or any destination copy; old
   expanded-reference graphs may read successfully but cannot be written. Retain

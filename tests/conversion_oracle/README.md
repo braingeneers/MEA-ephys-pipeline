@@ -188,3 +188,60 @@ actual local scientific CLI checks and test-local publication evidence. Complete
 corruption controls, original/native/bridge Nextflow graphs, live S3 and real
 consumer science remain later acceptance gates. All generic LINDI URI/padding
 failures above remain explicit.
+
+
+`controls.py` generates actual scientific/model/reference/alias and typed transport
+JSON counterexamples from copied native fixtures. Preparation retains each changed
+tree, then restores the workspace byte-for-byte from the original copy. Frozen facts
+are never changed. A separate check invocation mounts all generated trees read-only,
+runs the unchanged complete positives and checks each negative in a fresh subprocess
+with a 90-second limit and recorded peak RSS, at most two workers at once. Each negative must fail its intended
+comparison with NWB schema validation still passing. A stale publication checksum or
+unrelated exception cannot establish scientific rejection. Every result records actual
+changed/restored hashes, schema errors, exception frames and original typed values.
+The retained counterexamples are synthetic test inputs, never new producer receipts.
+Physical-artifact controls and the full original oracle audit remain separate.
+
+```bash
+# Use new empty /absolute/control-results and /absolute/control-reports directories.
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/test-results/inputs:/inputs:ro \
+  -v /absolute/positive-modes:/positives:ro \
+  -v /absolute/test-results/reference:/reference:ro \
+  -v /absolute/control-results:/generated --entrypoint python "$image" \
+  /code/controls.py prepare --inputs /inputs --positives /positives \
+  --reference /reference/installed-schema-reference.nwb --output /generated/controls
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/control-results/controls:/controls:ro \
+  -v /absolute/control-reports:/reports --entrypoint python "$image" \
+  /code/controls.py check --controls /controls --reports /reports
+```
+
+`/absolute/positive-modes` contains `enabled/` and `disabled/`, each with the
+unchanged `artifacts/` and original `receipts/` trees accepted by the complete
+checker. Preparation requires a new output; checking creates reports once. No
+scientific artifacts or evidence belong in Git. These controls do not establish
+original/native/MEA graph parity, live S3 or newer owner transport/runtime acceptance.
+
+Choose an acyclic alternate reference from the frozen contract and verify that it
+actually differs. A self-parent control can recurse during HDMF construction and
+exhaust a container; OOM, timeout and unrelated construction failures never count as
+scientific rejection. Keep such failed harnesses and their actual terminal evidence.
+
+The parent-cell-line control removes its actual authored Data vector. A present
+vector has schema-fixed shape `[1]`; its only other existing same-kind target would
+create a self-parent graph. Optional absence preserves schema validity and must
+fail the independent owned-Data inventory. This is a missing-authored-Data control,
+not a claim of wrong-value comparison on that vector. The other Data controls use
+real changed values or targets. Other model reference controls cover same-kind
+alternate line targets, ordered parent swaps, duplicate targets and truncated
+cardinality. A copied device alias loses the mapped link field and must fail
+complete field inventory. Valid distinct UUIDs cannot hide swapped ages of
+same-ID authored parents.
+
+The wrong recorded-culture alias uses an explicit soft link to an existing canonical
+parent. Soft links are allowed by the physical alias contract; an ambiguous new
+hard link can instead become owned storage during HDMF readback. The control must
+reach canonical object identity, without accepting an earlier constructor failure.
