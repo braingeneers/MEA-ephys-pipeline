@@ -49,6 +49,15 @@
   alias scope may map old representation paths; report failed original allocation
   order explicitly and retain the native order guard. Producer and reader identities
   remain separate, and a bare chunk-observation result is not native acceptance.
+- The original companion turns only the canonical raw path into a VDS; alternate
+  well/recording paths retain two physical raw copies and lose shared aliases.
+  Verify every logical path, metadata object, chunk and sample, and record those
+  failed native invariants. Never collapse the copies or invent newer scope markers.
+- Fixed-width inline schema strings truncate appended characters. Corruption
+  controls must change stored content and verify the encoded payload differs before
+  claiming rejection. LINDI pads numeric encoded chunks only when shorter than the
+  decoded byte size; compressed chunks can also be larger. Keep original URI and
+  labelled transport-copy padding observations distinct from native range checks.
 - Check artifact format versions and native byte-range offsets/lengths with exact
   JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
   reference reader cannot fetch floating byte fields. Preserve real malformed-

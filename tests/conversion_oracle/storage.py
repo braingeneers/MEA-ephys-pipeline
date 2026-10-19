@@ -176,7 +176,7 @@ def inline_contract(dataset, handle):
     return json.loads(store['X/.zarray']), array[:]
 
 
-def complete_sidecar(handle, nwb_path, sidecar, receipt, decoder, expected, selected):
+def sidecar_header(sidecar, receipt):
     require(set(sidecar) == {'generationMetadata','refs','templates','version'}
             and type(sidecar['version']) is int and sidecar['version'] == 1,
             'Complete sidecar root inventory/version')
@@ -192,7 +192,12 @@ def complete_sidecar(handle, nwb_path, sidecar, receipt, decoder, expected, sele
               numDatasetChunksThreshold=None,contiguousDatasetMaxChunkSize=20000000,
               maxwellFilter401FallbackApplied=False,maxwellFilter401Codec=CODEC), 'Complete LINDI generation metadata')
     require(argument('--source-url') == reader_url and phase['exit'] == 0, 'Actual LINDI invocation URL/exit')
-    rows, padding = native_chunks(handle,nwb_path,expected,selected,receipt['settings'],refs,reader_url,templates,decoder)
+    return refs, templates, reader_url
+
+
+def sidecar_contents(handle, nwb_path, sidecar, expected, rows, padding):
+    """Complete representation checks after scientific/chunk validation by caller."""
+    refs = sidecar['refs']
     allowed = set()
     store = {}
     for key, value in refs.items():
@@ -260,6 +265,12 @@ def complete_sidecar(handle, nwb_path, sidecar, receipt, decoder, expected, sele
             'Only actual native chunks may be external byte ranges')
     return dict(native_chunks=rows,padding_values_checked=padding,groups=group_count,arrays=array_count,
                 complete_refs=len(allowed),inline_values_checked=inline_values)
+
+
+def complete_sidecar(handle, nwb_path, sidecar, receipt, decoder, expected, selected):
+    refs, templates, reader_url = sidecar_header(sidecar, receipt)
+    rows, padding = native_chunks(handle,nwb_path,expected,selected,receipt['settings'],refs,reader_url,templates,decoder)
+    return sidecar_contents(handle,nwb_path,sidecar,expected,rows,padding)
 
 
 def verify(inputs,artifacts,receipts,schema_reference):

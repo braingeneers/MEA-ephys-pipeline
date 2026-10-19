@@ -166,6 +166,36 @@ uses fresh bounded subprocesses and retains actual mutations/errors/exits. Origi
 immutable evidence remains unchanged. The native scientific/physical and original
 alias control suites also apply to changes in the shared comparison helpers.
 
+`original_artifacts.py` composes that exact original NWB scope with complete
+companion, LINDI, final-report, invocation and publication checks. It takes the same
+arguments as `original_nwb.py`. Every original sibling name, URL, size and
+SHA must match the frozen producer receipt. It checks the actual original CLI
+paths/options/order, final repacked report input and before/after hashes, and every
+report field/finding including duplicate multiplicity. Measured clocks and UUIDs
+remain separately validated. The original production chain validates metadata
+before companion/LINDI generation; its companion-required output test CLI is a
+separate post-publication test, never an invented phase or disabled-companion call.
+
+Original companions have empty root attributes. Only the canonical selected raw
+path becomes a VDS; the two well/recording aliases become physical raw copies.
+The checker walks every logical path and verifies all native metadata/types,
+attributes, creation properties, encoded chunks, samples and VDS target selections.
+It preserves these copies and explicitly records failed native shared-alias and
+compact-storage invariants, alongside failed original NWB physical order. It does
+not invent newer scope markers or claim native acceptance. Complete original LINDI
+trees include expanded reference roots and every cached schema/inline value; native
+range values remain distinct from generic URI/padding client failures.
+
+`original_artifact_controls.py prepare --original /original --proof /proof --output /generated/controls`
+creates private companion/sidecar/report/publication/invocation counterexamples.
+`check --original /original --proof /proof --controls /controls --reference /reference/installed-schema-reference.nwb --reports /reports/new-check`
+checks four unchanged positives before 34 fresh bounded negative processes. Real
+semantic rejection precedes publication checksums where appropriate, and original
+producer evidence is never modified or resealed. Inline mutations verify changed
+stored payload bytes: fixed-width schema strings silently discard appended text.
+Keep failed harness attempts as evidence. Full original parent audit and actual
+native/MEA scientific Nextflow graphs remain separate acceptance gates.
+
 `storage.py` accepts unchanged fixed-image positives using the published 0.1.6
 reference above. Image 0.1.5 (digest `cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`)
 retains valid science but fails strict physical order for tiny compressed tails. The
