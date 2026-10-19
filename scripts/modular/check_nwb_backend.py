@@ -21,6 +21,7 @@ from pynwb import NWBFile, NWBHDF5IO, TimeSeries, validate
 from pynwb.ecephys import ElectricalSeries, LFP
 from neuroconv.tools.nwb_helpers import configure_backend, get_default_backend_configuration
 import neuroconv.tools.nwb_helpers._dataset_configuration as discovery
+from nwb_data_guard import typed
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'capsules/nwb_common/code'),
@@ -146,9 +147,9 @@ def payload_corruption_controls():
         values = data(column.data)
         original = values[0]
         values[0] = changed
-        assert metadata_graph(fresh) != baseline, 'Changed Data payload accepted: ' + name
+        assert typed(metadata_graph(fresh)) != typed(baseline), 'Changed Data payload accepted: ' + name
         values[0] = original
-        assert metadata_graph(fresh) == baseline
+        assert typed(metadata_graph(fresh)) == typed(baseline)
         rejected.append(name)
     return rejected
 
@@ -198,10 +199,10 @@ def roundtrip(source, label, backend, output, metadata_only=False, consolidated=
         assert paths['electrodes/location/data'].object_id == nwb.electrodes['location'].object_id
         configure_backend(nwbfile=nwb, backend_configuration=config)
         configured_graph = metadata_graph(nwb)
-        if configured_graph != expected_graph:
+        if typed(configured_graph) != typed(expected_graph):
             (output / (label + '-before.json')).write_text(json.dumps(expected_graph, indent=2) + '\n')
             (output / (label + '-configured.json')).write_text(json.dumps(configured_graph, indent=2) + '\n')
-        assert configured_graph == expected_graph
+        assert typed(configured_graph) == typed(expected_graph)
         assert discovery.get_manager is factory
         with target_cls(str(target), 'w') as writer:
             # Cross-backend HDF5 export also requires explicit copying.
@@ -213,7 +214,7 @@ def roundtrip(source, label, backend, output, metadata_only=False, consolidated=
             cached_schemas(target, consolidated)
         with open_source_nwb(target, 'r', target_cls, for_writing=True) as reader_out:
             actual = reader_out.read()
-            assert metadata_graph(actual) == expected_graph
+            assert typed(metadata_graph(actual)) == typed(expected_graph)
             assert not validate(io=reader_out)
             assert set(actual.acquisition) == (set() if metadata_only else set(originals))
             probe = actual.processing[label]['LFP'].electrical_series[label]
@@ -277,7 +278,7 @@ def main():
         writer.write(fresh)
     with open_source_nwb(args.output / 'in-memory.nwb', 'r', NWBHDF5IO) as reader:
         nwb = reader.read()
-        assert metadata_graph(nwb) == graph and not validate(io=reader)
+        assert typed(metadata_graph(nwb)) == typed(graph) and not validate(io=reader)
         arrays_equal(nwb.processing['in_memory']['LFP'].electrical_series['in_memory'].data[:], values)
     with ExitStack() as stack:
         readers = [stack.enter_context(open_source_nwb(source, 'r', NWBHDF5IO)) for source in args.native]
@@ -288,7 +289,7 @@ def main():
         for nwb, configuration in zip(nwbs, configs):
             assert configuration.dataset_configurations['electrodes/location/data'].object_id == nwb.electrodes['location'].object_id
             configure_backend(nwbfile=nwb, backend_configuration=configuration)
-        assert [metadata_graph(nwb) for nwb in nwbs] == graphs
+        assert typed([metadata_graph(nwb) for nwb in nwbs]) == typed(graphs)
     rejected = []
     for source in args.bad:
         before = inventory(source)

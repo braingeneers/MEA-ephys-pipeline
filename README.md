@@ -21,6 +21,7 @@ durable S3 transport for these MEA stages remains a separate adapter.
 - [Modeled NWB reader dependency layer](containers/nwb-io/README.md)
 - [Owning-manager NWB backend](containers/nwb-backend/README.md)
 - [Reproducible native modeled validation controls](docs/NATIVE_CONTROLS.md)
+- [Independent derived NWB stored-data checks](docs/NWB_DATA_VALIDATION.md)
 
 Scientific defaults, parameter precedence and original capsule pins are maintained
 beside the workflow in `pipeline/`. Build the documented runtime images before

@@ -168,6 +168,14 @@
   Counterexamples must actually change a target/value and retain valid acyclic
   ownership. Run negative oracle checks in fresh bounded processes; OOM, timeout
   and unrelated constructor failures never prove the intended scientific comparison.
+- Logical ragged-table slices do not cover the complete stored target. Verify all
+  spike/electrode buffers, input-derived cumulative indices and their exact dtypes,
+  canonical bindings and complete physical/decoded Data inventories. Preserve HDMF's
+  adaptive uint8/16/32/64 index policy; never infer expected length/type from output.
+  Keep schema-invalid float32 spike controls separate from scientific rejection.
+  Resolve model control targets through declared subject/reference identities,
+  not a historical culture-name prefix. Keep source/metadata comparisons typed so
+  Python's bool/int and int/float equality cannot hide a change.
 - Stage the owning NWB graph guard explicitly into both writer modules and both
   entry points. Preflight sources before export or any destination copy; old
   expanded-reference graphs may read successfully but cannot be written. Retain

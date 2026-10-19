@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Compile input-only storage expectations or verify an independently copied NWB."""
+import argparse
+import json
+from pathlib import Path
+import sys
+
+from nwb_data_guard import compile_expected, verify_store
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest='command', required=True)
+    compile_parser = commands.add_parser('compile')
+    compile_parser.add_argument('--source', type=Path, required=True)
+    compile_parser.add_argument('--facts', type=Path, required=True)
+    compile_parser.add_argument('--arrays', type=Path, required=True)
+    compile_parser.add_argument('--output', type=Path, required=True)
+    verify_parser = commands.add_parser('verify')
+    verify_parser.add_argument('--nwb', type=Path, required=True)
+    verify_parser.add_argument('--expected', type=Path, required=True)
+    verify_parser.add_argument('--role', choices=('nwb_ecephys', 'nwb_units'), required=True)
+    verify_parser.add_argument('--write-raw', action='store_true')
+    verify_parser.add_argument('--report', type=Path, required=True)
+    args = parser.parse_args()
+    if args.command == 'compile':
+        record = compile_expected(args.source, json.loads(args.facts.read_text()), args.arrays)
+        output = args.output
+    else:
+        root = Path(__file__).resolve().parents[2]
+        sys.path[:0] = [str(root / 'capsules/nwb_common/code'),
+                        str(root / 'pipeline/components/maxwell/runtime')]
+        from hdmf_zarr import NWBZarrIO
+        from pynwb import validate
+        from source_nwb import open_source_nwb
+        with open_source_nwb(args.nwb, 'r', NWBZarrIO, for_writing=True) as io:
+            nwb = io.read()
+            record = verify_store(args.nwb, nwb, json.loads(args.expected.read_text()), args.role, args.write_raw)
+            errors = validate(io=io)
+            if errors:
+                raise AssertionError(errors)
+        record['schema_valid'] = True
+        output = args.report
+    with output.open('x') as stream:
+        stream.write(json.dumps(record, indent=2) + '\n')
+    print(json.dumps(dict(passed=True, command=args.command, report=str(output))))
+
+
+if __name__ == '__main__':
+    main()
