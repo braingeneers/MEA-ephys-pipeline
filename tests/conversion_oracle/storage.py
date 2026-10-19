@@ -90,7 +90,7 @@ def schema_cache(handle, reference):
     return count
 
 
-def native_chunks(handle, nwb_path, expected, selected, settings, refs, reader_url, templates, decoder):
+def native_chunk_observations(handle, nwb_path, expected, selected, settings, refs, reader_url, templates, decoder):
     dataset = handle[SIGNAL]
     duration = settings['nwb_chunk_duration_ms']
     channels = settings['nwb_chunk_channels']
@@ -144,11 +144,17 @@ def native_chunks(handle, nwb_path, expected, selected, settings, refs, reader_u
             padding += int(truth.size - part.size)
             encoded_rows.append(dict(coordinate=[t,c],offset=info.byte_offset,bytes=len(encoded),mask=mask,
                                      sha256=hashlib.sha256(encoded).hexdigest()))
-    require([x['coordinate'] for x in sorted(encoded_rows,key=lambda x:x['offset'])] == [list(x) for x in coordinates],
-            'Complete channel-major physical allocation order')
+    channel_major = [x['coordinate'] for x in sorted(encoded_rows,key=lambda x:x['offset'])] == [list(x) for x in coordinates]
     allocated = sorted(encoded_rows,key=lambda x:x['offset'])
     require(all(a['offset']+a['bytes'] <= b['offset'] for a,b in zip(allocated,allocated[1:])), 'Native ranges overlap')
-    return encoded_rows, padding
+    return encoded_rows, padding, channel_major
+
+
+def native_chunks(handle, nwb_path, expected, selected, settings, refs, reader_url, templates, decoder):
+    rows, padding, channel_major = native_chunk_observations(
+        handle, nwb_path, expected, selected, settings, refs, reader_url, templates, decoder)
+    require(channel_major, 'Complete channel-major physical allocation order')
+    return rows, padding
 
 
 def inline_contract(dataset, handle):

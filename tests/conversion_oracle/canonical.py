@@ -240,13 +240,19 @@ class CanonicalCheck:
         self.scalars = 0
         self.physical_links = 0
 
+    def physical_path(self, path):
+        return path
+
+    def physical_matches(self, actual, expected):
+        return actual.id == expected.id
+
     def compare(self, actual, expected, label, handle=None):
         if isinstance(expected, Ref):
             if handle is None:
                 require(actual is self.objects[expected.key], label + ': canonical object identity')
             else:
                 require(isinstance(actual, h5py.Reference) and bool(actual), label + ': physical object reference')
-                require(handle[actual].id == handle[self.nodes[expected.key].path].id,
+                require(self.physical_matches(handle[actual], handle[self.nodes[expected.key].path]),
                         label + ': physical canonical target')
             self.references += 1
             return
@@ -450,15 +456,16 @@ class CanonicalCheck:
                 # Schema validation covers the cached schemas; complete cache byte/
                 # sidecar storage inventory belongs to the physical-artifact checker.
                 return
-            require(path in entries, path + ': unexpected physical object/link')
-            contract = entries[path]
-            visited.add(path)
+            expected_path = self.physical_path(path)
+            require(expected_path in entries, path + ': unexpected physical object/link')
+            contract = entries[expected_path]
+            visited.add(expected_path)
             parent, name = str(Path(path).parent), Path(path).name
             link = handle[parent].get(name, getlink=True) if path != '/' else None
             if contract['kind'] == 'link':
                 require(isinstance(link, (h5py.HardLink, h5py.SoftLink)), path + ': unsupported link')
                 target = self.nodes[contract['target']].path
-                require(handle[path].id == handle[target].id, path + ': alias points to a different physical object')
+                require(self.physical_matches(handle[path], handle[target]), path + ': alias points to a different physical object')
                 self.physical_links += 1
                 return
             require(path == '/' or isinstance(link, h5py.HardLink), path + ': canonical storage must be owned')

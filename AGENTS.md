@@ -45,6 +45,10 @@
   strings and object references can encode different heap/object pointers: resolve
   every pointer to complete bytes or ordered proven targets before comparison.
   Preserve fixed-width numeric bytes, independent authored paths and same-ID parents.
+- Keep original characterization separate from native acceptance. A verified
+  alias scope may map old representation paths; report failed original allocation
+  order explicitly and retain the native order guard. Producer and reader identities
+  remain separate, and a bare chunk-observation result is not native acceptance.
 - Check artifact format versions and native byte-range offsets/lengths with exact
   JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
   reference reader cannot fetch floating byte fields. Preserve real malformed-

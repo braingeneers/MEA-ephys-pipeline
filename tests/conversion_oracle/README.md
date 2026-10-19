@@ -136,6 +136,36 @@ in a fresh bounded process. It verifies schema validity and the exact intended
 value/reference/type/alias comparison, retaining changed files, hashes, exceptions
 and actual exits. These are synthetic controls, never new producer receipts.
 
+`original_nwb.py` applies complete NWB science/model/physical-alias, independent
+schema-cache and native chunk checks to the unchanged original fixture outputs.
+Supply `--original`, `--original-freeze-sha256`, `--proof`, `--proof-freeze-sha256`,
+`--schema-reference` and a new `--report`. The two reviewed seal digests are explicit
+trust inputs. Original files, input facts, actual producer receipts, complete alias
+proofs, implementation identities and reader packages/tools/plugin must match.
+Actual selected-view source identity/routing stays separate from the original raw
+source and authored projection. The proof reader never becomes the original producer.
+
+Shared canonical hooks default to exact paths and physical object identity. Only
+the separately validated original scope maps the proven paths/address classes.
+Foreign files with equal object addresses and unknown alias paths remain invalid.
+`storage.native_chunk_observations` performs all chunk/filter/range/sample/padding/
+non-overlap checks and returns the measured physical-order predicate;
+`storage.native_chunks` still requires that predicate for native acceptance.
+The original report records failed order as a failed native invariant, without
+rewriting output, relaxing native defaults or claiming complete artifact acceptance.
+Complete original sidecar, companion, final findings/publication and parent audits
+remain separate from this NWB-only check.
+
+`original_nwb_controls.py prepare --original /original --proof /proof --output /generated/controls`
+creates private changed-source, projection, numeric-fact, receipt, alias-proof,
+proof-code and producer-image counterexamples. Outer manifests are explicitly
+resealed synthetic test evidence, so source/proof semantic bindings are exercised
+beyond a stale outer checksum. Two additional controls change the trusted digest
+arguments. `check --original /original --proof /proof --controls /controls --reports /reports/new-check`
+uses fresh bounded subprocesses and retains actual mutations/errors/exits. Original
+immutable evidence remains unchanged. The native scientific/physical and original
+alias control suites also apply to changes in the shared comparison helpers.
+
 `storage.py` accepts unchanged fixed-image positives using the published 0.1.6
 reference above. Image 0.1.5 (digest `cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`)
 retains valid science but fails strict physical order for tiny compressed tails. The
