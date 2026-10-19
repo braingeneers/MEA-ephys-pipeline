@@ -166,6 +166,16 @@ uses fresh bounded subprocesses and retains actual mutations/errors/exits. Origi
 immutable evidence remains unchanged. The native scientific/physical and original
 alias control suites also apply to changes in the shared comparison helpers.
 
+`task_observer/` is an explicit test-only Bash/Python startup hook for real Nextflow
+tasks. Mount it read-only, set `BASH_ENV` to its `bashenv.sh` and
+`KS4_TASK_OBSERVER_HOOKS` to that directory. It preserves argv, scientific functions
+and child exit behavior while recording actual program/argument identities, UTC
+windows, pre/post file hashes and bounded JSON bytes. Records live in the task's
+`task-observer/`, outside guarded scientific scratch. Parent native/bridge records
+also retain installed tools/packages/plugin identities. Keep actual task/container
+and owning worker child exits: an `atexit` record alone never proves exit zero.
+Do not add this hook to ordinary workflow images or global Python configuration.
+
 `original_artifacts.py` composes that exact original NWB scope with complete
 companion, LINDI, final-report, invocation and publication checks. It takes the same
 arguments as `original_nwb.py`. Every original sibling name, URL, size and
