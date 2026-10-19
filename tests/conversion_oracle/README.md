@@ -428,3 +428,50 @@ and physical corruption suites rather than replacing them. Original baseline
 routing/allocation/companion-alias failures remain failures, even when all current
 native invariants pass. Generic LINDI URI and conditional encoded-padding probes,
 real downstream consumers, S3 and higher acceptance decisions remain separate.
+
+`runtime_controls.py` prepares actual current-owner runtime rejection cases from
+the trusted current graph. Eight positives reuse the original validator requests
+byte-for-byte and compare every returned check field/type. The31 negatives cover
+unknown HDF5/LINDI codecs, skipped output filters, sampled/unsampled floating byte
+ranges, boolean offsets, missing coverage, foreign URLs, wrong modeled values and
+ordered references, partial graphs, unavailable plugins, full source/projection
+digest mismatch and malformed Maxwell inputs. Native unit failures use actual
+raw/prepare plans and unchanged scientific children; no scientific function is
+stubbed. Metadata-only setup success is not conversion success.
+
+Stage a clean source snapshot at `$test_root/source`, this oracle directory at
+`$test_root/code-v1`, and create empty `cases`, `reports`, and `empty-plugin`
+directories there. Keep `$graph_root` at its original absolute path so its frozen
+URIs resolve. Both roots must be explicit absolute paths. The prepared scopes bind
+the reviewed graph seal, owner and immutable image rather than accepting arbitrary
+old producer fixtures. Run the stdlib Docker coordinator from the workstation:
+
+```bash
+python tests/conversion_oracle/runtime_controller.py prepare \
+  --root "$test_root" --graph-root "$graph_root"
+python tests/conversion_oracle/runtime_controller.py cases \
+  --root "$test_root" --graph-root "$graph_root"
+```
+
+The coordinator records commands, actual Docker image/user/mount/network/resource/
+wait/exit/log evidence before removing only its terminal containers. It bounds
+concurrency at two. Do not restart a live worker after an observation interruption.
+`task_observer/runtime_child.py` uses stdlib runpy to observe the original CLI's
+actual exception chain, including contexts hidden by its ordinary `from None`.
+It rethrows the original exception unchanged. Docker proves the exit; the journal
+alone cannot. Protected input/publication inventories must match before and after.
+
+Run `runtime_controls.py check --root "$test_root"` in the same pinned image with
+the graph at its original read-only mount, the case root mounted, the reviewed
+oracle at `/code`, and the generated owner runtime/common plus installed scientific
+scripts on PYTHONPATH. Only this semantic check accepts the campaign. A negative
+needs its exact expected exception, owning function/phase, actual exit and no new
+publication or completed port. Unrelated capacity/import/OOM failures never count.
+
+Wrong local digest controls change the declared SHA and its SHA-based ETag together
+to reach full-content verification; an inconsistent pair fails structural admission
+earlier. LocalStore currently wraps an invalid HDF5 signature's OSError in terminal
+I/O exit76; retain that exact outer status and inner HDF5 cause. It is not successful
+conversion or evidence of an S3 outage. Skipped-filter fixture construction closes
+and reopens HDF5 before checking the persisted mask and every unchanged sample.
+Retain failed fixture/expectation attempts separately from scientific outcomes.
