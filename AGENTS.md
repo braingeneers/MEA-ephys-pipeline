@@ -38,6 +38,9 @@
 - Use `trash` for local file deletion. Do not create a PR; the operator handles it.
 - Keep fixtures and execution evidence outside Git. Tiny process probes establish
   binding/cache behavior, not scientific parity or NERSC/Shifter execution.
+- Preserve an old Maxwell baseline's actual well-routing failure. A separately
+  proven selected-well reference changes reader topology, never original source or
+  authored projection bytes, and does not establish production Max Two support.
 - Check artifact format versions and native byte-range offsets/lengths with exact
   JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
   reference reader cannot fetch floating byte fields. Preserve real malformed-

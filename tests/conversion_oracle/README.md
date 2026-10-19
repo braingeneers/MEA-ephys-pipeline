@@ -88,6 +88,19 @@ proof. `storage.py` adds complete chunk/filter/range, schema-cache and sidecar c
 Companion and publication/report identities remain separate. Positive acceptance does not establish
 meaningful corruption coverage, original/bridge caller parity or actual S3 execution.
 
+`selected_reference.py` supplies a test-only compatibility reference for the old
+original converter's well-number assumption. It copies the independently selected
+Max Two `well002/data0001` into a separate Max One `well000/data0000` topology,
+preserving every selected sample/encoded chunk, calibration, mapping, retained
+metadata and hard alias. The original source, unselected store and authored
+projection remain unchanged. Its `check --baseline-reader` mode additionally
+compares the original installed reader's complete signal, clock, gains/offsets,
+channel mapping and geometry against input-only arrays. Build/check outside Git
+and pass `--inputs`, `--view` and a new `--report`; never call this view production
+Max Two support. Actual routing failures remain evidence. Full NWB alias equivalence
+and every published artifact comparison are separate checks; a successful raw view
+does not normalize a converted NWB or establish complete converter parity.
+
 `storage.py` accepts unchanged fixed-image positives using the published 0.1.6
 reference above. Image 0.1.5 (digest `cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`)
 retains valid science but fails strict physical order for tiny compressed tails. The
