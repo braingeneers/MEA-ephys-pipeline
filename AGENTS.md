@@ -41,6 +41,10 @@
 - Preserve an old Maxwell baseline's actual well-routing failure. A separately
   proven selected-well reference changes reader topology, never original source or
   authored projection bytes, and does not establish production Max Two support.
+- Baseline alias proofs must retain all encoded chunk identities. Copied vlen
+  strings and object references can encode different heap/object pointers: resolve
+  every pointer to complete bytes or ordered proven targets before comparison.
+  Preserve fixed-width numeric bytes, independent authored paths and same-ID parents.
 - Check artifact format versions and native byte-range offsets/lengths with exact
   JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
   reference reader cannot fetch floating byte fields. Preserve real malformed-

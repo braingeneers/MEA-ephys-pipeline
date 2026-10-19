@@ -101,6 +101,41 @@ Max Two support. Actual routing failures remain evidence. Full NWB alias equival
 and every published artifact comparison are separate checks; a successful raw view
 does not normalize a converted NWB or establish complete converter parity.
 
+`baseline_aliases.py` proves the old original repacker's expanded roots within each
+unchanged NWB. Pass `--nwb`, `--facts` (one case's input-only directory), `--receipt`
+and a new `--report`. It records every physical/logical path, native attribute/type,
+payload, link, reference, encoded chunk/range and all loaded fields plus `Data.data`.
+The complete strict authored model binds 30 containers and 13 Data payloads through
+independent containment paths, preserving same-ID parents at different ages. UUIDs
+and HDF5 addresses are separate observations. A unique complete equivalence proof,
+rather than a shared UUID, permits the returned comparison-only path mapping.
+
+Variable-length strings and object-reference columns can carry different encoded
+pointer records in the original copies. The proof retains every compressed range
+and hash, decodes each relevant descriptor, verifies every global-heap string byte
+or ordered object-header target against native reads and proves the full target
+objects. Fixed-width numerical values and their encoded chunks stay byte exact.
+The [HDF5 format specification](https://portal.hdfgroup.org/documentation/hdf5/latest/_f_m_t4.html)
+defines these indirections. Supported pointer decoding is restricted to this
+baseline's one-dimensional 64-bit metadata with the observed Deflate pipeline.
+Region references, external/virtual datasets and cyclic comparisons fail explicitly.
+
+The mapping is bound to the exact NWB/facts/receipt identities and recorded schema
+inventory/reader runtime. Keep original files and all physical observations intact;
+do not apply the map to another file or treat it as writable HDMF/export/append,
+original MaxTwo support, physical-layout, sidecar or complete artifact acceptance.
+Existing strict native checkers are unchanged. Original final NWBs have four
+expanded roots, 17 extra logical paths and ten physical copies; their pre-repack
+files have no expanded roots. All retain the same 30 loaded authored containers.
+
+`baseline_alias_controls.py prepare --original /original --output /generated/controls`
+creates private real counterexamples from the frozen original fixture root.
+`check --controls /controls --reports /reports/new-check` mounts those controls and
+the original root read-only, checks an unchanged positive, then runs each negative
+in a fresh bounded process. It verifies schema validity and the exact intended
+value/reference/type/alias comparison, retaining changed files, hashes, exceptions
+and actual exits. These are synthetic controls, never new producer receipts.
+
 `storage.py` accepts unchanged fixed-image positives using the published 0.1.6
 reference above. Image 0.1.5 (digest `cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`)
 retains valid science but fails strict physical order for tiny compressed tails. The
