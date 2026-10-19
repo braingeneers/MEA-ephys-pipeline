@@ -104,11 +104,15 @@ def main():
     parser.add_argument('--raw-nwb', type=Path, required=True)
     parser.add_argument('--expected', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--helpers', type=Path, help='Exact source_nwb/nwb_graph helper closure for historical artifacts')
     args = parser.parse_args()
     precision_controls = numeric_precision_controls()
-    root = Path(__file__).resolve().parents[2]
-    sys.path[:0] = [str(root / 'capsules/nwb_common/code'),
-                    str(root / 'pipeline/components/maxwell/runtime')]
+    if args.helpers:
+        sys.path.insert(0, str(args.helpers))
+    else:
+        root = Path(__file__).resolve().parents[2]
+        sys.path[:0] = [str(root / 'capsules/nwb_common/code'),
+                        str(root / 'pipeline/components/maxwell/runtime')]
     from source_nwb import open_source_nwb
     args.output.mkdir(exist_ok=False)
     expected = json.loads(args.expected.read_text())

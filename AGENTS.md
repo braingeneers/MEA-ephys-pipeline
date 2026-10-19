@@ -185,6 +185,10 @@
   Units column ordering may canonicalize; source IDs, science and all bindings stay
   exact. The QA metadata compiler must never read measured producer output or call
   its producer CLI to manufacture expectations.
+- Historical NWB corruption controls must select their exact original schema/
+  graph helper closure explicitly. Bind each negative to its actual data, reader
+  image, comparator and intended rejection; matching package versions alone do
+  not establish applicability across different artifacts or adapters.
 - Stage the owning NWB graph guard explicitly into both writer modules and both
   entry points. Preflight sources before export or any destination copy; old
   expanded-reference graphs may read successfully but cannot be written. Retain

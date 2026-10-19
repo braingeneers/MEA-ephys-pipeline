@@ -67,6 +67,9 @@ Float32 spike times are a separately recorded schema-invalid control because the
 pinned Units schema requires float64; they cannot prove scientific-guard coverage.
 Run both Maxwell layouts, actual positive/zero outcomes and both writer roles for
 the full current matrix. No small guard test alone establishes pipeline acceptance.
+For historical controls, pass `--helpers /exact-original-helper-closure` so the
+original schema/graph adapter opens each copy. A current helper with similar
+package versions does not establish historical artifact/control applicability.
 
 ## Complete generated metadata
 
