@@ -6,7 +6,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-SCHEMA=1
+SCHEMA=2
 RATE=20000
 FRAMES={'maxone':2003,'maxtwo_routed':2407}
 DTYPE=np.dtype([('channel','<i4'),('electrode','<i4'),('x','<f8'),('y','<f8')])
@@ -108,15 +108,16 @@ UUIDs are producer-generated, not biological keys. Ordered reference targets ret
   {'culture':['cultures/'+recorded]},dict(cell_lines=['lines/'+k for k in model['cell_lines']],
    cell_cultures=['cultures/'+k for k in model['cultures']]))
  context=model['context'];fields={k:v for k,v in context.items() if k not in ['pharmacology','session_id','session_start_time','session_description']}
- # ndx-cell-culture1.0.0 stores these floats as float32. Preserve authored encodings
- # above and declare exact, separately measured storage normalization here.
+ # ndx-cell-culture1.0.0 declares float32 minimum precision. The pinned producer
+ # coerces these values to Python float; HDMF6.1.0 preserves its binary64 precision.
+ # Keep original encodings separate from the exact source-derived storage rule.
  normalization={}
  for field in ['temperature_c','recording_duration_s']:
-  normalization['context/'+field]=dict(authored=typed(fields[field]),stored_dtype='<f4',stored_float_hex=float(np.float32(fields[field])).hex())
+  normalization['context/'+field]=dict(authored=typed(fields[field]),declared_schema_dtype='<f4',stored_dtype='<f8',stored_float_hex=float(fields[field]).hex())
  for row in context['pharmacology']:
   ident=row['pharmacology_id'];nodes['pharmacologies/'+ident]=_node('Pharmacology',ident,row)
   for field in ['start_time_s','end_time_s']:
-   normalization['pharmacologies/'+ident+'/'+field]=dict(authored=typed(row[field]),stored_dtype='<f4',stored_float_hex=float(np.float32(row[field])).hex())
+   normalization['pharmacologies/'+ident+'/'+field]=dict(authored=typed(row[field]),declared_schema_dtype='<f4',stored_dtype='<f8',stored_float_hex=float(row[field]).hex())
  nodes['context']=_node('ExperimentContext','experiment_context',fields,{'device':['device']},
   {'pharmacologies':['pharmacologies/'+x['pharmacology_id'] for x in context['pharmacology']]})
  return dict(nodes=nodes,numeric_storage_normalization=normalization,

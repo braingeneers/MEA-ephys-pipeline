@@ -10,7 +10,7 @@ from spikeinterface.extractors.extractor_classes import MaxwellRecordingExtracto
 from pynwb import NWBFile
 from hdmf.container import Data
 import ndx_cell_culture
-from inputs import sha,typed
+from inputs import SCHEMA,sha,typed
 
 sys.path.insert(0,'/opt/ephys-modular/maxwell/scripts')
 from maxwell_h5_utils import configure_bundled_maxwell_hdf5_plugin
@@ -58,8 +58,8 @@ def model_constructor_check(model,facts):
  assert objects['cultures/parent-a'].age=='P60D' and objects['cultures/parent-b'].age=='P75D'
  for key,node in facts['model']['nodes'].items():
   obj=objects[key];assert obj.neurodata_type==node['kind'],key
-  # These are authored input fields only. float32 storage is a separate declared
-  # schema contract; an unwritten constructor retains the Python binary64 value.
+  # Authored encodings, schema minimum precision and the pinned writer's exact
+  # binary64 storage rule are distinct contracts. No converted NWB is read here.
   for field,expected in node['fields']['fields'].items():
    actual=getattr(obj,field)
    if 'context/'+field in facts['model']['numeric_storage_normalization'] and key=='context':
@@ -77,11 +77,31 @@ def model_constructor_check(model,facts):
   expected_values_derived_from_constructor=False,converted_nwb_schema_validity_claimed=False)
 
 
+def scalar_storage_check(model,facts):
+ """Check every annotation against original authored JSON, not converted output."""
+ expected={}
+ for field in ['temperature_c','recording_duration_s']:
+  expected['context/'+field]=model['context'][field]
+ for row in model['context']['pharmacology']:
+  for field in ['start_time_s','end_time_s']:
+   expected['pharmacologies/'+row['pharmacology_id']+'/'+field]=row[field]
+ actual=facts['model']['numeric_storage_normalization']
+ assert set(actual)==set(expected)
+ for key,value in expected.items():
+  assert type(value) in [int,float] and math.isfinite(value),key
+  assert actual[key]==dict(authored=typed(value),declared_schema_dtype='<f4',
+   stored_dtype='<f8',stored_float_hex=float(value).hex()),key
+ return dict(annotations_checked=len(expected),declared_schema_dtype='<f4',
+  required_stored_dtype='<f8',exact_original_binary64_values_required=True)
+
+
 def verify(root):
  configure_bundled_maxwell_hdf5_plugin();codec=MaxwellMxwDataCodec()
- source_manifest=json.loads((root/'input-set.json').read_text());results=[];total_chunks=total_values=selected_values=0
+ source_manifest=json.loads((root/'input-set.json').read_text());assert source_manifest['schema_version']==SCHEMA
+ results=[];total_chunks=total_values=selected_values=0
  for case in source_manifest['cases']:
   folder=root/case['case'];facts=json.loads((folder/'facts.json').read_text());assert sha(folder/'facts.json')==case['facts_sha256']
+  assert facts['schema_version']==SCHEMA
   source=folder/facts['source']['file'];projection=folder/facts['projection']['file']
   assert sha(source)==facts['source']['sha256'] and source.stat().st_size==facts['source']['size']
   assert sha(projection)==facts['projection']['sha256'] and projection.stat().st_size==facts['projection']['size']
@@ -131,8 +151,8 @@ def verify(root):
      input_values_checked=int(expected.size),chunks=len(store['source_chunks']),all_native_ranges_and_source_readers_match=True,
      reader_property_keys=recording.get_property_keys(),declared_electrode_Data_payloads=8))
   if facts['case']=='maxtwo_routed':assert next(x for x in facts['stores'] if x['selected'])['store']=='/data_store/data0001'
-  check=model_constructor_check(model,facts)
-  results.append(dict(case=facts['case'],source_sha256=sha(source),projection_sha256=sha(projection),stores=stores,model=check))
+  check=model_constructor_check(model,facts);scalar_check=scalar_storage_check(model,facts)
+  results.append(dict(case=facts['case'],source_sha256=sha(source),projection_sha256=sha(projection),stores=stores,model=check,scalar_storage=scalar_check))
  recordings=json.loads((root/'recordings.json').read_text());bindings=json.loads((root/'bindings.json').read_text());transport=json.loads((root/'transport-facts.json').read_text())
  assert transport==dict(recordings=typed(recordings),bindings=typed(bindings))
  for value in [r['unknown_typed'] for r in recordings]+[r['metadata']['unknown_typed'] for r in bindings]:
