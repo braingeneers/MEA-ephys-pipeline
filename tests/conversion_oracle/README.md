@@ -2,8 +2,9 @@
 
 This test kit generates native Max One and nontrivially routed Max Two acquisitions,
 original typed metadata and input-only facts. It never reads converted NWBs to
-construct expectations. The complete artifact checker and corruption controls are
-separate work; successful input validation does not establish conversion parity.
+construct expectations. `canonical.py`, `storage.py` and `artifacts.py` compose the complete native artifact
+checker. Full corruption controls and actual caller acceptance remain separate;
+successful input validation alone does not establish conversion parity.
 
 Use the pinned public scientific runtime with Python 3.11. Generate outside Git,
 then validate with the inputs mounted read-only. These mounts are local test setup.
@@ -138,3 +139,52 @@ and uses an explicitly labelled filesystem-path sidecar copy to observe numeric
 padding separately. Partial chunks fail after that padding in both fixed-image
 fixtures. Never rewrite the original sidecar or call the transport copy original
 client acceptance.
+
+
+`artifacts.py` composes the complete canonical/storage checks with selected-unit
+companion, publication and final-report checks for these generated fixtures. Its
+companion expectations come from the original input graph and frozen selection:
+all retained metadata values/native types, complete children and aliases, exact
+channel VDS selections to `output.nwb`, and every selected and aliased sample.
+Unselected store/well objects are omitted under the explicit selected-unit scope.
+All retained metadata must be self-contained. Variable-length source strings retain
+their HDF5 type and exact values.
+
+Receipts must declare all four effective fixture settings, including a real boolean
+`create_linked_maxwell_companion`; missing artifacts never determine the option.
+Enabled fixtures require four scientific siblings and the companion phase. Disabled
+fixtures require three siblings and omit that phase. The old scientific output CLI
+requires a companion; the separately staged, revision-pinned `runtime/verify_outputs.py`
+supports omission. Its actual request/result bytes and source identity belong in
+`runtime_validation` evidence, and the complete returned checks are verified.
+Neither interface may fabricate success for an unrelated failure.
+
+Every sibling name/URI/size/SHA is checked against actual bytes before its receipt
+can pass. The default reviewed test publication root is
+`file:///evidence/published/`; `--publication-root` can select a different explicitly
+reviewed root. Each receipt's metadata-validation command must consume the final
+repack output, with the same final SHA immediately before and after every later
+phase. Complete report fields and all Inspector/recommended-term findings are
+checked against input-only metadata and pinned validator rules. Finding order is
+presentation-only; comparison preserves every field and duplicate multiplicity.
+These fixtures intentionally retain four Inspector findings and three culture
+recommendations per file.
+
+```bash
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/test-results/inputs:/inputs:ro \
+  -v /absolute/test-results/published:/artifacts:ro \
+  -v /absolute/test-results/receipts:/receipts:ro \
+  -v /absolute/test-results/reference:/reference:ro \
+  -v /absolute/test-results/reports:/reports --entrypoint python "$image" \
+  /code/artifacts.py --inputs /inputs --artifacts /artifacts --receipts /receipts \
+  --schema-reference /reference/installed-schema-reference.nwb \
+  --report /reports/artifacts.json
+```
+
+Both enabled and disabled fixtures pass with the immutable 0.1.6 image. These are
+actual local scientific CLI checks and test-local publication evidence. Complete
+corruption controls, original/native/bridge Nextflow graphs, live S3 and real
+consumer science remain later acceptance gates. All generic LINDI URI/padding
+failures above remain explicit.

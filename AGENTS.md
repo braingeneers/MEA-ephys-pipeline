@@ -42,6 +42,10 @@
   accepts `true` and `1.0` as `1`; preserve real malformed-sidecar controls.
   Inventory native chunk metadata with one `chunk_iter` traversal before checking
   every encoded range, sample, mask and physical offset.
+- A NumPy object dtype can be an HDF5 variable-length string. Compare its native
+  HDF5 type and every value instead of rejecting it as an object reference.
+  Bind validation reports to the actual final-NWB command and before/after SHA,
+  alongside their complete findings; a matching filename alone is insufficient.
 - Give out-of-order alias probes enough driver CPU capacity to run both aliases
   concurrently (12 CPUs for the full port probe). A four-CPU local scheduler can
   queue the second two-CPU unit until the first finishes; a timing assertion then
