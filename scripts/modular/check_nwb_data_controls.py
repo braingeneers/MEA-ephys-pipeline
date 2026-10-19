@@ -21,6 +21,33 @@ from pynwb import validate
 from nwb_data_guard import file_sha, numeric_sha, typed, verify_store
 
 
+def numeric_precision_controls():
+    """Retain finite complex components, NaN positions and signed zero exactly."""
+    complex_rejections = 0
+    for dtype in ('<c8', '<c16'):
+        for first, second in (
+            (complex(float('nan'), 1), complex(float('nan'), 2)),
+            (complex(1, float('nan')), complex(2, float('nan'))),
+            (complex(float('nan'), 0.0), complex(float('nan'), -0.0)),
+        ):
+            assert numeric_sha(np.asarray([first], dtype=dtype)) != numeric_sha(np.asarray([second], dtype=dtype))
+            complex_rejections += 1
+    float_rejections = 0
+    nan_payload_positives = 0
+    for dtype, uint, bits in (('<f4', '<u4', 0x7fc00000), ('<f8', '<u8', 0x7ff8000000000000)):
+        assert numeric_sha(np.asarray([0.0], dtype=dtype)) != numeric_sha(np.asarray([-0.0], dtype=dtype))
+        assert numeric_sha(np.asarray([np.nan, 1.0], dtype=dtype)) != numeric_sha(np.asarray([1.0, np.nan], dtype=dtype))
+        float_rejections += 2
+        first = np.asarray([bits + 1], dtype=uint).view(dtype)
+        second = np.asarray([bits + 2], dtype=uint).view(dtype)
+        assert first.tobytes() != second.tobytes() and np.isnan(first).all() and np.isnan(second).all()
+        assert numeric_sha(first) == numeric_sha(second)
+        nan_payload_positives += 1
+    assert typed({'value': True}) != typed({'value': 1}) != typed({'value': 1.0})
+    return dict(complex_component_rejections=complex_rejections, float_value_rejections=float_rejections,
+                canonical_NaN_payload_positives=nan_payload_positives, typed_cell_distinctions=True)
+
+
 def inventory(root):
     return {str(p.relative_to(root)): file_sha(p) for p in root.rglob('*') if p.is_file()}
 
@@ -78,6 +105,7 @@ def main():
     parser.add_argument('--expected', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    precision_controls = numeric_precision_controls()
     root = Path(__file__).resolve().parents[2]
     sys.path[:0] = [str(root / 'capsules/nwb_common/code'),
                     str(root / 'pipeline/components/maxwell/runtime')]
@@ -177,6 +205,7 @@ def main():
     valid_controls = sum(c.get('schema_valid', False) for c in results)
     record = dict(passed=True, unchanged_copy_controls=2, schema_valid_scientific_controls=valid_controls,
                   schema_invalid_controls=1,
+                  numeric_precision_controls=precision_controls,
                   controls=results, original_inputs_unchanged=True, complete_parent_acceptance=False)
     with (args.output / 'result.json').open('x') as stream:
         stream.write(json.dumps(record, indent=2) + '\n')

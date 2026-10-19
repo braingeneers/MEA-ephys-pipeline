@@ -54,6 +54,9 @@ datasets, unused tails, incorrect boundaries/types and foreign bindings. Numeric
 comparison preserves signed zero and all bits except canonical NaN payloads. Text
 types and Boolean/integer/float distinctions remain explicit. The CLI also runs
 schema validation; complete metadata and logical scientific checks are still needed.
+The numeric controls retain each finite complex component independently when the
+other component is NaN, and separately verify signed zero, NaN positions and the
+declared equivalent-NaN-payload rule.
 
 `check_nwb_data_controls.py --nwb ... --raw-nwb ... --expected ... --output ...`
 creates fresh positive copies and independent scientific corruptions for both raw

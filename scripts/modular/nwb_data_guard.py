@@ -55,7 +55,12 @@ def numeric_sha(array):
         values = np.asarray(array[()] if start is None else array[start:start + 60000])
         if values.dtype.kind in 'fc':
             values = values.copy()
-            values[np.isnan(values)] = np.nan
+            if values.dtype.kind == 'c':
+                # A NaN in one component must not erase the other component.
+                values.real[np.isnan(values.real)] = np.nan
+                values.imag[np.isnan(values.imag)] = np.nan
+            else:
+                values[np.isnan(values)] = np.nan
         digest.update(values.tobytes(order='C'))
     return digest.hexdigest()
 
