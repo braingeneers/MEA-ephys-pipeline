@@ -58,6 +58,11 @@
   claiming rejection. LINDI pads numeric encoded chunks only when shorter than the
   decoded byte size; compressed chunks can also be larger. Keep original URI and
   labelled transport-copy padding observations distinct from native range checks.
+- LINDI 0.4.6 templates a URL only at five or more occurrences. For current graph
+  audits, derive the exact expected representation from input shape and effective
+  chunk settings: short default-chunk recordings have four literal ranges and an
+  empty template map. Keep the historical checker defaults unchanged; bind a
+  separate invocation profile to the complete source/runtime/evidence seal.
 - Check artifact format versions and native byte-range offsets/lengths with exact
   JSON integer types. Python equality accepts `true` and `1.0` as `1`, while a
   reference reader cannot fetch floating byte fields. Preserve real malformed-

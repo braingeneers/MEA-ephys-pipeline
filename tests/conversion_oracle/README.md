@@ -384,3 +384,47 @@ integer/float equality. Single-range filesystem-path probes are labelled structu
 checks; they do not establish original file-URI or generic LINDI numeric compatibility.
 These tests do not replace actual runtime malformed-input/codec/plugin/projection
 rejection controls, original/native/MEA workflow runs or live S3 acceptance.
+
+`current_graph.py` applies the complete strict canonical/storage/companion/report
+checks to the frozen current native and MEA graph executions. It first rehashes the
+whole trusted execution seal (including literal staging links), verifies the exact
+generated owner and installed tools, and binds actual commands, full submitted and
+effective settings, phase exits, UTC windows, validator request/result bytes and
+every post-repack before/after NWB hash. The new invocation record is explicitly
+derived observer evidence; original producer receipts are never rewritten.
+
+The profile checks each native/MEA publication and each emitted bridge copy, with
+exact sibling names, URIs, sizes and SHA-256. Complete input-derived neural/model/
+Data/reference/schema/cache/chunk/mask/order/padding/companion/LINDI/report checks
+remain strict. The only sidecar-header adaptation follows pinned LINDI0.4.6's URL
+rule: fewer than five ranges use literal URLs and an empty template map. Expected
+counts come from input shape and effective chunk settings. Historical checker
+defaults are unchanged. Default 1000ms chunks and an explicit 10ms invocation must
+each satisfy their own settings; they need not have identical physical layouts.
+
+Mount the execution root at its original absolute path, read-only: its actual
+publication URIs and Nextflow links must resolve without rewriting. The independent
+schema reference must match the profile's reviewed SHA. Use new empty report paths.
+
+```bash
+# graph_root is the original absolute frozen evidence root, not a relocated copy.
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -e XDG_CACHE_HOME=/tmp/private-current-check \
+  -v "$graph_root:$graph_root:ro" \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/schema-reference:/reference:ro \
+  -v /absolute/comparison-reports:/reports --entrypoint python "$image" \
+  /code/current_graph.py --root "$graph_root" \
+  --trusted-freeze-sha256 "$graph_freeze_sha256" \
+  --schema-reference /reference/installed-schema-reference.nwb \
+  --output /reports/current
+```
+
+`current_graph_controls.py` uses the same root/seal with `--output` to exercise
+source/owner/settings/path/argv/phase/program/final-hash/request/result/publication
+drift and exact sidecar representation controls. These in-memory counterexamples
+leave all actual producer files unchanged. They supplement the complete scientific
+and physical corruption suites rather than replacing them. Original baseline
+routing/allocation/companion-alias failures remain failures, even when all current
+native invariants pass. Generic LINDI URI and conditional encoded-padding probes,
+real downstream consumers, S3 and higher acceptance decisions remain separate.
