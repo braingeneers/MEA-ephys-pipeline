@@ -42,7 +42,20 @@ def observe():
 
     def inputs():
         files = {}
-        for arg in sys.argv[1:]:
+        arguments = list(sys.argv[1:])
+        if program.name == 'verify_outputs.py' and len(arguments) == 2:
+            # This CLI declares its scientific inputs in a request, rather than
+            # --nwb-file. Retain both original request bytes and each dependency.
+            request_path = Path(arguments[0])
+            with request_path.open('rb') as stream:
+                raw = stream.read(32 * 1024 * 1024 + 1)
+            assert len(raw) <= 32 * 1024 * 1024
+            request = json.loads(raw)
+            for name in ('source', 'nwb', 'lindi', 'projection', 'companion'):
+                if name in request:
+                    assert isinstance(request[name], str)
+                    arguments.append(request[name])
+        for arg in arguments:
             path = Path(arg)
             if path.suffix in ('.nwb', '.h5', '.json') and path.is_file():
                 details = identity(path)

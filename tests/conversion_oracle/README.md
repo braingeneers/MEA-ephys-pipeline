@@ -170,7 +170,9 @@ alias control suites also apply to changes in the shared comparison helpers.
 tasks. Mount it read-only, set `BASH_ENV` to its `bashenv.sh` and
 `KS4_TASK_OBSERVER_HOOKS` to that directory. It preserves argv, scientific functions
 and child exit behavior while recording actual program/argument identities, UTC
-windows, pre/post file hashes and bounded JSON bytes. Records live in the task's
+windows, pre/post file hashes and bounded JSON bytes. Follow the optional output
+validator's explicit request dependencies as well as direct argv paths; its NWB
+is not a command-line argument. Records live in the task's
 `task-observer/`, outside guarded scientific scratch. Parent native/bridge records
 also retain installed tools/packages/plugin identities. Keep actual task/container
 and owning worker child exits: an `atexit` record alone never proves exit zero.
