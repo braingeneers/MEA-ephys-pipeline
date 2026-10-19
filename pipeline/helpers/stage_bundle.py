@@ -188,10 +188,22 @@ def scientific_policy(root, record, no_spikes):
     return outcomes
 
 
-def verify(root, expected, unit_id, no_spikes):
+def verify_invocation_metadata(record, unit_meta):
+    """Preserve predecessor claims while allowing new invocation metadata."""
+    require(isinstance(unit_meta, dict), "Stage invocation unit metadata must be an object")
+    previous = record.get("metadata", {}).get("unit_meta")
+    require(isinstance(previous, dict), "Stage bundle lacks predecessor unit metadata")
+    require(all(key in unit_meta and portable.encoded(unit_meta[key]) == portable.encoded(value)
+                for key, value in previous.items()),
+            "Stage invocation dropped or changed predecessor unit metadata")
+
+
+def verify(root, expected, unit_id, no_spikes, unit_meta=None):
     portable.verify(root)
     record = read_record(root)
     require(record["stage"] == expected and record["unit_id"] == unit_id, "Bundle kind or unit identity differs from the requested input")
+    if unit_meta is not None:
+        verify_invocation_metadata(record, unit_meta)
     outcomes = scientific_policy(root, record, no_spikes)
     require(outcomes == record["metadata"].get("outcomes"), "Scientific outcome receipt differs from current payload")
     return record
@@ -207,11 +219,9 @@ def build(request, paths, output, no_spikes):
     require(metadata["unit_meta"].get("unit_id") == request["unit_id"], "Unit metadata differs from assembly identity")
     if phase != "dispatch":
         previous = paths[request["previous"]]
-        prior = verify(previous, PREVIOUS[phase], request["unit_id"], no_spikes)
+        prior = verify(previous, PREVIOUS[phase], request["unit_id"], no_spikes,
+                       unit_meta=metadata["unit_meta"])
         require(prior["metadata"]["completed_stages"] == ORDER[:ORDER.index(phase)], "Predecessor history is incomplete")
-        require(all(key in metadata['unit_meta'] and portable.encoded(metadata['unit_meta'][key]) == portable.encoded(value)
-                    for key,value in prior['metadata']['unit_meta'].items()),
-                'Stage invocation dropped or changed predecessor unit metadata')
         metadata['stage_provenance'] = deepcopy(prior['metadata']['stage_provenance'])
         payloads.append({"source": str(previous / "data"), "destination": "data"})
         for item in prior["serializations"]:
@@ -288,6 +298,8 @@ def main():
     check.add_argument("--bundle", type=Path, required=True)
     check.add_argument("--kind", required=True)
     check.add_argument("--unit-id", required=True)
+    check.add_argument("--unit-meta", type=Path,
+                       help="Incoming unit metadata JSON; preserve predecessor claims before scientific work")
     args = parser.parse_args()
     no_spikes = classifier(args.outcomes_code)
     try:
@@ -295,8 +307,13 @@ def main():
             paths = [path.resolve() for path in sorted(args.inputs.glob("item*"))]
             record = build(json.loads(args.request.read_text()), paths, args.output, no_spikes)
         else:
-            record = verify(args.bundle.resolve(), args.kind, args.unit_id, no_spikes)
-    except (portable.BundleError, FileNotFoundError) as error:
+            unit_meta = None
+            if args.unit_meta is not None:
+                unit_meta = json.loads(args.unit_meta.read_text())
+                require(isinstance(unit_meta, dict), "Stage invocation unit metadata must be an object")
+            record = verify(args.bundle.resolve(), args.kind, args.unit_id, no_spikes,
+                            unit_meta=unit_meta)
+    except (portable.BundleError, FileNotFoundError, json.JSONDecodeError) as error:
         parser.exit(1, f"Scientific stage boundary error: {error}\n")
     print(json.dumps({"unit_id": record["unit_id"], "kind": record["stage"], "bytes": record["bytes"], "verified": True}))
 

@@ -99,6 +99,13 @@
 - A loaded Zarr analyzer can silently have no recording. Portable stage wrappers
   must verify the bundle and read recording samples before invoking capsules that
   classify load errors as skipped work. Missing dependencies are never zero spikes.
+- Validate incoming unit metadata against the predecessor at the shared verifier,
+  before releasing its port to scientific consumers. A packer-only comparison is
+  too late: changed projection references can already have run and published NWB
+  outputs. Stage metadata as literal JSON, preserve all predecessor keys and exact
+  encoded values (including nullable/type/signed-zero distinctions), and permit
+  new keys. Verification and assembly must use the same condition; keep the
+  independent contents-only helper API explicit.
 - Keep executable references distinct from historical provenance. Rebase the exact
   lazy recording graph, including its raw NWB and binary dependencies, using explicit
   serialization bases. Do not substitute a binary cache or infer a producing task

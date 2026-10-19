@@ -127,6 +127,26 @@ materialized bundle. The catalogue digest alone does not prove a recording remai
 loadable. A local JSON manifest also does not replace converter validation or
 complete S3 identity/publication checks.
 
+Named scientific stages also validate the incoming unit metadata before releasing
+the verified input to downstream processes. Every predecessor key must remain
+present with its exact encoded value; callers may add new keys. This preserves
+projection/session/recording references, nullable values, integer/float/boolean
+types, large integers and signed zero. The same condition applies during assembly.
+
+For an explicit caller claim, use the scientific stage helper in the pinned base
+runtime, supplying the owning sorter outcome classifier:
+
+```bash
+python pipeline/helpers/stage_bundle.py --outcomes-code capsules/kilosort4/code/outcomes.py \
+    verify --bundle unit.reported --kind reported --unit-id unit --unit-meta incoming-unit-meta.json
+```
+
+Omitting `--unit-meta` retains the independent contents-only verification API. All
+maintained named stage callers supply it; that check must happen before downstream
+science or publication, rather than waiting for the final packer to reject a
+changed reference. The ordinary entry point merges omitted metadata from its input
+bundle; named callers should forward the predecessor's metadata explicitly.
+
 The regression helper is `scripts/modular/check_portable_bundle.py`. Its `build`
 command takes a retained real direct run, source fixture/session and a fresh output
 directory. Move the resulting `unit-a`/`unit-b` plus `assembly-spec.json` to a new

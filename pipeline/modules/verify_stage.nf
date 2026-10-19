@@ -15,8 +15,11 @@ process verify_stage {
     script:
     """
     set -e
+    cat > unit-meta.json <<'MEA_UNIT_META'
+    ${groovy.json.JsonOutput.toJson(task_settings.unit_meta)}
+    MEA_UNIT_META
     python mea-tools/stage_bundle.py --outcomes-code sorting-outcomes.py verify \
-        --bundle input-bundle --kind '${task_settings.stage}' --unit-id '${task_settings.unit_id}'
+        --bundle input-bundle --kind '${task_settings.stage}' --unit-id '${task_settings.unit_id}' --unit-meta unit-meta.json
     ln -s input-bundle verified
     """
 }
