@@ -73,6 +73,20 @@ distinct. Identical raw filenames/internal recording IDs in different units are
 supported. Each finite stage input channel is collected once to validate unit
 uniqueness before scheduling its scientific tasks.
 
+The standalone unit/prior-bundle reader and scientific `--params_file` reader use
+`pipeline/json_values.nf`. Original JSON integers retain arbitrary precision;
+floating tokens use finite binary64, including negative zero. Duplicate keys,
+trailing content, malformed values and floating overflow are rejected before
+scientific tasks start. Unknown metadata keys and original input files are retained.
+
+Imported callers can use `meaReadJson(file(...))` or `meaJson(originalText)` from
+that module before constructing channels. Each stage eagerly snapshots unit
+metadata independently for its invocation. Preserve the original files/strings
+when exact numeric encodings matter: Nextflow's own parameter reader and Groovy
+JsonSlurper can already have lost large integer values or negative zero before a
+stage receives a map. The helper works on both supported Nextflow releases and
+has no converter runtime/library dependency.
+
 ## Composition interface
 
 Each export takes `(units, settings, context)` and emits `units`. Units are tuples
@@ -86,8 +100,8 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.20', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.20', step_id:'b'])
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.21', step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.21', step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -122,6 +136,11 @@ every byte, permitting JSON whitespace changes with unchanged values/types and
 dictionary order. Timeseries layer order determines visualization rows and must
 survive rebasing; only manifest hashes use canonical key sorting. A
 matching basename alone never establishes dependency identity.
+
+The preprocessing capsule defaults to a120-second minimum. A shorter recording
+writes its original `Recording too short` evidence; the prepared-bundle guard
+rejects that incomplete result and emits no successful prepared unit. Set
+`preprocessing.min_preprocessing_duration` explicitly when scientifically intended.
 
 Stages check the exact dispatch recording set and owned artifact families. Sorted
 output requires a loadable sorting and terminal Kilosort log. Zero detections need

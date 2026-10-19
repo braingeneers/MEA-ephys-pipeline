@@ -1,5 +1,7 @@
 nextflow.enable.dsl = 2
 
+include { meaReadJson } from './json_values'
+
 // Direct-call compatibility parsing, also usable by independent stage callers.
 // All values are invocation-local; imported processes receive only their own map.
 def loadLaunchSettings(Map parameters, pipelineRoot) {
@@ -25,7 +27,7 @@ def loadLaunchSettings(Map parameters, pipelineRoot) {
     // Load parameters from JSON file if provided
     def json_params = [:]
     if (options.params_file) {
-        json_params = new groovy.json.JsonSlurper().parseText(new File(options.params_file).text)
+        json_params = meaReadJson(new File(options.params_file).toPath())
         if (!(json_params instanceof Map)) {
             error '--params_file must contain a JSON object keyed by pipeline stage.'
         }

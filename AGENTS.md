@@ -24,6 +24,10 @@
 - Apply that decoder to bridge result/plan files too. Correct persisted unit JSON
   does not prove the emitted Nextflow tuple retains its metadata. Capture actual
   output-port values before downstream consumers and compare against original inputs.
+- Use `pipeline/json_values.nf` for portable stage units, prior bundle metadata and
+  user scientific JSON. Its Jackson reader works on both supported Nextflow releases;
+  keep the converter's separate runtime requirements scoped. Snapshot imported
+  metadata eagerly before fan-out, and compare original types/signs at real ports.
 - Keep process names stable unless changing and testing the backend selectors and
   trace consumers together. Test both Nextflow 26.04.6 and the NERSC 23.08.0-edge path.
 - Report dependencies must be installed globally in the derived image. NRP changes
@@ -202,3 +206,7 @@
   its work directory can infer only that mount; an unavailable BASH_ENV hook may silently
   produce no receipt. Count actual in-container evidence separately from bounded
   mount requests, including after an unrelated workflow failure.
+- Bash startup-hook errors can precede the task script's `set -e` and leave its
+  scientific command running. Define all preflight constants and explicitly exit
+  on failed checks. Verify the failure prevents a following command, retain missing
+  receipts honestly, and rerun corrected hooks in a fresh evidence directory.

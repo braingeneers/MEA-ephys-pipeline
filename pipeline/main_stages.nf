@@ -2,6 +2,7 @@
 nextflow.enable.dsl = 2
 
 include { loadLaunchSettings } from './settings'
+include { meaReadJson } from './json_values'
 include { MEA_PREPROCESSING; MEA_KILOSORT4; MEA_ANALYSIS; MEA_REPORTING; MEA_FINAL_EXPORT } from './stages'
 
 params.stage = 'all'
@@ -21,7 +22,7 @@ def selected = params.stage.toString()
 if (!(selected in ['all','preprocessing','sorting','analysis','reporting','export'])) error 'stage must be all, preprocessing, sorting, analysis, reporting or export.'
 def input_rows
 if (params.units_file) {
-    input_rows = new groovy.json.JsonSlurper().parseText(file(params.units_file,checkIfExists:true).text)
+    input_rows = meaReadJson(file(params.units_file,checkIfExists:true))
     if (!(input_rows instanceof List) || !input_rows) error 'units_file must contain a non-empty JSON list.'
 } else {
     if (!params.unit_id) error 'Set --unit_id to a stable identity, or use --units_file.'
@@ -29,7 +30,7 @@ if (params.units_file) {
     if (!input_path) error 'Provide --ecephys_path for preprocessing/all or --input_bundle for a downstream stage.'
     def meta = [unit_id:params.unit_id.toString()]
     if (!(selected in ['all','preprocessing'])) {
-        def prior = new groovy.json.JsonSlurper().parseText(file("${input_path}/bundle.json",checkIfExists:true).text)
+        def prior = meaReadJson(file("${input_path}/bundle.json",checkIfExists:true))
         meta = (prior.metadata.unit_meta ?: [:]) + meta
     }
     input_rows = [[input:input_path.toString(),metadata:meta]]
@@ -39,7 +40,7 @@ def rows = input_rows.collect { row ->
     def path = file(row.input.toString(),checkIfExists:true)
     def meta = new LinkedHashMap(row.metadata)
     if (!(selected in ['all','preprocessing'])) {
-        def prior = new groovy.json.JsonSlurper().parseText(path.resolve('bundle.json').text)
+        def prior = meaReadJson(path.resolve('bundle.json'))
         meta = (prior.metadata.unit_meta ?: [:]) + meta
     }
     tuple(meta,path)

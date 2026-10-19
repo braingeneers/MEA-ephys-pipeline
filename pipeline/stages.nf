@@ -1,6 +1,7 @@
 nextflow.enable.dsl = 2
 
 include { processOptions } from './settings'
+include { meaReadJson; meaSnapshot } from './json_values'
 include { job_dispatch } from './modules/job_dispatch'
 include { preprocessing } from './modules/preprocessing'
 include { spikesort_kilosort4 } from './modules/spikesort_kilosort4'
@@ -28,7 +29,7 @@ def stageInputs(units) {
             ids.add(meta.unit_id)
         }
         if (ids.toSet().size() != ids.size()) error 'Duplicate unit identities in stage input.'
-        rows
+        rows.collect { meta,path -> tuple(meaSnapshot(meta),path) }
     }
 }
 
@@ -55,7 +56,7 @@ def boundaryOptions(String kind, Map settings, Map context, Map meta, boolean pu
      results_path:"${ctx.output_uri}/bundles".toString(), publish_overwrite:settings.publish_overwrite]
 }
 
-def bundleRecord(path) { new groovy.json.JsonSlurper().parseText(path.resolve('bundle.json').text) }
+def bundleRecord(path) { meaReadJson(path.resolve('bundle.json')) }
 def children(path) { path.toFile().listFiles().sort{ a,b -> a.name <=> b.name }.collect{ file(it.toString()) } }
 def family(path, String prefix) { children(path.resolve('data')).findAll{ it.name.startsWith(prefix) } }
 def rawSession(path) { path.resolve('data/ecephys_session') }
