@@ -53,3 +53,36 @@ sources provide default-field semantics; the checker must verify the complete
 inventory and physical aliases. Measured UUIDs/file creation times require their
 own validity, uniqueness and invocation checks. LINDI 0.4.6's generic-reader numeric
 padding limitation remains explicit; validate exact native compressed ranges.
+
+`canonical.py` checks complete native NWB science/model against schema-2 facts.
+It checks all samples, timing, exact calibration, electrode columns, 30 canonical
+containers, 13 Data payloads, every field, ordered reference targets and physical
+aliases. It compares actual object identity separately from valid generated UUIDs.
+Pinned schemas map the independent expected fields to physical paths/attributes;
+extra objects/attributes outside the schema cache fail. Column order may vary under
+NeuroConv's set-based insertion, so exact column membership and the saved
+colnames/column/HDF5 bindings are checked together. ISO datetimes use HDMF's ASCII
+encoding; ordinary text uses UTF-8.
+
+For each case, provide `output.nwb` in an artifact directory and a JSON invocation
+receipt named `<case>.json`. Receipts bind case/source/projection/selected raw path
+and contain a successful `convert` phase with `started_at_utc` and `duration_s`;
+these bound measured file-creation dates without treating them as authored science.
+The report is create-only. Keep inputs, artifacts and receipts read-only:
+
+```bash
+docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
+  -v "$PWD/tests/conversion_oracle:/code:ro" \
+  -v /absolute/test-results/inputs:/inputs:ro \
+  -v /absolute/test-results/published:/artifacts:ro \
+  -v /absolute/test-results/receipts:/receipts:ro \
+  -v /absolute/test-results/reports:/reports --entrypoint python "$image" \
+  /code/canonical.py --inputs /inputs --artifacts /artifacts \
+  --receipts /receipts --report /reports/canonical.json
+```
+
+This checker currently requires the exact native pinned runtime. It does not
+normalize expanded baseline aliases without an independent complete within-file
+proof. Chunk/filter/range, companion, sidecar, publication/report identity and full
+schema-cache storage checks remain separate. Positive acceptance does not establish
+meaningful corruption coverage, original/bridge caller parity or actual S3 execution.
