@@ -9,7 +9,7 @@ Use the pinned public scientific runtime with Python 3.11. Generate outside Git,
 then validate with the inputs mounted read-only. These mounts are local test setup.
 
 ```bash
-image=braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce
+image=braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d
 mkdir -p /absolute/test-results
 docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
   -v "$PWD/tests/conversion_oracle:/code:ro" \
@@ -83,19 +83,24 @@ docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 \
 
 This checker currently requires the exact native pinned runtime. It does not
 normalize expanded baseline aliases without an independent complete within-file
-proof. Chunk/filter/range, companion, sidecar, publication/report identity and full
-schema-cache storage checks remain separate. Positive acceptance does not establish
+proof. `storage.py` adds complete chunk/filter/range, schema-cache and sidecar checks.
+Companion and publication/report identities remain separate. Positive acceptance does not establish
 meaningful corruption coverage, original/bridge caller parity or actual S3 execution.
 
-`storage.py` is in progress: the old pinned image's outputs fail its strict physical
-allocation-order check for tiny final chunks. An owning repair and fresh immutable
-image acceptance remain required. Private repacker candidate references are labelled
-in reports; their success does not establish production-image acceptance.
+`storage.py` accepts unchanged fixed-image positives using the published 0.1.6
+reference above. Image 0.1.5 (digest `cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce`)
+retains valid science but fails strict physical order for tiny compressed tails. The
+maintained owner repairs file allocation without changing encoded chunks or numerical
+dependencies. Preserve all old failures, private prototypes and their actual producer
+identities. A private override does not establish immutable-image acceptance.
 
 The checker runs the canonical checker first, then verifies every allocated signal
 chunk's filter pipeline/mask, dimensions, channel-major physical allocation, file
 range and native decoded values against the input arrays, including zero padding.
-It also checks every schema-cache object against an independent metadata-only
+A single chunk-index traversal records the complete coordinate inventory before
+checking every encoded range; repeated metadata lookup per chunk is unnecessary.
+The sidecar root version requires the integer 1; boolean true and floating 1.0 are
+not valid format versions. It also checks every schema-cache object against an independent metadata-only
 reference from the installed pinned catalog. Every LINDI group, dataset, attribute,
 reference, codec, inline payload and reader URL has an explicit comparison. Physical
 HDF5 metadata supplies representation facts only after canonical science passes;
@@ -125,3 +130,11 @@ The generic LINDI0.4.6 numeric-padding limitation remains. Passing exact native
 ranges and ordinary inline Zarr reads does not establish generic LINDI numeric
 client compatibility. Companion, publication/report identities, meaningful
 corruption controls and full caller acceptance remain separate checks.
+
+The native local reader URL is a canonical `file://` URI. LINDI 0.4.6 interprets
+that string as a literal filename; its range reader accepts filesystem paths or
+HTTP(S) URLs. A generic-client probe therefore retains the original URI failure
+and uses an explicitly labelled filesystem-path sidecar copy to observe numeric
+padding separately. Partial chunks fail after that padding in both fixed-image
+fixtures. Never rewrite the original sidecar or call the transport copy original
+client acceptance.

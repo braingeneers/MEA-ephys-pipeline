@@ -38,6 +38,10 @@
 - Use `trash` for local file deletion. Do not create a PR; the operator handles it.
 - Keep fixtures and execution evidence outside Git. Tiny process probes establish
   binding/cache behavior, not scientific parity or NERSC/Shifter execution.
+- Check artifact format versions with exact JSON integer types. Python equality
+  accepts `true` and `1.0` as `1`; preserve real malformed-sidecar controls.
+  Inventory native chunk metadata with one `chunk_iter` traversal before checking
+  every encoded range, sample, mask and physical offset.
 - Give out-of-order alias probes enough driver CPU capacity to run both aliases
   concurrently (12 CPUs for the full port probe). A four-CPU local scheduler can
   queue the second two-CPU unit until the first finishes; a timing assertion then

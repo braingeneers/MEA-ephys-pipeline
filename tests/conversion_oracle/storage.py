@@ -106,12 +106,19 @@ def native_chunks(handle, nwb_path, expected, selected, settings, refs, reader_u
     coordinates = [(t, c) for c in range(0, expected.shape[1], channels)
                    for t in range(0, expected.shape[0], chunks[0])]
     require(dataset.id.get_num_chunks() == len(coordinates), 'Complete allocated native chunk count')
+    allocated_info = {}
+    def collect(info):
+        coordinate = tuple(info.chunk_offset)
+        require(coordinate not in allocated_info, 'Duplicate allocated native chunk coordinate')
+        allocated_info[coordinate] = info
+    dataset.id.chunk_iter(collect)
+    require(set(allocated_info) == set(coordinates), 'Complete allocated native chunk coordinate inventory')
     encoded_rows = []
     padding = 0
     file_size = nwb_path.stat().st_size
     with nwb_path.open('rb') as stream:
         for t, c in coordinates:
-            info = dataset.id.get_chunk_info_by_coord((t, c))
+            info = allocated_info[(t, c)]
             mask, encoded = dataset.id.read_direct_chunk((t, c))
             require(mask == info.filter_mask == 0, 'Every native chunk must use filter401')
             require(info.size == len(encoded) and 0 <= info.byte_offset < file_size
@@ -162,7 +169,8 @@ def inline_contract(dataset, handle):
 
 
 def complete_sidecar(handle, nwb_path, sidecar, receipt, decoder, expected, selected):
-    require(set(sidecar) == {'generationMetadata','refs','templates','version'} and sidecar['version'] == 1,
+    require(set(sidecar) == {'generationMetadata','refs','templates','version'}
+            and type(sidecar['version']) is int and sidecar['version'] == 1,
             'Complete sidecar root inventory/version')
     refs, templates = sidecar['refs'], sidecar['templates']
     reader_url = receipt['reader_url']
