@@ -189,6 +189,17 @@ in the pinned NWB image once, then `verify --source-nwb <fixture.nwb> --output
 graph/header/dependency, native-declaration and metadata-order controls. These
 technical fixtures supplement full-size science and actual Nextflow acceptance.
 
+For explicitly reviewed historical test data, `scripts/modular/import_verified_bundle.py`
+creates a separate v2 counterpart. It requires a preexisting corpus authority and its
+SHA-256, a label, explicit authority path mappings, and the frozen legacy source plus
+its complete source inventory and SHA-256. Mount original data and authorities read
+only. Supply a new `--output` directory and an external `--report` path. The tool checks
+all original files and scientific evidence references, runs the frozen legacy CLI,
+freezes complete original expectations, then packages and verifies the counterpart.
+It requires identical payload bytes and preserves historical scientific metadata and
+serialization provenance; the external report identifies the new packaging separately.
+Failed attempts remain for diagnosis. This test tool is not a production upgrade path.
+
 The regression helper is `scripts/modular/check_portable_bundle.py`. Its `build`
 command takes a retained real direct run, source fixture/session and a fresh output
 directory. Move the resulting `unit-a`/`unit-b` plus `assembly-spec.json` to a new
