@@ -8,6 +8,7 @@ process verify_stage {
     tuple val(task_settings), path(bundle, stageAs: 'input-bundle')
     path helpers, stageAs: 'mea-tools'
     path outcomes_code, stageAs: 'sorting-outcomes.py'
+    path common_code, stageAs: 'native-common'
 
     output:
     tuple val(task_settings), path('verified'), emit: units
@@ -18,7 +19,7 @@ process verify_stage {
     cat > unit-meta.json <<'MEA_UNIT_META'
     ${groovy.json.JsonOutput.toJson(task_settings.unit_meta)}
     MEA_UNIT_META
-    python mea-tools/stage_bundle.py --outcomes-code sorting-outcomes.py verify \
+    python mea-tools/stage_bundle.py --outcomes-code sorting-outcomes.py --common-code native-common verify \
         --bundle input-bundle --kind '${task_settings.stage}' --unit-id '${task_settings.unit_id}' --unit-meta unit-meta.json
     ln -s input-bundle verified
     """

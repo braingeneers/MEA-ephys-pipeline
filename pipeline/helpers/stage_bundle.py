@@ -40,8 +40,71 @@ def checked_int(value, name):
     return value
 
 
-def scientific_policy(root, record, no_spikes):
+def verify_native_graph(value, base, native_nwb):
+    """Bind active NWB readers, respecting the root serialization's path mode."""
+    relative = value.get('relative_paths', False)
+    count = 0
+
+    def visit(node):
+        nonlocal count
+        if isinstance(node, list):
+            for child in node:
+                visit(child)
+        elif isinstance(node, dict):
+            if 'class' not in node:
+                for child in node.values():
+                    visit(child)
+                return
+            name = node.get('class', '').rsplit('.', 1)[-1]
+            kwargs = node.get('kwargs', {})
+            if name.startswith('Nwb') and name.endswith('RecordingExtractor'):
+                path = kwargs.get('file_path')
+                require(isinstance(path, str) and path,
+                        'Native NWB recording lacks its explicit file path')
+                path = Path(path)
+                if relative:
+                    path = base / path
+                require(path.resolve(strict=True) == native_nwb,
+                        'Active NWB recording differs from its native conversion source')
+                count += 1
+            # Annotations/provenance describe history; only kwargs are executable.
+            visit(kwargs)
+
+    visit(value)
+    return count
+
+
+def verify_native_conversion(root, record, common_code=None):
+    unit_meta = record['metadata']['unit_meta']
+    if 'maxwell_conversion' not in unit_meta:
+        return
+    from local_conversion_identity import verify_identity
+
+    native = root / 'data/ecephys_session'
+    try:
+        verify_identity(native, common_code=common_code, unit_meta=unit_meta,
+                        artifacts_first=True)
+    except (ValueError, KeyError, TypeError, AttributeError, IndexError) as error:
+        raise portable.BundleError(f'Native conversion identity: {error}') from error
+    native_nwb = (native / 'output.nwb').resolve(strict=True)
+    count = 0
+    for descriptor in record['serializations']:
+        location = portable.within(root, descriptor['path'])
+        base = portable.within(root, descriptor.get('relative_to', 'data'))
+        if descriptor['format'] == 'analyzer_zarr':
+            import zarr
+            group = zarr.open(str(location), mode='r')
+            value = group['recording'][0]
+        else:
+            value = portable.at_pointer(portable.read_serialization(location),
+                                        descriptor.get('pointer', []))
+        count += verify_native_graph(value, base, native_nwb)
+    require(count > 0, 'Native conversion lacks an active NWB recording binding')
+
+
+def scientific_policy(root, record, no_spikes, common_code=None):
     """Check expected recording sets and owned outcomes, independently of labels."""
+    verify_native_conversion(root, record, common_code)
     import numpy as np
     import spikeinterface as si
 
@@ -198,18 +261,18 @@ def verify_invocation_metadata(record, unit_meta):
             "Stage invocation dropped or changed predecessor unit metadata")
 
 
-def verify(root, expected, unit_id, no_spikes, unit_meta=None):
+def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None):
     portable.verify(root)
     record = read_record(root)
     require(record["stage"] == expected and record["unit_id"] == unit_id, "Bundle kind or unit identity differs from the requested input")
     if unit_meta is not None:
         verify_invocation_metadata(record, unit_meta)
-    outcomes = scientific_policy(root, record, no_spikes)
+    outcomes = scientific_policy(root, record, no_spikes, common_code)
     require(outcomes == record["metadata"].get("outcomes"), "Scientific outcome receipt differs from current payload")
     return record
 
 
-def build(request, paths, output, no_spikes):
+def build(request, paths, output, no_spikes, common_code=None):
     require(request.get("schema_version") == 1 and request.get("phase") in ORDER, "Unsupported stage assembly request")
     require(len(paths) == request.get("input_count"), "Declared input count does not match staged paths")
     phase = request["phase"]
@@ -220,7 +283,7 @@ def build(request, paths, output, no_spikes):
     if phase != "dispatch":
         previous = paths[request["previous"]]
         prior = verify(previous, PREVIOUS[phase], request["unit_id"], no_spikes,
-                       unit_meta=metadata["unit_meta"])
+                       unit_meta=metadata["unit_meta"], common_code=common_code)
         require(prior["metadata"]["completed_stages"] == ORDER[:ORDER.index(phase)], "Predecessor history is incomplete")
         metadata['stage_provenance'] = deepcopy(prior['metadata']['stage_provenance'])
         payloads.append({"source": str(previous / "data"), "destination": "data"})
@@ -276,19 +339,21 @@ def build(request, paths, output, no_spikes):
             "recording_ids": ids, "payloads": payloads, "serializations": descriptors, "metadata": metadata,
             "dependency_aliases":aliases}
     record = portable.pack(spec, output)
-    outcomes = scientific_policy(output, record, no_spikes)
+    outcomes = scientific_policy(output, record, no_spikes, common_code)
     record["metadata"]["outcomes"] = outcomes
     record.pop("content_sha256")
     import hashlib
     record["content_sha256"] = hashlib.sha256(portable.encoded(record)).hexdigest()
     (output / "bundle.json").write_bytes(portable.encoded(record) + b"\n")
-    verify(output, record["stage"], record["unit_id"], no_spikes)
+    verify(output, record["stage"], record["unit_id"], no_spikes, common_code=common_code)
     return record
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--outcomes-code", type=Path, required=True)
+    parser.add_argument("--common-code", type=Path,
+                        help="Exported native common/python contract and schema tree")
     commands = parser.add_subparsers(dest="command", required=True)
     create = commands.add_parser("build")
     create.add_argument("--request", type=Path, required=True)
@@ -305,14 +370,15 @@ def main():
     try:
         if args.command == "build":
             paths = [path.resolve() for path in sorted(args.inputs.glob("item*"))]
-            record = build(json.loads(args.request.read_text()), paths, args.output, no_spikes)
+            record = build(json.loads(args.request.read_text()), paths, args.output, no_spikes,
+                           common_code=args.common_code)
         else:
             unit_meta = None
             if args.unit_meta is not None:
                 unit_meta = json.loads(args.unit_meta.read_text())
                 require(isinstance(unit_meta, dict), "Stage invocation unit metadata must be an object")
             record = verify(args.bundle.resolve(), args.kind, args.unit_id, no_spikes,
-                            unit_meta=unit_meta)
+                            unit_meta=unit_meta, common_code=args.common_code)
     except (portable.BundleError, FileNotFoundError, json.JSONDecodeError) as error:
         parser.exit(1, f"Scientific stage boundary error: {error}\n")
     print(json.dumps({"unit_id": record["unit_id"], "kind": record["stage"], "bytes": record["bytes"], "verified": True}))

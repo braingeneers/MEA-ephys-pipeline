@@ -6,7 +6,6 @@ validator. This adapter owns local copies and bindings, not conversion science.
 """
 import argparse
 import copy
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -24,43 +23,10 @@ from raw_selection import input_location
 from task_preparation import prepare_conversion
 from conversion_worker import commit_conversion
 
+from local_conversion_identity import (NAMES, PHASES, require, json_equal, schema_one,
+    expected_phases, completed_phases, read_json, inventory, verify_identity)
+
 GIB = 1024 ** 3
-PHASES = ['validate_input', 'convert', 'repack', 'companion', 'lindi',
-          'validate_metadata', 'validate_outputs']
-NAMES = {'nwb': 'output.nwb', 'nwb_lindi': 'output.nwb.lindi.json',
-         'nwb_validation': 'output.nwb.validation.json',
-         'maxwell_companion': 'output.linked.raw.h5'}
-
-
-def require(condition, message):
-    if not condition:
-        raise ContractError(message)
-
-
-def json_equal(left, right):
-    """Compare frozen JSON claims without Python's numeric coercion."""
-    return canonical_json(left) == canonical_json(right)
-
-
-def schema_one(value, description, document_type=None):
-    require(isinstance(value, dict) and type(value.get('schema_version')) is int
-            and value['schema_version'] == 1
-            and (document_type is None or value.get('document_type') == document_type),
-            'Unsupported ' + description)
-
-
-def expected_phases(settings):
-    return [phase for phase in PHASES
-            if phase != 'companion' or settings['effective']['create_linked_maxwell_companion']]
-
-
-def completed_phases(report, settings):
-    """Native phase status is an integer exit code, never a JSON boolean/float."""
-    phases = report.get('phases') if isinstance(report, dict) else None
-    return (isinstance(phases, list) and all(isinstance(p, dict) for p in phases)
-            and report.get('scientific_execution_complete') is True
-            and json_equal([p.get('phase') for p in phases], expected_phases(settings))
-            and all(type(p.get('exit_code')) is int and p['exit_code'] == 0 for p in phases))
 
 
 class PublishedOnly(LocalStore):
@@ -75,11 +41,6 @@ class PublishedOnly(LocalStore):
 def write_json(path, value):
     path = Path(path).absolute()
     return LocalStore(path.parent.as_uri() + '/').put_json(path.as_uri(), value)
-
-
-def read_json(path):
-    with Path(path).open('rb') as stream:
-        return decode_json(stream.read(MAX_JSON_BYTES + 1))
 
 
 def checked_plan(plan):
@@ -184,70 +145,11 @@ def prepare(reference, request):
     return result
 
 
-def inventory(root):
-    result = {}
-    require(root.is_dir() and not root.is_symlink(), 'Local unit must be a real directory')
-    for path in sorted(root.rglob('*')):
-        require(not path.is_symlink(), 'Local conversion units cannot contain symlinks')
-        require(path.is_file() or path.is_dir(), 'Local conversion dependencies must be regular files')
-        if path.is_file():
-            with path.open('rb') as stream:
-                result[path.relative_to(root).as_posix()] = dict(size=path.stat().st_size,
-                    sha256=hashlib.file_digest(stream, 'sha256').hexdigest())
-    return result
-
-
 def verify_local(root, expected=None):
-    """Verify a relocated unit using only its declared local dependencies."""
+    """Verify both native identity and the actual modeled scientific artifacts."""
     root = Path(root).absolute()
-    receipt = read_json(root/'conversion-unit.json')
-    schema_one(receipt, 'local conversion receipt', 'mea_maxwell_local_unit')
-    require(receipt.get('digest') == digest({k: v for k, v in receipt.items() if k != 'digest'}),
-            'Invalid local conversion receipt')
-    require(receipt.get('document_type') == 'mea_maxwell_local_unit' and receipt.get('complete') is True,
-            'Local conversion is incomplete')
-    actual = inventory(root)
-    actual.pop('conversion-unit.json')
-    require(json_equal(actual, receipt['files']), 'Local conversion dependency inventory changed')
-    details = receipt['unit_meta']['maxwell_conversion']
-    schema_one(details, 'local conversion metadata')
-    for kind, ref in details['artifacts'].items():
-        require(json_equal(actual.get(NAMES[kind]), dict(size=ref['size'], sha256=ref['sha256'])),
-                'Local sibling differs from its native published object')
-    def frozen(relative, ref):
-        require(json_equal(actual.get(relative), dict(size=ref['size'], sha256=ref['sha256'])),
-                'Local provenance differs from its native published object')
-        return read_json(root/relative)
-    envelope = frozen('conversion/native-artifacts.json', details['native_artifacts'])
-    validate_envelope(envelope, transport='local')
-    native_ref = selected_stage(envelope, 'conversion', transport='local')
-    stage = frozen('conversion/native-stage.json', native_ref['manifest'])
-    validate_stage(stage, transport='local')
-    require(json_equal(stage['owner'], details['native_owner'])
-            and json_equal(stage['settings'], details['settings']),
-            'Local native ownership or settings changed')
-    require(any(json_equal(details['native_unit'], unit) for unit in stage['unit_inputs']),
-            'Local unit lost its explicit native binding')
-    frozen('conversion/recordings.json', envelope['selection'])
-    require(json_equal(read_json(root/'conversion/native-unit.json'), details['native_unit']), 'Native unit provenance changed')
-    outcomes = [o for o in stage['outcomes'] if json_equal(o['unit_id'], details['native_unit']['unit_id'])]
-    require(len(outcomes) == 1 and outcomes[0]['status'] == 'complete'
-            and json_equal(outcomes[0]['evidence'], details['native_evidence'])
-            and json_equal({a['kind']: a['object'] for a in outcomes[0]['artifacts']}, details['artifacts']),
-            'Local conversion lost its complete native outcome')
-    report = frozen('conversion/native-evidence.json', details['native_evidence'])
-    require(completed_phases(report, details['settings']), 'Local native science is incomplete')
-    if 'projection' in details['native_unit']:
-        frozen('conversion/projection.json', details['native_unit']['projection'])
-    if expected is not None:
-        require(receipt['plan_digest'] == expected[0] and json_equal(receipt['unit_meta'], expected[1]['unit_meta']),
-                'Local unit differs from its frozen bridge plan')
-        row = expected[1]
-        require(set(actual) == set(row['files']) | set(row['evidence']), 'Local dependency coverage differs from the plan')
-        for relative, ref in row['files'].items():
-            require(json_equal(actual[relative], dict(size=ref['size'], sha256=ref['sha256'])), 'Changed frozen local dependency')
-        for relative, value in row['evidence'].items():
-            require((root/relative).read_bytes() == canonical_json(value), 'Changed native provenance copy')
+    receipt = verify_identity(root, expected,
+        common_code=Path(sys.modules[ContractError.__module__].__file__).parent.parent)
     # Read the actual modeled NWB and external-link companion in isolation.
     import h5py
     import ndx_cell_culture  # Register the owning typed extension.

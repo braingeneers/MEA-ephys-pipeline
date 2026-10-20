@@ -94,14 +94,14 @@ workflow MEA_PREPROCESSING {
             processes:[[name:'job_dispatch',execution:execution,capsule_pin:cfg.capsule_pin,args:cfg.args]]]
         tuple(boundaryOptions('nwb',settings,context,cfg.unit_meta,false),request,[results,inputs,max_duration,inputs.resolve('ecephys_session')])
     }
-    PACK_DISPATCH(dispatch_requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    PACK_DISPATCH(dispatch_requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     dispatched = PACK_DISPATCH.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     prep_calls = dispatched.map{ meta,path -> tuple(taskOptions('preprocessing',settings,context,meta),path) }
     preprocessing(prep_calls.map{ cfg,path -> cfg },channel.value(file("${moduleDir}/../capsules/preprocessing/code")),
         prep_calls.map{ cfg,path -> duration(path) },prep_calls.map{ cfg,path -> rawSession(path) },prep_calls.map{ cfg,path -> family(path,'job_') })
     prepared_join = keyedProducers(preprocessing.out.unit_results).join(keyedUnits(dispatched),failOnDuplicate:true,failOnMismatch:true)
     requests = prepared_join.map{ id,p,prior -> assemble('prepared',prior.meta,settings,context,prior.path,[p+[name:'preprocessing']]) }
-    PACK_PREPARED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    PACK_PREPARED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     emit:
     units = PACK_PREPARED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
 }
@@ -111,14 +111,14 @@ workflow MEA_KILOSORT4 {
     main:
     if (settings.sorter != 'kilosort4') error 'MEA_KILOSORT4 requires the Kilosort4 settings owner.'
     valid = stageInputs(units).map{ meta,path -> tuple(boundaryOptions('prepared',settings,context,meta,false),path) }
-    VERIFY_PREPARED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    VERIFY_PREPARED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     verified = VERIFY_PREPARED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     calls = verified.map{ meta,path -> tuple(taskOptions('spikesort_kilosort4',settings,context,meta),path) }
     spikesort_kilosort4(calls.map{ cfg,path -> cfg },channel.value(file("${moduleDir}/../capsules/kilosort4/code")),
         calls.map{ cfg,path -> duration(path) },calls.map{ cfg,path -> children(path.resolve('data')).findAll{ !it.name.equals('ecephys_session') } })
     joined = keyedProducers(spikesort_kilosort4.out.unit_results).join(keyedUnits(verified),failOnDuplicate:true,failOnMismatch:true)
     requests = joined.map{ id,p,prior -> assemble('sorted',prior.meta,settings,context,prior.path,[p+[name:'spikesort_kilosort4']]) }
-    PACK_SORTED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    PACK_SORTED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     emit:
     units = PACK_SORTED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
 }
@@ -127,7 +127,7 @@ workflow MEA_ANALYSIS {
     take: units; settings; context
     main:
     valid = stageInputs(units).map{ meta,path -> tuple(boundaryOptions('sorted',settings,context,meta,false),path) }
-    VERIFY_SORTED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    VERIFY_SORTED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     verified = VERIFY_SORTED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     calls = verified.map{ meta,path -> tuple(taskOptions('postprocessing',settings,context,meta),path) }
     postprocessing(calls.map{ cfg,path -> cfg },channel.value(file("${moduleDir}/../capsules/postprocessing/code")),
@@ -157,7 +157,7 @@ workflow MEA_ANALYSIS {
     collected = keyedProducers(results_collector.out.unit_results).join(visualized,failOnDuplicate:true,failOnMismatch:true)
     requests = collected.map{ id,r,v,c,p,prior -> assemble('analyzed',prior.meta,settings,context,prior.path,
         [p+[name:'postprocessing'],c+[name:'curation'],v+[name:'visualization'],r+[name:'results_collector',role:'collector',destination:'data/collected']]) }
-    PACK_ANALYZED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    PACK_ANALYZED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     emit:
     units = PACK_ANALYZED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
 }
@@ -166,7 +166,7 @@ workflow MEA_REPORTING {
     take: units; settings; context
     main:
     valid = stageInputs(units).map{ meta,path -> tuple(boundaryOptions('analyzed',settings,context,meta,false),path) }
-    VERIFY_ANALYZED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    VERIFY_ANALYZED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     verified = VERIFY_ANALYZED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     calls = verified.flatMap{ meta,path -> bundleRecord(path).recording_ids.collect{ id ->
         tuple(taskOptions('report_generation',settings,context,meta,[analyzer_subpath:"data/postprocessed_${id}.zarr".toString()]),tuple(id,path,[path])) } }
@@ -185,7 +185,7 @@ workflow MEA_REPORTING {
             r.producers.collect{ it+[name:'report_generation',destination:'data/reports'] } +
             b.producers.collect{ it+[name:'burst_detection',destination:'data/bursts'] })
     }
-    PACK_REPORTED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    PACK_REPORTED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     emit:
     units = PACK_REPORTED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
 }
@@ -194,7 +194,7 @@ workflow MEA_FINAL_EXPORT {
     take: units; settings; context
     main:
     valid = stageInputs(units).map{ meta,path -> tuple(boundaryOptions('reported',settings,context,meta,false),path) }
-    VERIFY_REPORTED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    VERIFY_REPORTED(valid,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     verified = VERIFY_REPORTED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
     calls = verified.map{ meta,path -> tuple(taskOptions('nwb_ecephys',settings,context,meta),path) }
     nwb_ecephys(calls.map{ cfg,path -> cfg },channel.value(file("${moduleDir}/../capsules/nwb_ecephys/code")),
@@ -215,7 +215,7 @@ workflow MEA_FINAL_EXPORT {
         request[1].processes.add([name:'nwb_ecephys',execution:raw_nwb.execution,capsule_pin:raw_nwb.settings.capsule_pin,args:raw_nwb.settings.args])
         request
     }
-    PACK_EXPORTED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")))
+    PACK_EXPORTED(requests,channel.value(file("${moduleDir}/helpers")),channel.value(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py")),channel.value(file("${moduleDir}/components/maxwell/components/common/python")))
     emit:
     units = PACK_EXPORTED.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
 }

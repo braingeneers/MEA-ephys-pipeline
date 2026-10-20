@@ -171,7 +171,7 @@ process MEA_MAXWELL_PREPARE_UNITS {
     cat > bridge-request.json <<'MEA_CONVERSION_REQUEST'
     ${groovy.json.JsonOutput.toJson(cfg)}
     MEA_CONVERSION_REQUEST
-    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}' prepare --request bridge-request.json --artifacts '${artifacts}'
+    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' prepare --request bridge-request.json --artifacts '${artifacts}'
     """
 }
 
@@ -194,7 +194,7 @@ process MEA_MAXWELL_MATERIALIZE_UNIT {
     path 'materialization-telemetry.json', emit: telemetry
     script:
     """
-    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}' materialize --plan '${plan}' --unit-id '${meta.unit_id}' --requested-bytes '${task.disk.toBytes()}'
+    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' materialize --plan '${plan}' --unit-id '${meta.unit_id}' --requested-bytes '${task.disk.toBytes()}'
     """
 }
 
@@ -217,7 +217,7 @@ process MEA_MAXWELL_COMMIT_UNITS {
     path 'bridge-result.json', emit: result
     script:
     """
-    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}' commit --plan '${plan}' --units materialized
+    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' commit --plan '${plan}' --units materialized
     """
 }
 
@@ -245,7 +245,7 @@ workflow MEA_MAXWELL_CONVERSION {
     PREPARE_MAXWELL_SELECTION(selection.map { it.recordings },cfg.settings,nativeContext +
         [step_id:nativeContext.step_id+'-raw',collection_uri:cfg.native.context.output_base_uri+'derived/nwb/'])
     MAXWELL_TO_NWB(PREPARE_MAXWELL_SELECTION.out.artifacts,cfg.settings,nativeContext)
-    def bridge = file("${moduleDir}/helpers/maxwell_bridge.py")
+    def bridge = file("${moduleDir}/helpers")
     def runtime = file("${moduleDir}/components/maxwell/runtime")
     def common = file("${moduleDir}/components/maxwell/components/common/python")
     MEA_MAXWELL_PREPARE_UNITS(MAXWELL_TO_NWB.out.artifacts.combine(selection).map { uri,request -> tuple(request,uri) },

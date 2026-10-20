@@ -11,6 +11,7 @@ process bundle_stage {
     tuple val(task_settings), val(request), path(payloads, stageAs: 'inputs/item??')
     path helpers, stageAs: 'mea-tools'
     path outcomes_code, stageAs: 'sorting-outcomes.py'
+    path common_code, stageAs: 'native-common'
 
     output:
     tuple val(task_settings), path('bundle'), emit: units
@@ -21,7 +22,7 @@ process bundle_stage {
     cat > request.json <<'MEA_REQUEST'
     ${groovy.json.JsonOutput.toJson(request)}
     MEA_REQUEST
-    python mea-tools/stage_bundle.py --outcomes-code sorting-outcomes.py build \
+    python mea-tools/stage_bundle.py --outcomes-code sorting-outcomes.py --common-code native-common build \
         --request request.json --inputs inputs --output bundle
     """
 }

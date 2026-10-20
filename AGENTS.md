@@ -112,6 +112,13 @@
   encoded values (including nullable/type/signed-zero distinctions), and permit
   new keys. Verification and assembly must use the same condition; keep the
   independent contents-only helper API explicit.
+- Share native conversion identity checks through the lightweight
+  `local_conversion_identity` helper and the exported contract/schema tree. Stage
+  both explicitly for verifiers and packers; stage the whole helpers directory
+  for native bridge callers. A resealed portable inventory is insufficient:
+  retain native artifact byte references, receipt metadata and active NWB bindings.
+  Keep complete modeled/schema/companion validation in the native runtime. Read
+  executable kwargs using their declared bases; historical annotations are provenance.
 - Keep executable references distinct from historical provenance. Rebase the exact
   lazy recording graph, including its raw NWB and binary dependencies, using explicit
   serialization bases. Do not substitute a binary cache or infer a producing task

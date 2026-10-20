@@ -56,7 +56,8 @@ The wrapper adds the stage directory. This example publishes
 `/data/independent-sort/sorting/bundles/acquisition-a.sorted`. Continue with
 `analysis`, `reporting`, then `export`, each receiving its predecessor kind.
 Downstream calls retain predecessor unit metadata. Added metadata is allowed;
-changing or dropping existing fields is rejected during assembly.
+changing or dropping existing fields is rejected before scientific consumers run
+and during assembly.
 
 Multiple units use `--units_file /data/units.json`:
 
@@ -123,6 +124,20 @@ declared executable recording graph before downstream capsules can classify a lo
 failure as skipped work. Cumulative bundles retain raw NWBs, prepared binaries,
 stage outputs and execution provenance. Size storage for their decoded payload and
 temporary copies; this local contract does not perform S3 publication.
+
+For units carrying `maxwell_conversion`, both boundary tasks also verify the native
+conversion receipt, all published artifact bytes and retained provenance against
+the exported contract/schema library. Receipt metadata must match the stage's
+metadata exactly; new top-level invocation fields are allowed. Active NWB readers
+must refer to that verified native NWB using their declared serialization bases.
+Historical annotations are retained as provenance. The converter still performs
+its full modeled NWB, schema and companion validation in its own runtime.
+
+The helpers and exported `components/maxwell/components/common/python` tree are
+explicit task inputs. Direct helper callers can supply `--common-code`; otherwise
+the helper uses the workflow's exported tree. An invalid explicit tree never falls
+back to an installed package. Generic units without native conversion claims keep
+the portable bundle interface.
 
 Serialization bases are explicit. The collector rewrites analyzer recording graphs
 relative to its **publication** directory. Its maintained capsule preserves the
