@@ -29,7 +29,9 @@ substitute for a lazy filtered recording, whose floating samples can differ.
     ...                             # the stage's declared remaining artifacts
 ```
 
-The contract is `mea.local-stage-bundle/v1`. `unit_id` namespaces whole bundles;
+The contract is `mea.local-stage-bundle/v2`, with exact integer `schema_version: 2`.
+The assembly specification and stage request remain separate exact-integer v1
+interfaces. `unit_id` namespaces whole bundles;
 internal recording names and filenames stay unchanged. Two units may each contain
 `synthetic.nwb`; they must have distinct external unit identities. A non-conversion
 bundle's `recording_ids` must exactly match its dispatch inventory. Never join units
@@ -37,7 +39,8 @@ by arrival order or a raw basename.
 
 `bundle.json` records the stage (`nwb`, `prepared`, `sorted`, `analyzed`, `reported`
 or `exported`), recording identities, small caller metadata, all payload sizes and
-SHA-256 values, executable serialization descriptors and scientific fingerprints.
+SHA-256 values, executable serialization descriptors, complete scientific
+fingerprints and separate producer-owned `executable_bindings`.
 Its content digest detects manifest drift. It is not an authentication signature,
 publication receipt, S3 stage manifest or promise of cross-run result reuse.
 
@@ -114,12 +117,37 @@ historical evidence; they are not replayed as executable dependencies.
 
 Before accepting a bundle, assembly compares the original and portable graphs:
 channel order, properties (including gains/offsets/geometry), sample counts/rates,
-start/middle/end raw and microvolt sample windows and acquisition times, unit IDs,
+every raw and calibrated microvolt sample and every acquisition time, unit IDs,
 all spike-vector values, selected extension API data and every saved extension file.
 All copied files are verified against their full source SHA-256 values before
 serialization changes. Saved scientific arrays/extensions are not recomputed.
 Fingerprints preserve nullable Pandas values, NaN and infinity as distinct values;
 they do not remove or repair undefined scientific measurements.
+
+Recording arrays use exact shape/dtype and streaming SHA-256 of all ordered values.
+The fixed `mea.recording-stream/v1` policy reads 65,536 frames per block, including
+the final partial block; it never samples or shortens recordings. Explicit clocks
+are sliced from their actual stored vectors. Regular clocks use SpikeInterface's
+exact float64 global-index/rate/start equation. Read boundaries are fixed so lazy
+extractors receive the same calls before and after relocation. No numeric tolerance
+or scientific algorithm change is introduced by packaging.
+
+After all serialization rewrites, assembly freezes each active graph's class,
+module, version, kwargs, path mode and folder metadata. These bindings preserve
+selector types and dictionary order, normalize paths to logical locations under
+`data/`, and bind the complete bytes of every active file/directory dependency,
+including NWB headers. Verification checks them separately from the ordinary file
+inventory. Historical annotations remain provenance. A receiver resealing transport
+checksums cannot make a changed recording, header or executable source match the
+original producer receipt. These local receipts are not signatures and do not
+replace independent scientific validation.
+
+Current consumers reject v1 bundles with an actionable legacy-format error: those
+receipts recorded sample windows and cannot attest to complete recordings. Re-run
+the named stage producer to obtain v2. Audit historical artifacts with their exact
+frozen original verifier; there is no implicit production upgrade or bypass. Any
+test-only v2 counterpart must cite preexisting independently verified original
+science, retain its original producer attribution and record new packaging separately.
 
 Verification repeats the payload inventory and scientific checks and rejects
 missing, changed or unexpected files. Call it before a downstream consumer uses a
@@ -127,7 +155,9 @@ materialized bundle. The catalogue digest alone does not prove a recording remai
 loadable. A local JSON manifest also does not replace converter validation or
 complete S3 identity/publication checks.
 
-Named scientific stages also validate the incoming unit metadata before releasing
+Named scientific stages check manifest/inventory and kind/unit, incoming metadata,
+native conversion/work/outcome policy, then complete scientific/binding receipts
+before releasing
 the verified input to downstream processes. Every predecessor key must remain
 present with its exact encoded value; callers may add new keys. This preserves
 projection/session/recording references, nullable values, integer/float/boolean
@@ -146,6 +176,18 @@ maintained named stage callers supply it; that check must happen before downstre
 science or publication, rather than waiting for the final packer to reject a
 changed reference. The ordinary entry point merges omitted metadata from its input
 bundle; named callers should forward the predecessor's metadata explicitly.
+
+A reserved `data/ecephys_session/conversion-unit.json`, stored native metadata or an
+incoming native declaration requires native identity validation. Removing the
+stored marker cannot turn a native artifact into a generic input. Generic inputs
+without native declarations retain the same interface. Full native modeled/schema/
+companion validation remains owned by the converter runtime.
+
+Use `scripts/modular/check_complete_receipts.py create-nwb --output <fixture.nwb>`
+in the pinned NWB image once, then `verify --source-nwb <fixture.nwb> --output
+<new-directory>` in the pinned base image for generated multi-segment sample/clock/scaling, schema/type,
+graph/header/dependency, native-declaration and metadata-order controls. These
+technical fixtures supplement full-size science and actual Nextflow acceptance.
 
 The regression helper is `scripts/modular/check_portable_bundle.py`. Its `build`
 command takes a retained real direct run, source fixture/session and a fresh output

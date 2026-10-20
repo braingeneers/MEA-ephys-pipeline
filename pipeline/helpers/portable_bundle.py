@@ -18,7 +18,10 @@ import re
 import shutil
 
 
-CONTRACT = "mea.local-stage-bundle/v1"
+CONTRACT = "mea.local-stage-bundle/v2"
+BUNDLE_SCHEMA = 2
+# This is part of the scientific receipt, not a tunable sampling parameter.
+RECORDING_BLOCK_FRAMES = 65536
 STAGES = {"nwb", "prepared", "sorted", "analyzed", "reported", "exported"}
 FORMATS = {"extractor_json", "extractor_pickle", "analyzer_zarr"}
 SERIALIZATION_SUFFIXES = {".json", ".pkl", ".pickle"}
@@ -256,22 +259,116 @@ def assert_local_extractor(value, base, root):
 
 
 def recording_identity(recording):
+    import numpy as np
+
     result = {"sampling_frequency": recording.get_sampling_frequency(),
               "dtype": str(recording.get_dtype()), "channel_ids": jsonable(recording.channel_ids),
               "properties": {key: array_identity(recording.get_property(key))
-                             for key in sorted(recording.get_property_keys())}, "segments": []}
+                             for key in sorted(recording.get_property_keys())},
+              "read_policy": {"algorithm": "mea.recording-stream/v1", "frames_per_block": RECORDING_BLOCK_FRAMES},
+              "segments": []}
     for segment in range(recording.get_num_segments()):
         frames = recording.get_num_samples(segment)
-        windows = []
-        for start in sorted({0, frames // 2, max(0, frames - 128)}):
-            end = min(frames, start + 128)
-            times = recording.get_times(segment_index=segment)[start:end]
-            windows.append({"start": start, "end": end, "times": array_identity(times),
-                            "raw": array_identity(recording.get_traces(segment_index=segment, start_frame=start, end_frame=end)),
-                            "microvolts": array_identity(recording.get_traces(segment_index=segment, start_frame=start,
-                                                                              end_frame=end, return_scaled=True))})
-        result["segments"].append({"frames": frames, "windows": windows})
+        shape = (frames, recording.get_num_channels())
+        def traces(start, end, scaled=False):
+            return recording.get_traces(segment_index=segment, start_frame=start, end_frame=end, return_scaled=scaled)
+
+        # get_times constructs the entire regular vector. Use the pinned SI
+        # equation on global indices instead; never reconstruct explicit clocks.
+        clock = recording.get_time_info(segment_index=segment)
+        vector = clock["time_vector"]
+        if vector is not None and tuple(vector.shape) != (frames,):
+            raise BundleError("Recording time vector differs from segment frame count")
+        def times(start, end):
+            if vector is not None:
+                return np.asarray(vector[start:end])
+            values = np.arange(start, end, dtype="float64")
+            values /= clock["sampling_frequency"]
+            if clock["t_start"] is not None:
+                values += clock["t_start"]
+            return values
+
+        result["segments"].append({"frames": frames,
+            "raw": streamed_array_identity(shape, traces),
+            "microvolts": streamed_array_identity(shape, lambda a, b: traces(a, b, True)),
+            "times": streamed_array_identity((frames,), times)})
     return result
+
+
+def streamed_array_identity(shape, read):
+    """Hash every ordered value with bounded reads and exact dtype/shape checks."""
+    import numpy as np
+
+    digest, dtype = hashlib.sha256(), None
+    # Read an empty array once as well: it still has a meaningful dtype/shape.
+    for start in range(0, max(1, shape[0]), RECORDING_BLOCK_FRAMES):
+        end = min(shape[0], start + RECORDING_BLOCK_FRAMES)
+        array = np.asarray(read(start, end))
+        if array.shape != (end - start, *shape[1:]) or array.dtype.hasobject or array.dtype.fields:
+            raise BundleError("Recording stream must contain numeric arrays of the declared shape")
+        if dtype is not None and array.dtype != dtype:
+            raise BundleError("Recording stream dtype changed between blocks")
+        dtype = array.dtype
+        digest.update(array.tobytes(order="C"))
+    return {"shape": list(shape), "dtype": dtype.str, "sha256": digest.hexdigest()}
+
+
+def executable_binding(descriptor, root):
+    """Freeze active graph structure and complete dependencies in logical paths.
+
+    Ordinary transport inventories may be resealed by a receiver. This separate
+    producer receipt binds executable sources, selectors and ordering. Historical
+    annotations are deliberately not executable. Compute after all graph rewrites.
+    """
+    import numpy as np
+
+    location = within(root, descriptor["path"])
+    base = within(root, descriptor.get("relative_to", "data"))
+    if descriptor["format"] == "analyzer_zarr":
+        import zarr
+        value = zarr.open(str(location), mode="r")["recording"][0]
+        base = location
+    else:
+        value = at_pointer(read_serialization(location), descriptor.get("pointer", []))
+    assert_local_extractor(value, base, root)
+    dependencies = {}
+
+    def dependency(item):
+        if isinstance(item, list):
+            return [dependency(path) for path in item]
+        path = (base / item).resolve(strict=True)
+        logical = path.relative_to(root.resolve()).as_posix()
+        if path.is_dir():
+            identity = {"kind": "directory", "files": inventory(path)}
+        else:
+            identity = {"kind": "file", "bytes": path.stat().st_size, "sha256": sha256(path)}
+        dependencies[logical] = identity
+        return {"bundle_path": logical}
+
+    def normalized(node):
+        if isinstance(node, np.ndarray):
+            return {"numpy_array": array_identity(node)}
+        if isinstance(node, np.generic):
+            return {"numpy_scalar": {"dtype": node.dtype.str, "value": jsonable(node.item())}}
+        if isinstance(node, tuple):
+            return {"tuple": [normalized(item) for item in node]}
+        if isinstance(node, list):
+            return [normalized(item) for item in node]
+        if not isinstance(node, dict):
+            return jsonable(node)
+        if "class" not in node:
+            return {"mapping": [[normalized(key), normalized(item)] for key, item in node.items()]}
+        # Preserve meaningful key order in kwargs; omit non-executable history.
+        kwargs = [[key, dependency(item) if key in FILE_KEYS and item is not None else normalized(item)]
+                  for key, item in node["kwargs"].items()]
+        fields = [[key, normalized(node[key])] for key in ("class", "module", "version", "relative_paths") if key in node]
+        fields.append(["kwargs", {"mapping": kwargs}])
+        if node.get("folder_metadata") is not None:
+            fields.append(["folder_metadata", dependency(node["folder_metadata"])])
+        return {"extractor": fields}
+
+    graph = normalized(value)
+    return {"graph": graph, "dependencies": dependencies}
 
 
 def sorting_identity(sorting):
@@ -420,7 +517,7 @@ def check_recording_ids(record, data):
 
 
 def pack(spec, output):
-    if spec.get("schema_version") != 1 or spec.get("stage") not in STAGES:
+    if type(spec.get("schema_version")) is not int or spec["schema_version"] != 1 or spec.get("stage") not in STAGES:
         raise BundleError("Unsupported bundle assembly schema or stage")
     unit = spec.get("unit_id")
     if not isinstance(unit, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,159}", unit):
@@ -477,17 +574,18 @@ def pack(spec, output):
                 value = replacement
             write_serialization(destination, value)
         portable_descriptor = {key: value for key, value in descriptor.items() if key not in {"source", "base"}}
-        if fingerprint(portable_descriptor, output, portable=True) != expected:
+        if encoded(fingerprint(portable_descriptor, output, portable=True)) != encoded(expected):
             raise BundleError(f"Scientific identity changed during packaging: {descriptor['path']}")
         science.append(expected)
         original_serializations.append({"path": descriptor["path"], "pointer": descriptor.get("pointer", []),
                                         "sha256": sha256(original) if original.is_file() else None})
     payload_inventory = inventory(output / "data")
-    record = {"schema_version": 1, "contract": CONTRACT, "unit_id": unit, "stage": spec["stage"],
+    record = {"schema_version": BUNDLE_SCHEMA, "contract": CONTRACT, "unit_id": unit, "stage": spec["stage"],
               "recording_ids": spec["recording_ids"], "metadata": spec.get("metadata", {}),
               "files": payload_inventory, "bytes": sum(item["bytes"] for item in payload_inventory.values()),
               "serializations": [{key: value for key, value in item.items() if key not in {"source", "base"}}
                                  for item in descriptors], "scientific_fingerprints": science,
+              "executable_bindings": [executable_binding(item, output) for item in descriptors],
               "original_serializations": original_serializations,
               "historical_provenance_paths": "Retained as evidence; not executable dependencies."}
     record["content_sha256"] = hashlib.sha256(encoded(record)).hexdigest()
@@ -495,23 +593,46 @@ def pack(spec, output):
     return record
 
 
-def verify(root):
+def verify_manifest(root):
+    """Check transport and declared structure without loading scientific arrays."""
     root = Path(root).resolve()
     record = json.loads((root / "bundle.json").read_text())
-    if record.get("schema_version") != 1 or record.get("contract") != CONTRACT or record.get("stage") not in STAGES:
-        raise BundleError("Unsupported scientific bundle contract")
+    if type(record.get("schema_version")) is not int:
+        raise BundleError("Bundle schema_version must be exact integer 2")
+    if record["schema_version"] == 1:
+        raise BundleError("Legacy scientific bundle v1 lacks complete recording receipts; re-run its named stage producer "
+                          "to create v2. Audit historical v1 artifacts with their frozen original verifier.")
+    if record["schema_version"] != BUNDLE_SCHEMA or record.get("contract") != CONTRACT or record.get("stage") not in STAGES:
+        raise BundleError("Unsupported scientific bundle contract (expected mea.local-stage-bundle/v2)")
     unsigned = {key: value for key, value in record.items() if key != "content_sha256"}
     if hashlib.sha256(encoded(unsigned)).hexdigest() != record.get("content_sha256"):
         raise BundleError("Bundle manifest digest mismatch")
-    if inventory(root / "data") != record["files"]:
+    actual = inventory(root / "data")
+    if encoded(actual) != encoded(record["files"]):
         raise BundleError("Bundle file inventory mismatch (missing, changed or unexpected payload)")
+    if type(record.get("bytes")) is not int or record["bytes"] != sum(item["bytes"] for item in actual.values()):
+        raise BundleError("Bundle byte count differs from its complete inventory")
     check_catalogue(record["serializations"], root / "data")
     check_recording_ids(record, root / "data")
+    return record
+
+
+def verify_science(root, record):
+    """Check immutable producer receipts after stage metadata/policy preflight."""
+    root = Path(root).resolve()
     identities = [fingerprint(item, root, portable=True) for item in record["serializations"]]
-    if identities != record["scientific_fingerprints"]:
+    if encoded(identities) != encoded(record["scientific_fingerprints"]):
         raise BundleError("Bundle scientific fingerprint mismatch")
+    bindings = [executable_binding(item, root) for item in record["serializations"]]
+    if encoded(bindings) != encoded(record.get("executable_bindings")):
+        raise BundleError("Bundle executable binding mismatch")
     return {"passed": True, "unit_id": record["unit_id"], "stage": record["stage"], "bytes": record["bytes"],
             "files": len(record["files"]), "serializations": len(identities), "content_sha256": record["content_sha256"]}
+
+
+def verify(root):
+    """Contents-only API; stage consumers also enforce invocation/native/work policy."""
+    return verify_science(root, verify_manifest(root))
 
 
 def main():

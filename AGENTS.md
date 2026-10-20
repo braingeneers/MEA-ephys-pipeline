@@ -119,6 +119,17 @@
   retain native artifact byte references, receipt metadata and active NWB bindings.
   Keep complete modeled/schema/companion validation in the native runtime. Read
   executable kwargs using their declared bases; historical annotations are provenance.
+- Portable bundles use exact-integer v2 receipts. Hash every segment's raw/scaled
+  samples and actual clocks with the fixed bounded read policy; three windows are
+  insufficient. Freeze active graph/dependency bindings after all rewrites, keeping
+  selector types and dictionary order. Check incoming metadata/native policy before
+  complete scientific reads. A reserved native receipt or incoming native claim
+  requires the guard even if its stored marker is removed. Preserve legacy artifacts
+  with their frozen reader; never silently upgrade their scientific attribution.
+- The base image's optional PyNWB import is incompatible independently of bundle
+  consumption. Create tiny NWB contract fixtures in the pinned NWB image, validate
+  them there, and consume them in the actual base runtime. Do not patch dependencies
+  or replace that runtime to make a packaging test import its fixture generator.
 - Keep executable references distinct from historical provenance. Rebase the exact
   lazy recording graph, including its raw NWB and binary dependencies, using explicit
   serialization bases. Do not substitute a binary cache or infer a producing task

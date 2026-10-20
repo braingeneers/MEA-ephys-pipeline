@@ -74,17 +74,18 @@ def verify_native_graph(value, base, native_nwb):
     return count
 
 
-def verify_native_conversion(root, record, common_code=None):
-    unit_meta = record['metadata']['unit_meta']
-    if 'maxwell_conversion' not in unit_meta:
+def verify_native_conversion(root, record, common_code=None, unit_meta=None):
+    stored_meta = record['metadata']['unit_meta']
+    native = root / 'data/ecephys_session'
+    if not ((native / 'conversion-unit.json').exists() or 'maxwell_conversion' in stored_meta
+            or isinstance(unit_meta, dict) and 'maxwell_conversion' in unit_meta):
         return
     from local_conversion_identity import verify_identity
 
-    native = root / 'data/ecephys_session'
     try:
-        verify_identity(native, common_code=common_code, unit_meta=unit_meta,
+        verify_identity(native, common_code=common_code, unit_meta=stored_meta,
                         artifacts_first=True)
-    except (ValueError, KeyError, TypeError, AttributeError, IndexError) as error:
+    except (ValueError, KeyError, TypeError, AttributeError, IndexError, OSError) as error:
         raise portable.BundleError(f'Native conversion identity: {error}') from error
     native_nwb = (native / 'output.nwb').resolve(strict=True)
     count = 0
@@ -102,9 +103,9 @@ def verify_native_conversion(root, record, common_code=None):
     require(count > 0, 'Native conversion lacks an active NWB recording binding')
 
 
-def scientific_policy(root, record, no_spikes, common_code=None):
+def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None):
     """Check expected recording sets and owned outcomes, independently of labels."""
-    verify_native_conversion(root, record, common_code)
+    verify_native_conversion(root, record, common_code, unit_meta)
     import numpy as np
     import spikeinterface as si
 
@@ -262,18 +263,20 @@ def verify_invocation_metadata(record, unit_meta):
 
 
 def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None):
-    portable.verify(root)
-    record = read_record(root)
+    record = portable.verify_manifest(root)
     require(record["stage"] == expected and record["unit_id"] == unit_id, "Bundle kind or unit identity differs from the requested input")
     if unit_meta is not None:
         verify_invocation_metadata(record, unit_meta)
-    outcomes = scientific_policy(root, record, no_spikes, common_code)
-    require(outcomes == record["metadata"].get("outcomes"), "Scientific outcome receipt differs from current payload")
+    outcomes = scientific_policy(root, record, no_spikes, common_code, unit_meta)
+    require(portable.encoded(outcomes) == portable.encoded(record["metadata"].get("outcomes")),
+            "Scientific outcome receipt differs from current payload")
+    portable.verify_science(root, record)
     return record
 
 
 def build(request, paths, output, no_spikes, common_code=None):
-    require(request.get("schema_version") == 1 and request.get("phase") in ORDER, "Unsupported stage assembly request")
+    require(type(request.get("schema_version")) is int and request["schema_version"] == 1
+            and request.get("phase") in ORDER, "Unsupported stage assembly request")
     require(len(paths) == request.get("input_count"), "Declared input count does not match staged paths")
     phase = request["phase"]
     previous = None
