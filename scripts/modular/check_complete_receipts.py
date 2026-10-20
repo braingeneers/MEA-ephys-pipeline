@@ -157,6 +157,24 @@ class CompleteReceipts(unittest.TestCase):
         with self.assertRaisesRegex(portable.BundleError, 'executable binding mismatch'):
             portable.verify(root)
 
+    def test_absolute_path_to_same_source_rejected_before_constructor(self):
+        root = self.copy()
+        path = root / 'data/job_0.json'
+        value = portable.read_serialization(path)
+        graph = value['recording_dict']
+        graph['kwargs']['file_path'] = str(root / 'data/input.nwb')
+        for probe_constructor in [False, True]:
+            if probe_constructor:
+                # If policy constructs this graph before path preflight, an
+                # unrelated constructor error would hide the intended guard.
+                graph['kwargs']['unknown_constructor_probe'] = True
+            portable.write_serialization(path, value)
+            reseal(root)
+            with self.assertRaisesRegex(portable.BundleError, 'requires relative filesystem paths'):
+                portable.verify(root)
+            with self.assertRaisesRegex(portable.BundleError, 'requires relative filesystem paths'):
+                stages.verify(root, 'nwb', 'unit', lambda log: False)
+
     def test_selector_type_and_kwargs_order_rejected(self):
         for name in ['type', 'order']:
             root = ROOT / (self._testMethodName + '-' + name)

@@ -126,6 +126,10 @@
   complete scientific reads. A reserved native receipt or incoming native claim
   requires the guard even if its stored marker is removed. Preserve legacy artifacts
   with their frozen reader; never silently upgrade their scientific attribution.
+- Reject absolute executable paths even when they resolve inside the current bundle.
+  Logical-path normalization alone can accept a machine-specific graph that fails
+  after relocation. Preflight graph paths after incoming metadata and before policy
+  constructors; keep absolute source rebasing available to the original capsules.
 - The base image's optional PyNWB import is incompatible independently of bundle
   consumption. Create tiny NWB contract fixtures in the pinned NWB image, validate
   them there, and consume them in the actual base runtime. Do not patch dependencies

@@ -113,6 +113,12 @@ malformed graphs and omissions from the known executable catalogue. Original
 `provenance.json`, sorter history, annotations and processing paths remain as
 historical evidence; they are not replayed as executable dependencies.
 
+Portable executable paths must themselves be relative, even when an absolute
+spelling currently resolves to the same bundled file. Stage verification preflights
+these graph paths after incoming metadata and before native/work policy constructs
+extractors. Assembly still accepts the original capsules' absolute source paths and
+rebases them. Existing valid v2 receipts keep their format and scientific identities.
+
 ## Verification scope
 
 Before accepting a bundle, assembly compares the original and portable graphs:

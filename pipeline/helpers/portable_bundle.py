@@ -185,7 +185,7 @@ def register_alias(source, target, mappings):
     mappings[source] = target
 
 
-def rebase_extractor(value, old_base, new_base, mappings, bundle_root):
+def rebase_extractor(value, old_base, new_base, mappings, bundle_root, *, require_relative=False):
     """Rebase executable kwargs, leaving annotations and provenance untouched.
 
     A root relative_paths flag applies to every nested extractor, as in the pinned
@@ -201,6 +201,8 @@ def rebase_extractor(value, old_base, new_base, mappings, bundle_root):
         if not isinstance(path, (str, Path)) or not str(path):
             raise BundleError("Extractor filesystem dependency must be a non-empty string")
         original = Path(path)
+        if require_relative and original.is_absolute():
+            raise BundleError(f"Portable extractor requires relative filesystem paths: {path}")
         if relative:
             original = old_base / original
         elif not original.is_absolute():
@@ -255,7 +257,7 @@ def assert_local_extractor(value, base, root):
         raise BundleError("Portable extractor must declare relative_paths=true")
     mappings = {path.resolve(): path.resolve() for path in (root / "data").rglob("*")}
     mappings[(root / "data").resolve()] = (root / "data").resolve()
-    rebase_extractor(value, base, base, mappings, root)
+    rebase_extractor(value, base, base, mappings, root, require_relative=True)
 
 
 def recording_identity(recording):
@@ -313,6 +315,24 @@ def streamed_array_identity(shape, read):
     return {"shape": list(shape), "dtype": dtype.str, "sha256": digest.hexdigest()}
 
 
+def executable_graph(descriptor, root):
+    """Read the declared executable graph without constructing an extractor."""
+    location = within(root, descriptor["path"])
+    base = within(root, descriptor.get("relative_to", "data"))
+    if descriptor["format"] == "analyzer_zarr":
+        import zarr
+        return zarr.open(str(location), mode="r")["recording"][0], location
+    return at_pointer(read_serialization(location), descriptor.get("pointer", [])), base
+
+
+def verify_executables(root, record):
+    """Preflight portable paths before loaders can use a machine-specific graph."""
+    root = Path(root).resolve()
+    for descriptor in record["serializations"]:
+        value, base = executable_graph(descriptor, root)
+        assert_local_extractor(value, base, root)
+
+
 def executable_binding(descriptor, root):
     """Freeze active graph structure and complete dependencies in logical paths.
 
@@ -322,14 +342,7 @@ def executable_binding(descriptor, root):
     """
     import numpy as np
 
-    location = within(root, descriptor["path"])
-    base = within(root, descriptor.get("relative_to", "data"))
-    if descriptor["format"] == "analyzer_zarr":
-        import zarr
-        value = zarr.open(str(location), mode="r")["recording"][0]
-        base = location
-    else:
-        value = at_pointer(read_serialization(location), descriptor.get("pointer", []))
+    value, base = executable_graph(descriptor, root)
     assert_local_extractor(value, base, root)
     dependencies = {}
 
@@ -632,7 +645,9 @@ def verify_science(root, record):
 
 def verify(root):
     """Contents-only API; stage consumers also enforce invocation/native/work policy."""
-    return verify_science(root, verify_manifest(root))
+    record = verify_manifest(root)
+    verify_executables(root, record)
+    return verify_science(root, record)
 
 
 def main():

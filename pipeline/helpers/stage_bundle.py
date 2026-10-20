@@ -267,6 +267,7 @@ def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None)
     require(record["stage"] == expected and record["unit_id"] == unit_id, "Bundle kind or unit identity differs from the requested input")
     if unit_meta is not None:
         verify_invocation_metadata(record, unit_meta)
+    portable.verify_executables(root, record)
     outcomes = scientific_policy(root, record, no_spikes, common_code, unit_meta)
     require(portable.encoded(outcomes) == portable.encoded(record["metadata"].get("outcomes")),
             "Scientific outcome receipt differs from current payload")
