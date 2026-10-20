@@ -21,6 +21,9 @@ def maxwellFiniteJson(value) {
 // Each alias gets an independent metadata value. Global params are deployment only.
 def maxwellMetadata(settings, context, image) {
     if (!(settings instanceof Map)) error 'Maxwell settings must be an object'
+    if (settings.containsKey('controls') || (context.containsKey('controls') &&
+        (!(context.controls instanceof Map) || context.controls)))
+        error 'The fresh-only export does not accept execution controls; use the mixed workflow'
     def submitted = new LinkedHashMap(settings)
     // The portal exposes one JSON object; portable callers may pass the map directly.
     if (submitted.keySet() == (['settings'] as Set)) {

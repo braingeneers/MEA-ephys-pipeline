@@ -99,7 +99,7 @@ def _freeze_projection(reader, specification):
     return observed
 
 
-def prepare_raw_selection(store, recordings, context, owner, *, read_budgets=None):
+def prepare_raw_selection(store, recordings, context, owner, *, read_budgets=None, resolver=None):
     """Read-only validation; no cache, selection or scientific output is written."""
     transport = getattr(store, 'transport', 's3')
     context, owner, recordings = copy.deepcopy(context), copy.deepcopy(owner), copy.deepcopy(recordings)
@@ -149,10 +149,19 @@ def prepare_raw_selection(store, recordings, context, owner, *, read_budgets=Non
         metadata = recording.get('nwb_metadata', {})
         if not isinstance(metadata, dict):
             raise ContractError('nwb_metadata must map unit names to frozen projection references')
-        source = _freeze_source(reader, uri, recording.get('source_reference'))
-        header = inspect_input(reader, source, selectors, read_budgets=read_budgets)
+        if resolver is None:
+            source = _freeze_source(reader, uri, recording.get('source_reference'))
+            header = inspect_input(reader, source, selectors, read_budgets=read_budgets)
+            facts = dict(original_source=source, routes=header['header']['selected'],
+                source_metadata=dict(source_header_digest=header['header_digest'],
+                    source_full_sha256_verified=header['inspection']['full_sha256_verified']))
+        else:
+            facts = resolver.source(reader, recording, identity, names, selectors, read_budgets)
+            source = facts['original_source']
         units = []
-        for unit_index, (name, selected) in enumerate(zip(names, header['header']['selected'])):
+        if len(facts['routes']) != len(names):
+            raise ContractError('Resolved source must account for every selected unit')
+        for unit_index, (name, selected) in enumerate(zip(names, facts['routes'])):
             unit_id = re.sub(r'[^A-Za-z0-9_.-]', '_', identity + '-' + name)
             _shape(unit_id, 'identifier')
             if unit_id in units_seen:
@@ -161,12 +170,18 @@ def prepare_raw_selection(store, recordings, context, owner, *, read_budgets=Non
             output = collection + 'outputs/' + identity + '/' + name + '/'
             validate_root(output, transport)
             assert_within(output + 'planned-object', root, transport=transport)
-            projection = _freeze_projection(reader, metadata.get(name))
-            units.append({'unit_id': unit_id, 'unit_name': name, 'unit_index': unit_index,
+            projection = (_freeze_projection(reader, metadata.get(name)) if resolver is None else
+                          resolver.projection(reader, metadata.get(name), identity, name))
+            entry = {'unit_id': unit_id, 'unit_name': name, 'unit_index': unit_index,
                 'raw_dataset_path': selectors[unit_index],
                 'resolved_raw_dataset_path': selected['raw_dataset_path'],
-                'unit_output_uri': output, 'original_projection': projection})
-        cached = [source] + [unit['original_projection'] for unit in units if unit['original_projection']]
+                'unit_output_uri': output, 'original_projection': projection}
+            if resolver is not None:
+                entry.update(resolver.projection_fields(identity, name))
+            units.append(entry)
+        physical = facts.get('physical_source', source)
+        cached = [physical] + [unit.get('physical_projection', unit['original_projection']) for unit in units
+                               if unit['original_projection']]
         needs_cache = transport == 's3' and any(ref['uri'].startswith('file:') for ref in cached)
         cache_base = None
         if needs_cache:
@@ -180,16 +195,27 @@ def prepare_raw_selection(store, recordings, context, owner, *, read_budgets=Non
             assert_within(cache_base + 'planned-object', cache_root)
             cache_base += ('modular-v1/' + context['run_id'] + '/' + context['step_id']
                            + '/' + identity + '/')
-        prepared.append({'recording_index': index, 'recording_id': identity, 'original_source': source,
-            'source_basename': source_basename(uri), 'source_header_digest': header['header_digest'],
-            'source_full_sha256_verified': header['inspection']['full_sha256_verified'],
-            'units': units, 'cache_base_uri': cache_base})
+        record = {'recording_index': index, 'recording_id': identity, 'original_source': source,
+            'source_basename': source_basename(uri), 'units': units, 'cache_base_uri': cache_base,
+            **facts['source_metadata']}
+        if physical != source:
+            record['physical_source'] = physical
+        if facts.get('source_cache_evidence') is not None:
+            record['source_cache_evidence'] = facts['source_cache_evidence']
+        prepared.append(record)
     return {'recordings': recordings, 'context': context, 'owner': owner, 'records': prepared}
 
 
 def publish_raw_selection(store, recordings, context, owner, *, cache_store=None, read_budgets=None):
     """Publish one common raw graph; full scientific execution remains worker-owned."""
     plan = prepare_raw_selection(store, recordings, context, owner, read_budgets=read_budgets)
+    return _publish_selection(store, plan, cache_store=cache_store)
+
+
+def _publish_selection(store, plan, *, cache_store=None, revalidate=None):
+    """Shared create-only input publisher; owner wrappers validate their full plan."""
+    if revalidate is not None:
+        revalidate()
     transport = getattr(store, 'transport', 's3')
     context = plan['context']
     needs_cache = any(record['cache_base_uri'] for record in plan['records'])
@@ -221,11 +247,13 @@ def publish_raw_selection(store, recordings, context, owner, *, cache_store=None
         return staged, evidence
     units, outcomes = [], []
     for record in plan['records']:
-        raw, raw_cache = stage(record['original_source'], record, 'sources')
+        raw, raw_cache = stage(record.get('physical_source', record['original_source']), record, 'sources')
+        raw_cache = record.get('source_cache_evidence', raw_cache)
         for entry in record['units']:
-            projection, projection_cache = stage(entry['original_projection'], record, 'projections')
+            projection, projection_cache = stage(entry.get('physical_projection', entry['original_projection']), record, 'projections')
+            projection_cache = entry.get('projection_cache_evidence', projection_cache)
             metadata = {key: record[key] for key in ('recording_index', 'source_basename',
-                'source_header_digest', 'source_full_sha256_verified', 'original_source')}
+                'source_header_digest', 'source_full_sha256_verified', 'original_source', 'source_resolution') if key in record}
             metadata.update({key: entry[key] for key in ('unit_name', 'unit_index', 'raw_dataset_path',
                                                        'resolved_raw_dataset_path', 'unit_output_uri')})
             metadata['expected_units'] = len(record['units'])
@@ -255,6 +283,8 @@ def publish_raw_selection(store, recordings, context, owner, *, cache_store=None
     # Shape/scientific binding errors must not create even an initial selection document.
     make_stage(EPHYS, 'selection', execution['step_id'], root, placeholder, plan['owner'],
                {}, {}, execution, units, outcomes, transport=transport)
+    if revalidate is not None:
+        revalidate()
     selection = store.put_json(uri('selection.json'), plan['recordings'])
     initial = new_envelope(EPHYS, root, selection, transport=transport)
     parent = publish_initial(store, initial, uri('initial.json'))

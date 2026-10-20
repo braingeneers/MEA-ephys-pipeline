@@ -1,7 +1,7 @@
 # Generated Maxwell conversion component
 
-Generated from https://github.com/braingeneers/workflows at `855cb3c17a85e7fd995e97118eec6dc348d3f6f6`.
-Owning workflow version: `0.1.30`. Scientific task image: `braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d`.
+Generated from https://github.com/braingeneers/workflows at `0f3a980cab85192ad8e444be06be531fb3b7f2d9`.
+Owning workflow version: `0.1.39`. Scientific task image: `braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d`.
 Generated scientific/controller files retain their upstream bytes and headers.
 Only Docker COPY source paths are relocated. No license is inferred or reassigned;
 consult the recorded upstream notices/headers and source provenance.
@@ -10,6 +10,15 @@ This is the complete fresh conversion component: source validation, conversion,
 channel-major repack, compact companion, LINDI, final validation and verified
 publication. Source replacement/finalization is not supported. The native artifact
 contract is preserved. An MEA artifact-to-local-unit bridge is a separate caller.
+The maintained entry templates live under `export/fresh/` in the source repository;
+generate this package to launch that entry. Its `native_task.py` calls the maintained
+fresh scientific helpers. The catalog's mixed invocation adapter has a separate
+entry and is not part of this fresh-only package. The manifest records each exact
+entry source path; no Nextflow text is rewritten during export.
+This fresh-only entry rejects mixed execution controls and recording_source_states
+overrides. Keep their config defaults empty; use the mixed workflow for discovery,
+reuse or adoption. Named callers cannot add a controls wrapper or nonempty context
+controls. Ordinary scientific maps and the settings-only wrapper remain supported.
 
 Requires Nextflow 26.04.6 and Docker for local tasks. Its config includes the pinned
 nf-k8s deployment plugin; driver plugin acquisition is distinct from scientific
@@ -53,13 +62,13 @@ Regenerate from the exact committed exporter, with Python 3.11+ and Git:
 
 ```bash
 python3.11 export_component.py export --source-repository /path/to/workflows \
-  --source-revision 855cb3c17a85e7fd995e97118eec6dc348d3f6f6 --output /path/to/new-component
+  --source-revision 0f3a980cab85192ad8e444be06be531fb3b7f2d9 --output /path/to/new-component
 ```
 
 For a local development rebuild (not a published image or replacement release pin):
 
 ```bash
-docker build --network none --build-arg SOURCE_REVISION=855cb3c17a85e7fd995e97118eec6dc348d3f6f6 \
+docker build --network none --build-arg SOURCE_REVISION=0f3a980cab85192ad8e444be06be531fb3b7f2d9 \
   -t maxwell-export-check:development /path/to/component
 docker run --rm --network none --entrypoint python maxwell-export-check:development \
   scripts/runtime_identity.py

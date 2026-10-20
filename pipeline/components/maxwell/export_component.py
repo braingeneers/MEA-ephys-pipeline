@@ -19,6 +19,7 @@ COMMON = 'workflow-sources/ephys-modular-common'
 GENERATOR = OWNER + '/export_component.py'
 MANIFEST = 'export-manifest.json'
 FORMAT = 1
+FRESH_ENTRY = OWNER + '/export/fresh/'
 
 
 class ExportError(ValueError):
@@ -106,7 +107,15 @@ def selection(source):
         elif path.startswith(COMMON + '/python/ephys_modular/') and path.endswith('.py'):
             relative = path[len(COMMON + '/python/'): -3].replace('/', '.')
             modules[relative.removesuffix('.__init__')] = path
-    pending, reachable = ['native_task', 'verify_outputs'], set()
+    entry = source.read(FRESH_ENTRY + 'component.nf').decode()
+    main = source.read(FRESH_ENTRY + 'main.nf').decode()
+    if re.findall(r'''from\s+['"]\./([^'"]+)['"]''', main) != ['component']:
+        raise ExportError('Review the fresh entry module boundary')
+    commands = [line for line in entry.splitlines() if re.search(r'\bpython\s+', line)]
+    roots = [re.findall(r'\$\{runtime\}/([A-Za-z_][A-Za-z_0-9]*)\.py', line) for line in commands]
+    if not roots or any(len(row) != 1 for row in roots):
+        raise ExportError('Fresh task helpers require explicit static runtime paths')
+    pending, reachable = [row[0] for row in roots] + ['verify_outputs'], set()
     while pending:
         name = pending.pop()
         if name in reachable:
@@ -128,7 +137,9 @@ def selection(source):
             selected[path] = (path[len(OWNER) + 1:], 'task-runtime')
     for name in science:
         selected[OWNER + '/scripts/' + name] = ('scripts/' + name, 'scientific-image-source')
-    fixed = ('main.nf', 'component.nf', 'nextflow.config', 'Dockerfile', 'defaults.json',
+    for name in ('main.nf', 'component.nf'):
+        selected[FRESH_ENTRY + name] = (name, 'fresh-entry')
+    fixed = ('nextflow.config', 'Dockerfile', 'defaults.json',
              'image.json', 'process-policy.json', 'runtime-lock.json', 'extraction.json',
              'runtime/allocation-policy.json', 'runtime/owner-runtime-policy.json',
              'lib/MaxwellTaskRetry.groovy', 'export_component.py')
@@ -164,6 +175,15 @@ This is the complete fresh conversion component: source validation, conversion,
 channel-major repack, compact companion, LINDI, final validation and verified
 publication. Source replacement/finalization is not supported. The native artifact
 contract is preserved. An MEA artifact-to-local-unit bridge is a separate caller.
+The maintained entry templates live under `export/fresh/` in the source repository;
+generate this package to launch that entry. Its `native_task.py` calls the maintained
+fresh scientific helpers. The catalog's mixed invocation adapter has a separate
+entry and is not part of this fresh-only package. The manifest records each exact
+entry source path; no Nextflow text is rewritten during export.
+This fresh-only entry rejects mixed execution controls and recording_source_states
+overrides. Keep their config defaults empty; use the mixed workflow for discovery,
+reuse or adoption. Named callers cannot add a controls wrapper or nonempty context
+controls. Ordinary scientific maps and the settings-only wrapper remain supported.
 
 Requires Nextflow 26.04.6 and Docker for local tasks. Its config includes the pinned
 nf-k8s deployment plugin; driver plugin acquisition is distinct from scientific
@@ -269,7 +289,8 @@ def export_component(repository, revision, output):
         applicable_notice_files=notices, files=records,
         regeneration=['python3.11', 'export_component.py', 'export', '--source-repository',
             '/path/to/workflows', '--source-revision', revision, '--output', '/path/to/new-component'],
-        scientific_source_transformed=False, source_replacement_supported=False)
+        scientific_source_transformed=False, source_replacement_supported=False,
+        entry_scope='fresh-only', entry_sources={name:FRESH_ENTRY+name for name in ('main.nf','component.nf')})
     manifest['content_sha256'] = checksum(encoded(manifest))
     output = Path(output).absolute()
     top = Path(source.git('rev-parse', '--show-toplevel').decode().strip()).resolve()

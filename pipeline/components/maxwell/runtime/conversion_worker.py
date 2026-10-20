@@ -29,11 +29,24 @@ class ScratchExceeded(ScientificFailure):
     pass
 
 
+def _json_equal(left, right):
+    """Frozen JSON retains numeric types, signed zero and nullable key presence."""
+    return canonical_json(left) == canonical_json(right)
+
+
+def _claims_match(observed, expected):
+    """Check declared frozen claims; additional report observations stay allowed."""
+    return (isinstance(observed, dict)
+            and all(key in observed and _json_equal(observed[key], value)
+                    for key, value in expected.items()))
+
+
 def validate_plan(store, plan):
     """Rebuild bindings/allocation from frozen graph; diagnostics may vary by read."""
     from task_preparation import prepare_conversion
     if (not isinstance(plan, dict) or plan.get('document_type') != 'maxwell_conversion_plan'
-            or plan.get('schema_version') != 1 or plan.get('scientific_execution_complete') is not False
+            or type(plan.get('schema_version')) is not int or plan['schema_version'] != 1
+            or plan.get('scientific_execution_complete') is not False
             or plan.get('plan_digest') != digest({k: v for k, v in plan.items() if k != 'plan_digest'})):
         raise ContractError('Invalid or changed conversion plan')
     semantic = plan['semantic']
@@ -53,7 +66,7 @@ def validate_plan(store, plan):
         for task in result['tasks']:
             task['header'].pop('inspection', None)
         return result
-    if comparable(current) != comparable(plan):
+    if not _json_equal(comparable(current), comparable(plan)):
         raise ContractError('Conversion plan differs from current frozen inputs or derived bindings')
     return plan
 
@@ -348,6 +361,10 @@ def execute_unit(store, plan, unit_id, directory, *, public_endpoint=None):
 
 def _validate_fresh_report(plan, task, outcome, scientific_runtime, report, *, transport):
     """Complete maintained fresh report semantics; performs no storage substitution."""
+    if (not isinstance(report, dict) or type(report.get('schema_version')) is not int
+            or report['schema_version'] != 1
+            or report.get('document_type') != 'maxwell_conversion_evidence'):
+        raise ContractError('Unsupported fresh conversion evidence format')
     unit_id = task['unit']['unit_id']
     kinds = {'nwb': 'nwb', 'lindi': 'nwb_lindi', 'validation': 'nwb_validation',
              'companion': 'maxwell_companion'}
@@ -357,12 +374,12 @@ def _validate_fresh_report(plan, task, outcome, scientific_runtime, report, *, t
         'unit_id': unit_id, 'owner': plan['semantic']['owner'], 'settings': plan['semantic']['settings'],
         'source': task['raw'], 'projection': task['unit'].get('projection'),
         'artifacts': outcome['artifacts']}
-    if any(report.get(key) != value for key, value in expected_bindings.items()):
+    if not _claims_match(report, expected_bindings):
         raise ContractError('Task evidence differs from the frozen conversion invocation')
     expected = {kinds[name]: uri for name, uri in task['outputs'].items() if name in kinds}
     artifacts = outcome['artifacts']
     if (not isinstance(artifacts, list) or len(artifacts) != len(expected)
-            or {item['kind']: item['object']['uri'] for item in artifacts} != expected):
+            or not _json_equal({item['kind']: item['object']['uri'] for item in artifacts}, expected)):
         raise ContractError('Task artifact coverage or destinations differ from the plan')
     checks = report.get('checks', {})
     shape = task['header']['header']['selected'][0]['shape']
@@ -371,7 +388,7 @@ def _validate_fresh_report(plan, task, outcome, scientific_runtime, report, *, t
         'all_lindi_signal_ranges_equal': True,
         'all_linked_values_equal': True if 'companion' in task['outputs'] else None,
         'modeled_projection_verified': 'projection' in task['unit']}
-    if (any(checks.get(key) != value for key, value in expected_checks.items())
+    if (not _claims_match(checks, expected_checks)
             or type(checks.get('lindi_signal_ranges_checked')) is not int
             or checks['lindi_signal_ranges_checked'] <= 0):
         raise ContractError('Task lacks complete scientific output verification')
@@ -379,27 +396,28 @@ def _validate_fresh_report(plan, task, outcome, scientific_runtime, report, *, t
     if 'companion' in task['outputs']:
         expected_phases += ['companion']
     expected_phases += ['lindi', 'validate_metadata', 'validate_outputs']
-    if ([item.get('phase') for item in report.get('phases', [])] != expected_phases
+    phases = report.get('phases')
+    if (not isinstance(phases, list) or any(not isinstance(item, dict) for item in phases)
+            or not _json_equal([item.get('phase') for item in phases], expected_phases)
             or any(type(item.get('exit_code')) is not int or item['exit_code'] != 0
-                   for item in report['phases'])
-            or report.get('scientific_runtime') != scientific_runtime):
+                   for item in phases)
+            or not _json_equal(report.get('scientific_runtime'), scientific_runtime)):
         raise ContractError('Task scientific phases/runtime do not match the owning execution')
     observed = report.get('staged_source')
     validate_ref(observed, strong=True, transport=transport)
-    if any(observed.get(key) != value for key, value in task['raw'].items()):
+    if not _claims_match(observed, task['raw']):
         raise ContractError('Task lacks the full frozen source verification')
     if 'projection' in task['unit']:
         observed_projection = report.get('staged_projection')
         validate_ref(observed_projection, strong=True, transport=transport)
-        if any(observed_projection.get(key) != value for key, value in task['unit']['projection'].items()):
+        if not _claims_match(observed_projection, task['unit']['projection']):
             raise ContractError('Task lacks the full frozen projection verification')
     if report.get('reader_url') != reader_url(task['outputs']['nwb'], transport,
                                              report.get('public_reader_endpoint')):
         raise ContractError('Task reader URL differs from its durable NWB destination')
     scratch = report.get('scratch', {})
     allocation = task['allocation']
-    if (scratch.get('requested_bytes') != allocation['requested_bytes']
-            or scratch.get('minimum_free_bytes') != allocation['minimum_free_bytes']
+    if (not _claims_match(scratch, {key: allocation[key] for key in ('requested_bytes', 'minimum_free_bytes')})
             or any(type(scratch.get(key)) is not int or scratch[key] < 0
                    for key in ('observed_peak_apparent_bytes', 'observed_peak_allocated_bytes',
                                'observed_minimum_free_bytes', 'checks'))

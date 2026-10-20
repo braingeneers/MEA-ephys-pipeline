@@ -198,9 +198,17 @@ def _unique(values, label):
         raise ContractError("Duplicate " + label)
 
 
+def _version_one(value):
+    # JSON Schema const treats 1.0 as 1; the wire format requires an integer.
+    if (not isinstance(value, dict) or type(value.get("schema_version")) is not int
+            or value["schema_version"] != 1):
+        raise ContractError("Artifact schema_version must be the JSON integer 1")
+
+
 def validate_envelope(value, dataset_uri=None, transport="s3"):
     _transport(transport)
     canonical_json(value)
+    _version_one(value)
     _shape(value, "envelope")
     validate_ref(value["selection"], strong=True, transport=transport)
     if "parent" in value:
@@ -237,6 +245,7 @@ def stage_signature(value):
 def validate_stage(value, expected_units=None, transport="s3"):
     _transport(transport)
     canonical_json(value)
+    _version_one(value)
     _shape(value, "stage_result")
     validate_ref(value["selection"], strong=True, transport=transport)
     for item in value["inputs"]:

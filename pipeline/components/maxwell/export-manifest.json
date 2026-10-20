@@ -1,6 +1,11 @@
 {
   "applicable_notice_files": [],
-  "content_sha256": "ba6d10f19e0e288d41a2d8973e61ff696d35caf5067be0d88bfd7548d70c029f",
+  "content_sha256": "ecde1dc6156d33cdd3ab6411cb4732a0c16cdb2dda3657083bd6d06f59e25830",
+  "entry_scope": "fresh-only",
+  "entry_sources": {
+    "component.nf": "workflow-sources/modular-maxwell-to-nwb/export/fresh/component.nf",
+    "main.nf": "workflow-sources/modular-maxwell-to-nwb/export/fresh/main.nf"
+  },
   "files": {
     "Dockerfile": {
       "bytes": 964,
@@ -12,21 +17,21 @@
       "transform": "relocate-five-Docker-COPY-prefixes"
     },
     "README.md": {
-      "bytes": 3871,
+      "bytes": 4599,
       "mode": "100644",
       "role": "distribution",
-      "sha256": "14f9ea79489b5878977f1bec85fa26c863a627af396755117b172c83d491a4f9",
+      "sha256": "4288f4fde2a4aaf115c4e63449366eb8ae7e5b3ff2029234143e343a891b5823",
       "source_path": null,
       "source_sha256": null,
       "transform": "generated-portable-instructions"
     },
     "component.nf": {
-      "bytes": 9494,
+      "bytes": 9738,
       "mode": "100644",
-      "role": "task-runtime",
-      "sha256": "0503af4899fc91cb3459f66dc0ef925d8e3aa4de4ac87a12f4960b951c2f8ed3",
-      "source_path": "workflow-sources/modular-maxwell-to-nwb/component.nf",
-      "source_sha256": "0503af4899fc91cb3459f66dc0ef925d8e3aa4de4ac87a12f4960b951c2f8ed3",
+      "role": "fresh-entry",
+      "sha256": "1906c463d4f274c76c3c87e4d914ab93cda41a3cca0a75a727592bda96526b1a",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/export/fresh/component.nf",
+      "source_sha256": "1906c463d4f274c76c3c87e4d914ab93cda41a3cca0a75a727592bda96526b1a",
       "transform": "copy"
     },
     "components/common/python/ephys_modular/__init__.py": {
@@ -48,12 +53,21 @@
       "transform": "copy"
     },
     "components/common/python/ephys_modular/contracts.py": {
-      "bytes": 17379,
+      "bytes": 17744,
       "mode": "100644",
       "role": "task-runtime",
-      "sha256": "4cc0d6d68e98e77db6bd1d08c817c56e9e785822ac9ad7e14713ba1698e1b630",
+      "sha256": "bcf0fa66a4848e372106e494ba9dc3bfb3e8d894119d2b8ada5418b56d001a92",
       "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/contracts.py",
-      "source_sha256": "4cc0d6d68e98e77db6bd1d08c817c56e9e785822ac9ad7e14713ba1698e1b630",
+      "source_sha256": "bcf0fa66a4848e372106e494ba9dc3bfb3e8d894119d2b8ada5418b56d001a92",
+      "transform": "copy"
+    },
+    "components/common/python/ephys_modular/discovery.py": {
+      "bytes": 7253,
+      "mode": "100644",
+      "role": "task-runtime",
+      "sha256": "7e38353db410a94448fc96cf3c492683ff94a8243759a86143169979d0427af2",
+      "source_path": "workflow-sources/ephys-modular-common/python/ephys_modular/discovery.py",
+      "source_sha256": "7e38353db410a94448fc96cf3c492683ff94a8243759a86143169979d0427af2",
       "transform": "copy"
     },
     "components/common/python/ephys_modular/local.py": {
@@ -111,12 +125,12 @@
       "transform": "copy"
     },
     "export_component.py": {
-      "bytes": 17538,
+      "bytes": 19104,
       "mode": "100644",
       "role": "distribution",
-      "sha256": "d478366aa13b8af5f801db88f8a2d59dbbb294f6127ed470584b58c7da4380e8",
+      "sha256": "54b6aa201c26415621409f320238c03c502c6fa8e8271d3d68794f63a9b73033",
       "source_path": "workflow-sources/modular-maxwell-to-nwb/export_component.py",
-      "source_sha256": "d478366aa13b8af5f801db88f8a2d59dbbb294f6127ed470584b58c7da4380e8",
+      "source_sha256": "54b6aa201c26415621409f320238c03c502c6fa8e8271d3d68794f63a9b73033",
       "transform": "copy"
     },
     "extraction.json": {
@@ -147,21 +161,21 @@
       "transform": "copy"
     },
     "main.nf": {
-      "bytes": 1935,
+      "bytes": 2205,
       "mode": "100644",
-      "role": "task-runtime",
-      "sha256": "9d05d3d32d8f4cb717b3b0014b3f1d4a9d88c108665b7766cf20624e8a19f7a5",
-      "source_path": "workflow-sources/modular-maxwell-to-nwb/main.nf",
-      "source_sha256": "9d05d3d32d8f4cb717b3b0014b3f1d4a9d88c108665b7766cf20624e8a19f7a5",
+      "role": "fresh-entry",
+      "sha256": "13405246b6dd3955dc370c9f108deb1ee98d9148b14fab3d32fd7d116f9d0da5",
+      "source_path": "workflow-sources/modular-maxwell-to-nwb/export/fresh/main.nf",
+      "source_sha256": "13405246b6dd3955dc370c9f108deb1ee98d9148b14fab3d32fd7d116f9d0da5",
       "transform": "copy"
     },
     "nextflow.config": {
-      "bytes": 558,
+      "bytes": 611,
       "mode": "100644",
       "role": "task-runtime",
-      "sha256": "4a44372e70411ead804aea109701649334d9564eb29c212d9b8971446977486a",
+      "sha256": "c41283833adba720e01c038317dc3dbe6aa871ccdac6bf9af290d5d8ed2f9a68",
       "source_path": "workflow-sources/modular-maxwell-to-nwb/nextflow.config",
-      "source_sha256": "4a44372e70411ead804aea109701649334d9564eb29c212d9b8971446977486a",
+      "source_sha256": "c41283833adba720e01c038317dc3dbe6aa871ccdac6bf9af290d5d8ed2f9a68",
       "transform": "copy"
     },
     "process-policy.json": {
@@ -201,12 +215,12 @@
       "transform": "copy"
     },
     "runtime/conversion_worker.py": {
-      "bytes": 27385,
+      "bytes": 28197,
       "mode": "100644",
       "role": "task-runtime",
-      "sha256": "dcac4e04319bf0983799056b58a3ddb832b6dc53f2afb6b234985d756d7858ef",
+      "sha256": "db11f17bdfe97a034ca38740e9d9e234fea7040ecb254ab13d29a8fda8d54166",
       "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/conversion_worker.py",
-      "source_sha256": "dcac4e04319bf0983799056b58a3ddb832b6dc53f2afb6b234985d756d7858ef",
+      "source_sha256": "db11f17bdfe97a034ca38740e9d9e234fea7040ecb254ab13d29a8fda8d54166",
       "transform": "copy"
     },
     "runtime/frozen_s3_file.py": {
@@ -219,12 +233,12 @@
       "transform": "copy"
     },
     "runtime/inspect_maxwell_input.py": {
-      "bytes": 15369,
+      "bytes": 15966,
       "mode": "100644",
       "role": "task-runtime",
-      "sha256": "ccd48694a721bb425ba92f05b8f1127680ee40c6d6df528c27b669dba7d9d93f",
+      "sha256": "b6ab07ec10f65d0b63c98afb0dfbf4a63028b70e1ce6e71ac383441083356618",
       "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/inspect_maxwell_input.py",
-      "source_sha256": "ccd48694a721bb425ba92f05b8f1127680ee40c6d6df528c27b669dba7d9d93f",
+      "source_sha256": "b6ab07ec10f65d0b63c98afb0dfbf4a63028b70e1ce6e71ac383441083356618",
       "transform": "copy"
     },
     "runtime/metadata_volume.py": {
@@ -273,12 +287,12 @@
       "transform": "copy"
     },
     "runtime/raw_selection.py": {
-      "bytes": 16686,
+      "bytes": 18380,
       "mode": "100644",
       "role": "task-runtime",
-      "sha256": "938a44fcdf11de24109a25aa4a54553089c7b943159239a7c13a4455caf6a572",
+      "sha256": "7074334f9219ddacd9f3963f65c3870c64d5b56a482f1419d240321c339db3f4",
       "source_path": "workflow-sources/modular-maxwell-to-nwb/runtime/raw_selection.py",
-      "source_sha256": "938a44fcdf11de24109a25aa4a54553089c7b943159239a7c13a4455caf6a572",
+      "source_sha256": "7074334f9219ddacd9f3963f65c3870c64d5b56a482f1419d240321c339db3f4",
       "transform": "copy"
     },
     "runtime/task_preparation.py": {
@@ -455,9 +469,9 @@
   },
   "generator": {
     "path": "workflow-sources/modular-maxwell-to-nwb/export_component.py",
-    "sha256": "d478366aa13b8af5f801db88f8a2d59dbbb294f6127ed470584b58c7da4380e8"
+    "sha256": "54b6aa201c26415621409f320238c03c502c6fa8e8271d3d68794f63a9b73033"
   },
-  "owner_version": "0.1.30",
+  "owner_version": "0.1.39",
   "regeneration": [
     "python3.11",
     "export_component.py",
@@ -465,7 +479,7 @@
     "--source-repository",
     "/path/to/workflows",
     "--source-revision",
-    "855cb3c17a85e7fd995e97118eec6dc348d3f6f6",
+    "0f3a980cab85192ad8e444be06be531fb3b7f2d9",
     "--output",
     "/path/to/new-component"
   ],
@@ -484,7 +498,7 @@
     "version": "0.1.6"
   },
   "scientific_source_transformed": false,
-  "source_commit": "855cb3c17a85e7fd995e97118eec6dc348d3f6f6",
+  "source_commit": "0f3a980cab85192ad8e444be06be531fb3b7f2d9",
   "source_replacement_supported": false,
   "source_repository": "https://github.com/braingeneers/workflows"
 }

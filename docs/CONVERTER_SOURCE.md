@@ -2,14 +2,14 @@
 
 [`pipeline/components/maxwell`](../pipeline/components/maxwell/README.md) contains
 the complete maintained fresh converter, generated from Workflows commit
-`855cb3c17a85e7fd995e97118eec6dc348d3f6f6`. The exporter was introduced at `e7d1813`.
+`0f3a980cab85192ad8e444be06be531fb3b7f2d9`. The exporter was introduced at `e7d1813`.
 Its [manifest](../pipeline/components/maxwell/export-manifest.json) records original
 paths/hashes, the exact generator, image pin, transformations and content identity.
 Generated code retains upstream headers and observed notices; its source ownership
 remains independent of the surrounding MEA code.
 
-The native owner is `braingeneers-modular-maxwell-to-nwb` 0.1.30, common contracts
-are 0.1.9, and the scientific image is the immutable 0.1.6 reference recorded in
+The native owner is `braingeneers-modular-maxwell-to-nwb` 0.1.39, common contracts
+are 0.1.11, and the scientific image is the immutable 0.1.6 reference recorded in
 `image.json`. Native outputs are verified artifact references after complete
 publication. Source validation, conversion, channel-major repacking, compact
 companion, LINDI, final validation and verification are included. Source replacement
@@ -35,10 +35,10 @@ generated scientific code or copy an unpinned live branch. The packaged verifier
 checks bytes, modes and the complete file inventory against the generated manifest;
 bind its content digest to the reviewed source revision as well.
 
-This snapshot has 50 manifest entries (51 regular files), including the explicitly
+This snapshot has 51 manifest entries (52 regular files), including the explicitly
 staged `runtime/nwb_graph.py` guard, shared `runtime/owner_runtime.py` image guard
 and its authoritative `runtime/owner-runtime-policy.json`. Its exact content digest is
-`ba6d10f19e0e288d41a2d8973e61ff696d35caf5067be0d88bfd7548d70c029f`.
+`ecde1dc6156d33cdd3ab6411cb4732a0c16cdb2dda3657083bd6d06f59e25830`.
 The native image preserves physical reference topology, while runtime identity v2
 binds all verified scientific tool hashes and the extraction record. Both MEA
 writers stage the same owning guard before export or source-copy/append. Historical
@@ -88,7 +88,21 @@ Earlier 0.1.24 source/content provenance remains historical:
 Import and interface regressions do not establish complete original/native/MEA
 scientific graph acceptance at 0.1.30; that acceptance remains a separate gate.
 
-The native shared dependency is publicly pinned. MEA source and consumer image
-publication remain phase 05. Full original-versus-exported converter parity, refreshed pipeline-boundary
+The preceding 0.1.30 source remains historical at
+`855cb3c17a85e7fd995e97118eec6dc348d3f6f6`, content digest
+`ba6d10f19e0e288d41a2d8973e61ff696d35caf5067be0d88bfd7548d70c029f`.
+The selected 0.1.39 export keeps the same scientific image/tools/defaults and
+publication, allocation, schema, profile and retry policy. It adds strict frozen
+native/common JSON claims and integer format versions, bounded route-helper
+extraction, optional raw-source resolver plumbing and explicit fresh-only execution
+control rejection. Its common package includes an unused shared discovery helper;
+mixed native invocation, reuse and adoption coordination are excluded. The exporter
+copies its maintained fresh templates directly, without rewriting Nextflow source.
+Historical valid artifacts retain their original scientific producer identities.
+
+The selected owner revision is local during integration validation. Make that exact
+revision accessible from its maintained source repository before the upstream
+handoff; runtime launches use the already-bundled source and pinned image. MEA source
+and consumer image publication remain phase 05. Full original-versus-exported converter parity, refreshed pipeline-boundary
 acceptance and GPU/cluster acceptance remain separate requirements. Earlier real
 scientific producer acceptance keeps its actual source and image owners. Scientific fixtures/logs remain outside Git.

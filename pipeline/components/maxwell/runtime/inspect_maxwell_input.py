@@ -167,14 +167,12 @@ def _scalar_well(handle, path):
     return value[()].reshape(-1)[0]
 
 
-def inspect_header(handle, selectors, *, max_objects=50000, max_links=100000,
-                   metadata_read_budget_bytes=None):
-    datasets, traversal, objects, link_name_bytes = _inventory(handle, max_objects, max_links)
-    raw_paths = list_routed_raw_dataset_paths(handle)
-    if not raw_paths:
-        raise HeaderError('No routed Maxwell raw table found')
-    if any(not isinstance(handle[path], h5py.Dataset) for path in raw_paths):
-        raise HeaderError('Routed raw path is not a dataset')
+def selected_routes(handle, selectors, raw_paths):
+    """Resolve declared routes; caller separately validates fresh/linked storage."""
+    if not isinstance(selectors, (list, tuple)) or not 0 < len(selectors) <= 1024:
+        raise HeaderError('Supply a bounded nonempty selector list')
+    if not raw_paths or any(not isinstance(handle[path], h5py.Dataset) for path in raw_paths):
+        raise HeaderError('No valid routed Maxwell raw table found')
     raw_tokens = {_token(handle[path]) for path in raw_paths}
     selected, tokens = [], set()
     for requested in selectors:
@@ -207,6 +205,19 @@ def inspect_header(handle, selectors, *, max_objects=50000, max_links=100000,
                          'filter_ids': [int(properties.get_filter(i)[0]) for i in range(properties.get_nfilters())],
                          'sampling_hz': _scalar(handle, group + '/settings/sampling'),
                          'lsb': _scalar(handle, group + '/settings/lsb')})
+    return selected
+
+
+def inspect_header(handle, selectors, *, max_objects=50000, max_links=100000,
+                   metadata_read_budget_bytes=None):
+    datasets, traversal, objects, link_name_bytes = _inventory(handle, max_objects, max_links)
+    raw_paths = list_routed_raw_dataset_paths(handle)
+    if not raw_paths:
+        raise HeaderError('No routed Maxwell raw table found')
+    if any(not isinstance(handle[path], h5py.Dataset) for path in raw_paths):
+        raise HeaderError('Routed raw path is not a dataset')
+    raw_tokens = {_token(handle[path]) for path in raw_paths}
+    selected = selected_routes(handle, selectors, raw_paths)
     metadata = [value for token, value in datasets.items() if token not in raw_tokens]
     raw_volumes = [datasets[token]['fixed_logical_bytes'] for token in raw_tokens]
     result = {'selected': selected, 'raw_table_count': len(raw_tokens),

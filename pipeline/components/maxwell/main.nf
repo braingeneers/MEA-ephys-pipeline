@@ -1,6 +1,9 @@
 include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellJson } from './component'
 
 workflow {
+    if (!(params.controls instanceof Map) || params.controls ||
+        !(params.recording_source_states instanceof Map) || params.recording_source_states)
+        error 'The fresh-only export does not accept controls or recording_source_states; use the mixed workflow'
     def runId = params.run_id ?: java.util.UUID.randomUUID().toString()
     def root = params.output_uri
     if (!root) error 'An explicit output_uri is required'
