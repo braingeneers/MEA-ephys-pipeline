@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "candidate_recipe_not_selected_or_published",
+  "parent_image": "braingeneers/mea-ephys-base:0.1.0",
+  "parent_local_image_id": "sha256:f09087aa24b5d3cc9ee09dd9c02ea180eeadb1be45ae043d99a32ee3c8bbc9d7",
+  "preserved_numerical_packages": {
+    "numpy": "2.4.4",
+    "scipy": "1.17.1",
+    "pandas": "2.3.3",
+    "spikeinterface": "0.103.2",
+    "h5py": "3.16.0",
+    "zarr": "2.18.7",
+    "numcodecs": "0.15.1"
+  },
+  "expected_parent_reader_packages": {
+    "hdmf": "6.0.1",
+    "hdmf-zarr": "0.9.0",
+    "platformdirs": null,
+    "pynwb": "2.8.2"
+  },
+  "runtime": [
+    {
+      "name": "hdmf",
+      "version": "6.1.0",
+      "filename": "hdmf-6.1.0-py3-none-any.whl",
+      "sha256": "3354913c85c1b242e8a6f2677804dcaf0b86c44b5187fa6fb27c29ef00f4224d",
+      "bytes": 362345,
+      "url": "https://files.pythonhosted.org/packages/2f/cd/84ef0cfad5be45ffe8da0658fc4a12b33c654383040469d2a79a8e870ee5/hdmf-6.1.0-py3-none-any.whl"
+    },
+    {
+      "name": "hdmf-zarr",
+      "version": "0.12.0",
+      "filename": "hdmf_zarr-0.12.0-py3-none-any.whl",
+      "sha256": "aaf866122799f547b9594f54fe906e2ffc4e8b9fe1928bf15a037dfcc864c98b",
+      "bytes": 33787,
+      "url": "https://files.pythonhosted.org/packages/96/74/eeff5039149201bead00c27fab2ddf071899307bd578c3eabcd069ba4eba/hdmf_zarr-0.12.0-py3-none-any.whl"
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.2.2",
+      "filename": "platformdirs-4.2.2-py3-none-any.whl",
+      "sha256": "2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee",
+      "bytes": 18146,
+      "url": "https://files.pythonhosted.org/packages/68/13/2aa1f0e1364feb2c9ef45302f387ac0bd81484e9c9a4c5688a322fbdfd08/platformdirs-4.2.2-py3-none-any.whl"
+    },
+    {
+      "name": "pynwb",
+      "version": "4.0.0",
+      "filename": "pynwb-4.0.0-py3-none-any.whl",
+      "sha256": "3b138f9d64151146ae8a7dd5ce5f82680a93447e478cfc829a0e7b4966892a93",
+      "bytes": 1411767,
+      "url": "https://files.pythonhosted.org/packages/20/52/e8a3ee1cd6510eeeaddaaf7e51eea14b705d15c1261ed612d8bce424725c/pynwb-4.0.0-py3-none-any.whl"
+    }
+  ],
+  "plugin": {
+    "path": "/opt/mea-maxwell-hdf5-plugin/libcompression.so",
+    "sha256": "4bc74ea98c08b70406aa976950fcf5f55d572430f51d3882eeb947c557dd14f4",
+    "bytes": 35776
+  }
+}
