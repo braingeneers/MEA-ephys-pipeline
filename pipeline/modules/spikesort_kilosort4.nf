@@ -1,12 +1,14 @@
 nextflow.enable.dsl = 2
 
+include { meaCodeDigest } from '../code_identity'
+
 process spikesort_kilosort4 {
     tag 'spikesort-kilosort4'
     container { task_settings.container }
 
     input:
     val task_settings
-    path local_code, stageAs: 'capsule-source'
+    tuple val(local_code_identity), path(local_code, stageAs: 'capsule-source')
     val max_duration_minutes
     path preprocessing_results, stageAs: 'capsule/data/*'
 
@@ -15,11 +17,13 @@ process spikesort_kilosort4 {
     path 'capsule/results/*', emit: results
 
     script:
+    def staged_code_identity = meaCodeDigest([local_code])
     execution_record = [container: task.container ?: '', cpus: task.cpus,
         memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
         accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
     """
     #!/usr/bin/env bash
+    # MEA staged-code SHA-256: ${staged_code_identity}
     set -e
     ln -s capsule/results unit-results
 

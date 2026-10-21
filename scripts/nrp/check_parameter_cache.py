@@ -27,6 +27,7 @@ def main():
     code = folder / "probe-code"
     code.mkdir(exist_ok=True)
     (code / "run").write_text("""#!/usr/bin/env bash
+# cache-control: a
 exec python3 - "$@" <<'PYTHON'
 import json, sys
 from pathlib import Path
@@ -43,6 +44,7 @@ PYTHON
     script = folder / "main.nf"
     script.write_text("""nextflow.enable.dsl = 2
 include { loadLaunchSettings; processOptions } from '""" + str(source / "pipeline/settings") + """'
+include { meaCodeInput } from '""" + str(source / "pipeline/code_identity") + """'
 include { spikesort_kilosort4 as SORTER_PARAMETERS } from '""" + str(source / "pipeline/modules/spikesort_kilosort4") + """'
 include { preprocessing as PREPROCESSING_PARAMETERS } from '""" + str(source / "pipeline/modules/preprocessing") + """'
 params.params_file = null
@@ -53,12 +55,12 @@ params.git_repo_prefix = 'https://github.com/AllenNeuralDynamics/aind-'
 settings = loadLaunchSettings(params, baseDir)
 workflow {
     SORTER_PARAMETERS(channel.value(processOptions('spikesort_kilosort4', settings)),
-        file('""" + str(code) + """'), channel.value(1), file('""" + str(prepared) + """'))
+        channel.value(meaCodeInput(file('""" + str(code) + """'))), channel.value(1), file('""" + str(prepared) + """'))
     PREPROCESSING_PARAMETERS(channel.value(processOptions('preprocessing', settings)),
-        file('""" + str(code) + """'), channel.value(1), file('""" + str(root / 'data') + """'), file('""" + str(dispatch) + """'))
+        channel.value(meaCodeInput(file('""" + str(code) + """'))), channel.value(1), file('""" + str(root / 'data') + """'), file('""" + str(dispatch) + """'))
 }
 """)
-    for name in ("capsule_versions.env", "kilosort4_defaults.json"):
+    for name in ("capsule_versions.env", "kilosort4_defaults.json", "container_images.json"):
         shutil.copy2(source / "pipeline" / name, folder / name)
     config = folder / "local.config"
     config.write_text("process.executor = 'local'\nprocess.cpus = 1\nparams.executor = 'k8s'\n")
@@ -112,6 +114,15 @@ workflow {
                               else line for line in lines) + "\n")
     run("capsule-pin-change", dict(cached, SORTER_PARAMETERS="COMPLETED"))
     run("pin-unchanged", cached)
+    # Keep the parent directory and file size/mtime unchanged. A directory path
+    # input alone misses this edit in local/isolated source launches.
+    runner = code / "run"
+    original_stat = runner.stat()
+    runner.write_text(runner.read_text().replace("# cache-control: a", "# cache-control: b"))
+    os.utime(runner, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+    assert runner.stat().st_size == original_stat.st_size
+    run("nested-code-change", complete)
+    run("code-unchanged", cached)
     result = {"passed": True, "source": str(source), "checks": outcomes,
               "actual_process_modules": True, "scientific_capsules_stubbed": True}
     (folder / "result.json").write_text(json.dumps(result, indent=2))

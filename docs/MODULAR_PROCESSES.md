@@ -21,14 +21,23 @@ required publication paths, plus execution resources and the effective KS4 devic
 Both functions are includable DSL2 functions. They
 use invocation-local maps; imported processes never read scientific global params.
 
-Callers stage checkout-owned capsule/helper directories as explicit `path` inputs.
+Callers stage checkout-owned capsule/helper code with `meaCodeInput(path)` from
+`pipeline/code_identity.nf`. Each code port is a `(SHA-256, path)` tuple: an explicit
+value for Nextflow's cache key and the original staged path. Scientific input ports
+retain their ordinary path/value types. For example:
+
+```groovy
+include { meaCodeInput } from './pipeline/code_identity'
+// Pass channel.value(meaCodeInput(file('/workflow/capsules/kilosort4/code')))
+// to spikesort_kilosort4's code port.
+```
 An includable caller should resolve its own helper paths from `moduleDir`. Scientific
 source already vendored in `capsules/` remains maintained there with its provenance;
 changing a capsule pin alone does not replace that vendored code. The remaining
 external capsules still check out their exact recorded commits.
 
 The results collector is maintained locally at its original pin, with an explicit
-`local_code` path input after settings. Both original and named callers stage the
+`local_code` code port after settings. Both original and named callers stage the
 same code. Its [documented correction](../capsules/results_collector/UPSTREAM.md)
 preserves recording references to explicit pipeline data; it does not rename the
 canonical `ecephys_session` directory into a session label. Collection no longer
@@ -40,7 +49,15 @@ declares boolean QC masks for zero units while preserving the original nonempty
 values, query, disabled model classifiers, labels and metadata. The original
 runner/parameters/license are retained; curation no longer clones code at task time.
 
-All explicit settings and capsule identities participate in task caching. The cache
+All explicit settings and capsule identities participate in task caching. Locally
+staged capsule and helper inputs also contribute an explicit SHA-256 value of
+all relative filenames and file contents to the task inputs. This keeps
+code edits visible to `-resume` in a checkout or isolated runtime bundle, where
+Nextflow's Git-asset content hashing is unavailable. It covers the shared boundary
+helpers, native common library, and both NWB writer helpers. Scientific payloads
+retain their ordinary inputs and validation; this code digest does not scan them.
+Code inputs must stay unchanged during a run. The rendered digest comment is
+diagnostic; a script-local calculation alone does not establish cache identity. The cache
 check now invokes the actual preprocessing/KS4 modules with tiny argument-recording
 capsules, covering changed and unchanged settings and pins. These probes establish
 bindings/cache behavior, not scientific accuracy.

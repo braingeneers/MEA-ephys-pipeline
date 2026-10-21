@@ -1,6 +1,8 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
+include { meaCodeInput } from './code_identity'
+
 include { loadLaunchSettings; processOptions } from './settings'
 include { job_dispatch } from './modules/job_dispatch'
 include { preprocessing } from './modules/preprocessing'
@@ -40,7 +42,7 @@ workflow {
     // Job dispatch
     job_dispatch_out = job_dispatch(
         Channel.value(processOptions('job_dispatch', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/job_dispatch/code")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/job_dispatch/code"))),
         ecephys_ch.collect()
     )
 
@@ -51,7 +53,7 @@ workflow {
     // Preprocessing
     preprocessing_out = preprocessing(
         Channel.value(processOptions('preprocessing', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/preprocessing/code")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/preprocessing/code"))),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.flatten()
@@ -67,7 +69,7 @@ workflow {
     } else if (sorter == 'kilosort4') {
         spikesort_out = spikesort_kilosort4(
             Channel.value(processOptions('spikesort_kilosort4', launch_settings)),
-            Channel.value(file("${baseDir}/../capsules/kilosort4/code")),
+            Channel.value(meaCodeInput(file("${baseDir}/../capsules/kilosort4/code"))),
             max_duration_minutes,
             preprocessing_out.results
         )
@@ -90,7 +92,7 @@ workflow {
     // Postprocessing
     postprocessing_out = postprocessing(
         Channel.value(processOptions('postprocessing', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/postprocessing/code")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/postprocessing/code"))),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.flatten(),
@@ -101,7 +103,7 @@ workflow {
     // Curation
     curation_out = curation(
         Channel.value(processOptions('curation', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/curation/code")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/curation/code"))),
         max_duration_minutes,
         postprocessing_out.results
     )
@@ -109,7 +111,7 @@ workflow {
     // Visualization
     visualization_out = visualization(
         Channel.value(processOptions('visualization', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/visualization/code")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/visualization/code"))),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),
@@ -122,7 +124,7 @@ workflow {
     // Results collection
     results_collector_out = results_collector(
         Channel.value(processOptions('results_collector', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/results_collector/code")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/results_collector/code"))),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),
@@ -144,21 +146,21 @@ workflow {
     report_generation_out = report_generation(
         Channel.value(processOptions('report_generation', launch_settings)),
         report_inputs,
-        Channel.value(file("${baseDir}/../capsules/report_generation"))
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/report_generation")))
     )
     burst_detection(
         Channel.value(processOptions('burst_detection', launch_settings)),
         report_generation_out.results.map { id, folder -> tuple(id, folder.resolve('spike_times.npy')) },
-        Channel.value(file("${baseDir}/../capsules/burst_detection"))
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/burst_detection")))
     )
     // QC modules remain available but are not invoked, matching the baseline.
 
     // NWB ecephys
     nwb_ecephys_out = nwb_ecephys(
         Channel.value(processOptions('nwb_ecephys', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/nwb_ecephys/code")),
-        Channel.value(file("${baseDir}/../capsules/nwb_common/code/source_nwb.py")),
-        Channel.value(file("${baseDir}/components/maxwell/runtime/nwb_graph.py")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/nwb_ecephys/code"))),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/nwb_common/code/source_nwb.py"))),
+        Channel.value(meaCodeInput(file("${baseDir}/components/maxwell/runtime/nwb_graph.py"))),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),
@@ -167,9 +169,9 @@ workflow {
     // NWB units
     nwb_units(
         Channel.value(processOptions('nwb_units', launch_settings)),
-        Channel.value(file("${baseDir}/../capsules/nwb_units/code")),
-        Channel.value(file("${baseDir}/../capsules/nwb_common/code/source_nwb.py")),
-        Channel.value(file("${baseDir}/components/maxwell/runtime/nwb_graph.py")),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/nwb_units/code"))),
+        Channel.value(meaCodeInput(file("${baseDir}/../capsules/nwb_common/code/source_nwb.py"))),
+        Channel.value(meaCodeInput(file("${baseDir}/components/maxwell/runtime/nwb_graph.py"))),
         max_duration_minutes,
         ecephys_ch.collect(),
         job_dispatch_out.results.collect(),

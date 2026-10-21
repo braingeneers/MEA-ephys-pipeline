@@ -89,7 +89,6 @@ actual['staged_dependencies']=[str(path) for path in staged]
 (output/'recording-check.json').write_text(json.dumps(actual))
 runpy.run_path(str(Path(__file__).parent/'report_capsule.py'),run_name='__main__')
 ''')
-    shutil.copy2(source / "pipeline/modules/report_generation.nf", root / "report_generation.nf")
     command = ["docker", "run", "--rm", "--network", "none", "--user", "1000:1000",
                "--cpus", "1", "--memory", "2g", "-v", f"{source}:{source}:ro", "-v", f"{root}:{root}",
                "-v", f"{dependencies}:{dependencies}", "-e", "OPENBLAS_NUM_THREADS=1",
@@ -132,8 +131,10 @@ runpy.run_path(str(Path(__file__).parent/'report_capsule.py'),run_name='__main__
         published = case / "published"
         settings = {"container": image, "results_path": str(published),
                     "publish_overwrite": None if policy in ("default", "missing") else policy == "true"}
-        prefix = ("nextflow.enable.dsl=2\ninclude { report_generation } from "
-                  + json.dumps(str(root / "report_generation")) + "\nsettings=new groovy.json.JsonSlurper().parseText("
+        prefix = ("nextflow.enable.dsl=2\ninclude { meaCodeInput } from "
+                  + json.dumps(str(source / "pipeline/code_identity"))
+                  + "\ninclude { report_generation } from "
+                  + json.dumps(str(source / "pipeline/modules/report_generation")) + "\nsettings=new groovy.json.JsonSlurper().parseText("
                   + json.dumps(json.dumps(settings)) + ")\nworkflow {\n")
         if policy == "missing":
             inputs = "inputs=channel.of(tuple('missing',file(" + json.dumps(str(root / "analyzer.zarr")) + "),[]))\n"
@@ -145,8 +146,8 @@ runpy.run_path(str(Path(__file__).parent/'report_capsule.py'),run_name='__main__
                       + json.dumps(str(dependencies / "prepared/shared")) + ")).collect()\n"
                       + "inputs=analyzers.combine(deps).map{fields -> tuple(fields[0],fields[1],fields.drop(2).sort{it.toString()})}\n")
         script = case / "main.nf"
-        script.write_text(prefix + inputs + "report_generation(channel.value(settings),inputs,channel.value(file("
-                          + json.dumps(str(code)) + ")))\n"
+        script.write_text(prefix + inputs + "report_generation(channel.value(settings),inputs,channel.value(meaCodeInput(file("
+                          + json.dumps(str(code)) + "))))\n"
                           + "report_generation.out.unit_results.map{cfg,execution,id,results,data -> "
                           + "[id:id,results:results.toString(),data:data.toString()]}.collect().subscribe{rows -> "
                           + "file('emitted.json').text=groovy.json.JsonOutput.toJson(rows)}\n}\n")

@@ -94,29 +94,31 @@ PYTHON
         (root / (alias + "-launch.json")).write_text(json.dumps(launches[alias]))
     component = r'''nextflow.enable.dsl=2
 include { processOptions } from @SETTINGS@
+include { meaCodeInput } from @CODE_IDENTITY@
 include { spikesort_kilosort4 } from @SORTER@
 include { report_generation } from @REPORT@
 workflow PROBE_STAGE {
     take: units; launch
     main:
     calls = units.map { unit, prepared -> tuple(processOptions('spikesort_kilosort4', launch) + [unit_id:unit], prepared) }
-    spikesort_kilosort4(calls.map{ cfg, prepared -> cfg }, channel.value(file(@SORT_CODE@)),
+    spikesort_kilosort4(calls.map{ cfg, prepared -> cfg }, channel.value(meaCodeInput(file(@SORT_CODE@))),
         channel.value('1'), calls.map{ cfg, prepared -> prepared })
     reports = spikesort_kilosort4.out.unit_results.map { cfg, execution, results, layout ->
         tuple(processOptions('report_generation', launch) + [unit_id:cfg.unit_id], tuple(cfg.unit_id, results, [layout])) }
-    report_generation(reports.map{ cfg, analyzer -> cfg }, reports.map{ cfg, analyzer -> analyzer }, channel.value(file(@REPORT_CODE@)))
+    report_generation(reports.map{ cfg, analyzer -> cfg }, reports.map{ cfg, analyzer -> analyzer }, channel.value(meaCodeInput(file(@REPORT_CODE@))))
     emit:
     units = report_generation.out.unit_results
     sorting = spikesort_kilosort4.out.unit_results
 }
 '''
-    replacements = {"@SETTINGS@": source / "pipeline/settings", "@SORTER@": source / "pipeline/modules/spikesort_kilosort4",
+    replacements = {"@CODE_IDENTITY@": source / "pipeline/code_identity", "@SETTINGS@": source / "pipeline/settings", "@SORTER@": source / "pipeline/modules/spikesort_kilosort4",
                     "@REPORT@": source / "pipeline/modules/report_generation", "@SORT_CODE@": code, "@REPORT_CODE@": report_code}
     for key, path in replacements.items():
         component = component.replace(key, json.dumps(str(path)))
     (root / "component.nf").write_text(component)
     script = r'''nextflow.enable.dsl=2
 include { loadLaunchSettings; processOptions } from @SETTINGS@
+include { meaCodeInput } from @CODE_IDENTITY@
 include { job_dispatch } from @DISPATCH@
 include { PROBE_STAGE as ALPHA; PROBE_STAGE as BETA } from './component'
 a = loadLaunchSettings(new groovy.json.JsonSlurper().parse(new File(@ALPHA@)), @PIPELINE@)
@@ -135,7 +137,7 @@ workflow {
     beta_sort = BETA.out.sorting.map{ cfg, execution, results, layout ->
         [alias:'beta',unit:cfg.unit_id,results:results.toString(),layout:layout.toString(),execution:execution] }
     alpha_sort.mix(beta_sort).collect().subscribe { rows -> file('emitted-sorting.json').text=groovy.json.JsonOutput.toJson(rows) }
-    job_dispatch(channel.value(processOptions('job_dispatch',a)+[unit_id:'job-probe']),channel.value(file(@JOB_CODE@)),channel.value(file(@JOB_INPUT@)))
+    job_dispatch(channel.value(processOptions('job_dispatch',a)+[unit_id:'job-probe']),channel.value(meaCodeInput(file(@JOB_CODE@))),channel.value(file(@JOB_INPUT@)))
     job_dispatch.out.unit_results.subscribe { cfg, execution, results, layout, duration ->
         file('emitted-job.json').text=groovy.json.JsonOutput.toJson([unit:cfg.unit_id,execution:execution,
             results:results.toString(),layout:layout.toString(),duration:duration.text.trim()]) }

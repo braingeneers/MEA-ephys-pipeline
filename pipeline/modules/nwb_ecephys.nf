@@ -1,14 +1,16 @@
 nextflow.enable.dsl = 2
 
+include { meaCodeDigest } from '../code_identity'
+
 process nwb_ecephys {
     tag 'nwb-ecephys'
     container { task_settings.container }
 
     input:
     val task_settings
-    path local_code, stageAs: 'capsule-source'
-    path source_metadata_helper, stageAs: 'source_nwb.py'
-    path source_graph_helper, stageAs: 'nwb_graph.py'
+    tuple val(local_code_identity), path(local_code, stageAs: 'capsule-source')
+    tuple val(source_metadata_helper_identity), path(source_metadata_helper, stageAs: 'source_nwb.py')
+    tuple val(source_graph_helper_identity), path(source_graph_helper, stageAs: 'nwb_graph.py')
     val max_duration_minutes
     path ecephys_session_input, stageAs: 'capsule/data/ecephys_session'
     path job_dispatch_results, stageAs: 'capsule/data/*'
@@ -18,11 +20,13 @@ process nwb_ecephys {
     path 'capsule/results/*', emit: results
 
     script:
+    def staged_code_identity = meaCodeDigest([local_code, source_metadata_helper, source_graph_helper])
     execution_record = [container: task.container ?: '', cpus: task.cpus,
         memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
         accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
     """
     #!/usr/bin/env bash
+    # MEA staged-code SHA-256: ${staged_code_identity}
     set -e
     ln -s capsule/results unit-results
 

@@ -112,7 +112,9 @@ reads the literal version from its owning `nextflow.config`.
 
 Bundles publish under `<context.output_uri>/bundles/<unit-id>.<kind>`. Original
 capsule publications use `<context.output_uri>/artifacts/<unit-id>/`. Capsule code
-and helper directories are explicit module-relative path inputs. Package
+and helper code ports carry `meaCodeInput(file(...))` tuples, pairing a content
+digest with each explicit module-relative path. Both maintained callers use the
+same helper, including boundary/native-common and NWB writer code. Package
 `pipeline/` (including `container_images.json`) and `capsules/` together. The NRP
 development submission helpers additionally need `scripts/nrp/`.
 

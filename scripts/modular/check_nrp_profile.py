@@ -26,13 +26,15 @@ a=p.parse_args(); Path(a.output_dir,'binding.txt').write_text('report selector p
 """)
     settings = {"container": args.image, "results_path": str(root / "published"),
                 "publish_overwrite": None}
-    script = ("nextflow.enable.dsl=2\ninclude { report_generation } from "
+    script = ("nextflow.enable.dsl=2\ninclude { meaCodeInput } from "
+              + json.dumps(str(source / "pipeline/code_identity"))
+              + "\ninclude { report_generation } from "
               + json.dumps(str(source / "pipeline/modules/report_generation")) + "\n"
               + "workflow { report_generation(channel.value(new groovy.json.JsonSlurper().parseText("
               + json.dumps(json.dumps(settings)) + ")), channel.value(tuple('probe', file("
               + json.dumps(str(root / "analyzer")) + "), [file("
-              + json.dumps(str(root / "analyzer")) + ")])), file("
-              + json.dumps(str(code)) + ")) }\n")
+              + json.dumps(str(root / "analyzer")) + ")])), channel.value(meaCodeInput(file("
+              + json.dumps(str(code)) + ")))) }\n")
     (root / "main.nf").write_text(script)
     # Enable the real task image: a bare local executor reports no container
     # identity and cannot prove that the NRP selector uses the input settings.

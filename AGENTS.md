@@ -281,3 +281,11 @@
   Retain original unseeded products and mark unobserved original draws honestly.
   Equal rendered bytes do not prove equal motion artist data; preserve both full
   artist inputs and products without rounding or silently accepting differences.
+
+- Local/isolated source directories are not necessarily Nextflow Git assets.
+  Directory path inputs can retain a task hash after a nested helper changes, even
+  with deep caching. Keep staged source content in explicit task inputs via
+  `pipeline/code_identity.nf` and explicit `meaCodeInput(path)` value/path tuples.
+  A digest calculated only in a process's script block is insufficient. Hash code
+  only, preserve scientific payload guards,
+  and test unchanged resume plus nested-file edits on both supported engines.
