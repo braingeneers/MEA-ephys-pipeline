@@ -36,6 +36,10 @@
   metadata eagerly before fan-out, and compare original types/signs at real ports.
 - Keep process names stable unless changing and testing the backend selectors and
   trace consumers together. Test both Nextflow 26.04.6 and the NERSC 23.08.0-edge path.
+- The pinned Nextflow driver need not contain Python. Prepare and verify source-only
+  profile checks in the pinned Python image, execute their frozen requests in the
+  exact driver, and retain actual exits and outputs. Do not patch the driver image
+  or replay successful scientific tasks to repair a test coordinator.
 - Report dependencies must be installed globally in the derived image. NRP changes
   `HOME` to `/tmp`, so build-time user-site installs disappear from its import path.
   Preserve the base scientific stack and restore its `pipelineuser` after installation.
@@ -157,8 +161,9 @@
 - Complete exported-NWB verification needs compatible concrete reference readers
   and the original base scientific fingerprints. The writer image can decode
   references yet change analyzer spike-vector identities. Use the separately
-  validated base-derived export-verifier candidate for that role only after its
-  full release gate; preserve the writer image and all other base package files.
+  validated base-derived export-verifier candidate only for that role, retaining
+  the broader-use gate through full release; preserve the writer image and all
+  other base package files.
   Keep exact package/file and complete scientific receipt compatibility proof,
   rather than normalizing a different runtime's spike vector.
 - Keep executable references distinct from historical provenance. Rebase the exact
@@ -257,6 +262,11 @@
   private namespace maps and permit valid reference links, including core aliases.
   Zarr export controls must use the capsule's `link_data=False` policy, and each
   fixture file needs a fresh NWB container instance.
+- Corruption controls must pass actual schema validation and construction before
+  earning a scientific rejection. An owned hard-linked Device group cannot replace
+  ElectrodeGroup's required device LinkSpec, even with a matching name. Use shared
+  DataSpec arrays for valid hard-alias controls and retain separate device-link
+  target controls; preserve invalid-fixture failures without changing the reader.
 - Native control generation retains the zero-centered float signal and biased ADC
   acquisition as distinct identities; preserve quantization/calibration and never
   claim generated ground truth as a KS4 outcome. SI injected-template recordings

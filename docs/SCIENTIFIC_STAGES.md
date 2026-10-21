@@ -120,7 +120,9 @@ development submission helpers additionally need `scripts/nrp/`.
 
 ## Boundary verification
 
-`bundle_stage` and `verify_stage` use the pinned scientific base runtime and the
+Earlier `bundle_stage` and `verify_stage` boundaries use the pinned scientific
+base runtime. Exported boundaries use the compatible base-derived
+`container_images.export_verifier` runtime. Both use the
 [portable bundle contract](PORTABLE_BUNDLES.md). They verify copied bytes and every
 declared executable recording graph before downstream capsules can classify a load
 failure as skipped work. Cumulative bundles retain raw NWBs, prepared binaries,
@@ -172,7 +174,12 @@ assembly/verification policy rejects missing or malformed classifier work before
 publishing or releasing a stage input. Reporting preserves
 `no_detected_units`, `no_curated_units` and burst `no_spikes`, and waits for every
 expected report/burst recording. Export requires NWB structure and unit/spike counts
-matching curation. Full scientific NWB validation is a separate integration check.
+matching curation, plus a complete `metadata.derived_science` receipt. It binds every
+stored group, dataset, physical attribute and typed Data buffer, including model
+and ordered reference identities, raw/LFP clocks and samples, Units, metrics and
+waveforms. HDF5 aliases and both Zarr metadata views are checked explicitly.
+Full independent source-derived scientific NWB validation remains a separate
+integration check.
 
 Reported bundles also require `metadata.reported_science` schema1. Assembly binds
 each reported unit and its complete float64 train to the analyzer's sorting and

@@ -4,5 +4,6 @@
   "base": "braingeneers/mea-ephys-base:0.1.0",
   "analysis": "braingeneers/mea-ephys-analysis:0.2.0",
   "ks4": "braingeneers/mea-ephys-kilosort4:0.1.0",
-  "nwb": "braingeneers/mea-ephys-nwb:0.2.2"
+  "nwb": "braingeneers/mea-ephys-nwb:0.2.2",
+  "export_verifier": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate"
 }

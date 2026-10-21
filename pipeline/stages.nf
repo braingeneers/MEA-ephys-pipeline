@@ -53,7 +53,7 @@ def taskOptions(String name, Map settings, Map context, Map meta, Map overrides=
 def boundaryOptions(String kind, Map settings, Map context, Map meta, boolean publish=true) {
     def ctx = stageContext(context)
     [unit_id:meta.unit_id, unit_meta:new LinkedHashMap(meta), stage:kind, publish:publish,
-     container:settings.container_images.base,
+     container:kind == 'exported' ? settings.container_images.export_verifier : settings.container_images.base,
      resources:new LinkedHashMap(settings.resources?.get('bundle_stage',[:]) ?: [:]),
      results_path:"${ctx.output_uri}/bundles".toString(), publish_overwrite:settings.publish_overwrite]
 }

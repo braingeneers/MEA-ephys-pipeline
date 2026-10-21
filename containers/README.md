@@ -10,7 +10,8 @@ development validation. They are not yet published releases.
 
 | Role | Image | Build path |
 | --- | --- | --- |
-| Base, bundles and verification | `braingeneers/mea-ephys-base:0.1.0` | [Offline codec](maxwell-codec/README.md) on the original scientific base |
+| Base and earlier bundle boundaries | `braingeneers/mea-ephys-base:0.1.0` | [Offline codec](maxwell-codec/README.md) on the original scientific base |
+| Exported bundle boundaries | `braingeneers/mea-ephys-export-verifier:0.1.0-candidate` | [Compatible reader](export-verifier/README.md), preserving the base numerical stack; full stage release pending |
 | KS4 | `braingeneers/mea-ephys-kilosort4:0.1.0` | Same codec derivation on the original KS4 image |
 | Reports | `braingeneers/mea-ephys-analysis:0.2.0` | [Spreadsheet dependencies](analysis/README.md), then offline codec |
 | NWB writers | `braingeneers/mea-ephys-nwb:0.2.2` | [Reader dependencies](nwb-io/README.md), then [backend patches](nwb-backend/README.md) |
@@ -37,6 +38,7 @@ For local development, supply a Nextflow params file such as:
     "base": "braingeneers/mea-ephys-base:0.1.0",
     "ks4": "braingeneers/mea-ephys-kilosort4:0.1.0",
     "nwb": "braingeneers/mea-ephys-nwb:0.2.2",
+    "export_verifier": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
     "analysis": "braingeneers/mea-ephys-analysis:0.2.0"
   }
 }
@@ -50,6 +52,11 @@ JSON. Unknown roles, non-map overrides and empty/non-string image values fail
 before tasks start. KS2.5 retains its original SI-versioned image; other sorters
 retain their original capsule pins and scientific base stack. Callers own the
 compatibility of custom image overrides.
+
+Only exported bundle boundaries select `export_verifier`; earlier boundaries use
+`base` and scientific NWB writers keep `nwb`. Each role remains invocation-local.
+The candidate's exact package/file and existing scientific receipt compatibility
+is recorded beside its recipe. Its complete stage release remains a separate gate.
 
 Docker and NRP selectors follow each task's invocation settings. NERSC retains
 independent Shifter configuration and Nextflow 23. Common images do not establish

@@ -1,7 +1,9 @@
 # Export verifier runtime candidate
 
-This recipe is a local candidate for complete exported-NWB verification. Workflow
-defaults continue to use their existing images until full boundary acceptance.
+This recipe is a local candidate for complete exported-NWB verification. This
+branch selects it only for exported bundle boundaries; full boundary release and
+registry publication remain pending. Earlier boundaries and scientific writers
+retain their existing images.
 It derives from `braingeneers/mea-ephys-base:0.1.0`, preserving that image's NumPy,
 SciPy, Pandas, SpikeInterface, HDF5 and Zarr packages. It updates only HDMF,
 HDMF-Zarr and PyNWB and adds the required platformdirs package, using the four

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "locally_verified_reader_candidate_not_selected_or_published",
+  "status": "integrated_local_export_boundary_candidate_full_stage_release_and_registry_publication_pending",
   "reference": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
   "local_image_id": "sha256:da10729c863cc4679e6e2c80b378822ffc4a6f1588c4fcb06632dc7c5dbb4c08",
   "registry_digest": null,

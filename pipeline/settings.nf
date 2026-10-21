@@ -55,7 +55,7 @@ def loadLaunchSettings(Map parameters, pipelineRoot) {
     def images = new LinkedHashMap(new groovy.json.JsonSlurper().parseText(
         new File("${pipelineRoot}/container_images.json").text))
     def image_overrides = options.get('container_images', [:])
-    if (!(image_overrides instanceof Map)) error 'container_images must be a map keyed by base, ks4, nwb or analysis.'
+    if (!(image_overrides instanceof Map)) error 'container_images must be a map keyed by base, ks4, nwb, analysis or export_verifier.'
     def unknown_images = image_overrides.keySet() - images.keySet()
     if (unknown_images) error "Unknown container_images roles: ${unknown_images}"
     images.putAll(image_overrides)

@@ -200,13 +200,40 @@ base runtime for focused contract regressions, optionally supplying both
 `--positive-bundle` and `--zero-bundle` for readonly real report inputs. These checks
 run no scientific capsules and do not substitute for full bundle or Nextflow acceptance.
 
-For an explicit caller claim, use the scientific stage helper in the pinned base
-runtime, supplying the owning sorter outcome classifier:
+Exported bundles require `metadata.derived_science`, with exact-integer schema1.
+Assembly freezes the complete output set, formats and every stored group/dataset,
+physical attribute, typed Data buffer and ordered reference binding. Numeric arrays
+use bounded C-order reads; object arrays retain complete typed values and reference
+targets. Shapes, dtypes, signed zero and nonfinite masks remain exact. This covers
+complete ragged buffers/indices, identifiers, metrics, waveforms, raw/LFP samples
+and clocks, model metadata and aliases. The receipt records measured generated IDs;
+it supplements independent input-derived writer validation rather than replacing it.
+
+HDF5 exports retain their internal hard/soft alias graph and must be self-contained.
+External links, external/virtual data and unsupported region references fail
+explicitly. Zarr references and `zarr_link` targets must resolve within the store,
+and consolidated metadata must match the physical metadata. Directory-backed
+stores may have a `.nwb` suffix. Verification requires the existing receipt and
+identifies the differing scientific node and field. It never manufactures missing
+expectations or upgrades a historical artifact.
+
+For an explicit caller claim on a reported bundle, use the scientific stage helper
+in the pinned base runtime, supplying the owning sorter outcome classifier:
 
 ```bash
 python pipeline/helpers/stage_bundle.py --outcomes-code capsules/kilosort4/code/outcomes.py \
     verify --bundle unit.reported --kind reported --unit-id unit --unit-meta incoming-unit-meta.json
 ```
+
+Run the same helper with `--kind exported` in the configured
+`container_images.export_verifier` image. That workflow-owned runtime preserves
+the base numerical stack and exact scientific receipts while enabling concrete
+NWB reference decoding; the scientific writer image has a separate stack. Local
+integration currently uses the versioned candidate documented in
+[its recipe](../containers/export-verifier/README.md). Full stage release and
+registry publication remain pending. Focused contract checks run through
+`scripts/modular/check_export_science.py --output <new-directory>` in that image;
+its tiny schema-valid fixtures are separate from full scientific acceptance.
 
 Omitting `--unit-meta` retains the independent contents-only verification API. All
 maintained named stage callers supply it; that check must happen before downstream

@@ -11,6 +11,7 @@ from pathlib import Path
 
 import portable_bundle as portable
 import reported_science
+import exported_science
 
 
 PREVIOUS = {"prepared": "nwb", "sorted": "prepared", "analyzed": "sorted", "reported": "analyzed", "exported": "reported"}
@@ -331,6 +332,8 @@ def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None)
             "Scientific outcome receipt differs from current payload")
     if record["metadata"]["phase"] in ("reported", "exported"):
         reported_science.verify(root / "data", record)
+    if record["metadata"]["phase"] == "exported":
+        exported_science.verify(root / "data", record)
     portable.verify_science(root, record)
     return record
 
@@ -409,6 +412,8 @@ def build(request, paths, output, no_spikes, common_code=None):
     record["metadata"]["outcomes"] = outcomes
     if phase == "reported":
         record["metadata"]["reported_science"] = reported_science.capture(output / "data", ids)
+    if phase == "exported":
+        record["metadata"]["derived_science"] = exported_science.capture(output / "data")
     record.pop("content_sha256")
     import hashlib
     record["content_sha256"] = hashlib.sha256(portable.encoded(record)).hexdigest()
