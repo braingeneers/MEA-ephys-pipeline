@@ -169,6 +169,17 @@ present with its exact encoded value; callers may add new keys. This preserves
 projection/session/recording references, nullable values, integer/float/boolean
 types, large integers and signed zero. The same condition applies during assembly.
 
+Prepared and later bundles require the capsule's per-recording
+`data_process_preprocessing_<recording>.json`; sorted and later bundles also require
+`data_process_spikesorting_<recording>.json`. The shared producer/consumer policy
+checks their JSON structure, process owner, recording or sorter identity, and ordered
+completion timestamps. This lightweight required-work check supplements the actual
+recording, sorting and log checks; it does not replace scientific or AIND validation.
+Unknown sorter errors and incomplete work remain hard failures. A successful empty
+sort requires a completed successful sorter log; `no_spikes_detected` requires the
+exact owned zero-detection error, completed detection evidence and explicit status.
+Its frame counts and sampling rate must retain their exact encoded numeric types.
+
 For an explicit caller claim, use the scientific stage helper in the pinned base
 runtime, supplying the owning sorter outcome classifier:
 
@@ -194,6 +205,12 @@ in the pinned NWB image once, then `verify --source-nwb <fixture.nwb> --output
 <new-directory>` in the pinned base image for generated multi-segment sample/clock/scaling, schema/type,
 graph/header/dependency, native-declaration and metadata-order controls. These
 technical fixtures supplement full-size science and actual Nextflow acceptance.
+
+`scripts/modular/check_stage_work.py` accepts `--preprocessing-record`,
+`--sorting-record`, their `--recording-id`, a genuine `--zero-sorter-log`, and a new
+`--output` directory. Supply real retained capsule records in the pinned base runtime.
+It preserves them and writes missing/malformed metadata and terminal-log controls;
+it generates no sorting result.
 
 For explicitly reviewed historical test data, `scripts/modular/import_verified_bundle.py`
 creates a separate v2 counterpart. It requires a preexisting corpus authority and its

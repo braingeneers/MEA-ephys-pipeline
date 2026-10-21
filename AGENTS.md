@@ -46,6 +46,10 @@
   Keep default/true/false publication policies static and select through `saveAs`;
   test fresh and cached-resume behavior for all three on both supported runtimes.
 - Use `trash` for local file deletion. Do not create a PR; the operator handles it.
+- `copytree` preserves sealed fixture directory modes. Give owner-write permission
+  only to independently copied private control directories before mutation; never
+  change the original. Retain removed control files outside the candidate within
+  the same private mount so a cross-mount move cannot fail after copying them.
 - Keep fixtures and execution evidence outside Git. Tiny process probes establish
   binding/cache behavior, not scientific parity or NERSC/Shifter execution.
 - Preserve an old Maxwell baseline's actual well-routing failure. A separately
@@ -126,6 +130,11 @@
   complete scientific reads. A reserved native receipt or incoming native claim
   requires the guard even if its stored marker is removed. Preserve legacy artifacts
   with their frozen reader; never silently upgrade their scientific attribution.
+- Require the capsule's per-recording preprocessing/sorting DataProcess completion
+  records in the shared packer/verifier policy. Complete traces and a sorter log
+  do not cover missing processing provenance. Compare zero-status frame counts
+  and rates with the typed codec; a later folder-binding rejection does not prove
+  that the producer's semantic predicate checked their types.
 - Reject absolute executable paths even when they resolve inside the current bundle.
   Logical-path normalization alone can accept a machine-specific graph that fails
   after relocation. Preflight graph paths after incoming metadata and before policy

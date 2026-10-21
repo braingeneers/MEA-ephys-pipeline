@@ -2,6 +2,7 @@
 """Build and verify scientific stage boundaries over portable local bundles."""
 import argparse
 from copy import deepcopy
+from datetime import datetime
 import importlib.util
 import json
 import math
@@ -37,6 +38,34 @@ def jobs(data):
 
 def checked_int(value, name):
     require(type(value) is int and value >= 0, f"{name} must be a nonnegative integer")
+    return value
+
+
+def completion_record(data, recording, role):
+    """Require the capsule's completed, recording-owned processing record."""
+    path = data / f"data_process_{role}_{recording}.json"
+    require(path.is_file(), f"Missing {role} completion record for {recording}")
+    message = f"Malformed {role} completion record for {recording}"
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise portable.BundleError(message) from error
+    owner = {"preprocessing": "Ephys preprocessing", "spikesorting": "Spike sorting"}[role]
+    require(isinstance(value, dict) and value.get("object_type") == "Data process"
+            and value.get("process_type") == owner and value.get("stage") == "Processing"
+            and isinstance(value.get("code"), dict)
+            and isinstance(value["code"].get("parameters"), dict)
+            and isinstance(value.get("output_parameters"), dict), message)
+    parameters = value["code"]["parameters"]
+    require(parameters.get("recording_name") == recording if role == "preprocessing"
+            else parameters.get("sorter_name") == "kilosort4", message)
+    try:
+        start = datetime.fromisoformat(value.get("start_date_time"))
+        end = datetime.fromisoformat(value.get("end_date_time"))
+        completed = end >= start
+    except (TypeError, ValueError):
+        completed = False
+    require(completed, message)
     return value
 
 
@@ -138,6 +167,7 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
         if ORDER.index(phase) >= 1:
             prepared = data / ("preprocessed_" + recording)
             require(prepared.is_dir() and not (prepared / "error.txt").exists(), f"Preprocessing incomplete for {recording}")
+            completion_record(data, recording, "preprocessing")
             binary = next((data / ("binary_" + recording + suffix) for suffix in (".json", ".pkl", ".pickle")
                            if (data / ("binary_" + recording + suffix)).is_file()), None)
             require(binary is not None, f"Missing prepared recording descriptor for {recording}")
@@ -149,6 +179,7 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
         if ORDER.index(phase) >= 2:
             folder = data / ("spikesorted_" + recording)
             require(folder.is_dir() and not (folder / "error.txt").exists(), f"Missing or failed sorting for {recording}")
+            completion_record(data, recording, "spikesorting")
             sorting = si.load(folder)
             spikes = sorting.to_spike_vector()
             log = json.loads((folder / 'spikeinterface_log.json').read_text())
@@ -158,8 +189,10 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
                 status_path = folder / "sorting_status.json"
                 require(status_path.is_file(), f"Empty sorting lacks owned terminal evidence for {recording}")
                 status = json.loads(status_path.read_text())
-                require(status.get("status") == "no_spikes_detected" and status.get("frames") == outcome["frames"]
-                        and status.get("sample_rate") == outcome["sampling_frequency"], f"Malformed zero-detection outcome for {recording}")
+                require(status.get("status") == "no_spikes_detected"
+                        and portable.encoded(status.get("frames")) == portable.encoded(outcome["frames"])
+                        and portable.encoded(status.get("sample_rate")) == portable.encoded(outcome["sampling_frequency"]),
+                        f"Malformed zero-detection outcome for {recording}")
                 require(checked_int(status.get("units"), "sorting units") == 0 and checked_int(status.get("spikes"), "sorting spikes") == 0,
                         f"Nonempty zero-detection outcome for {recording}")
                 require(sorting.get_num_units() == 0 and status.get("detector_log") == "spikeinterface_log.json",
