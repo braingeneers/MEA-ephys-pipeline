@@ -163,7 +163,13 @@ Stages check the exact dispatch recording set and owned artifact families. Sorte
 output requires a loadable sorting and terminal Kilosort log. Zero detections need
 the shared capsule's exact exception/zero-detector evidence and typed status record.
 Unrelated errors remain failures. Analysis requires a real analyzer, reporting
-extensions, curation mask, visualization and collected families. Reporting preserves
+extensions, curation mask, classifier CSV, visualization and collected families.
+The classifier CSV requires `decoder_label` and `decoder_probability` columns and
+one row per analyzer unit, including units excluded by QC. Labels must be nonempty
+and probabilities finite within `[0, 1]`; extra columns are retained. A genuine
+zero-unit analyzer still requires the header with zero data rows. The shared
+assembly/verification policy rejects missing or malformed classifier work before
+publishing or releasing a stage input. Reporting preserves
 `no_detected_units`, `no_curated_units` and burst `no_spikes`, and waits for every
 expected report/burst recording. Export requires NWB structure and unit/spike counts
 matching curation. Full scientific NWB validation is a separate integration check.

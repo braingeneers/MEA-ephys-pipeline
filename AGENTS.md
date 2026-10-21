@@ -135,6 +135,11 @@
   do not cover missing processing provenance. Compare zero-status frame counts
   and rates with the typed codec; a later folder-binding rejection does not prove
   that the producer's semantic predicate checked their types.
+- Require the curation classifier CSV for analyzed and later bundles. Its rows
+  describe all analyzer units, including those excluded by QC; genuine zero units
+  retain the required header. An ordinary resealed file inventory does not prove
+  that required classifier work exists. Keep this policy shared by build/verify
+  and retain explicit test-only classifier markers in graph probes.
 - Reject absolute executable paths even when they resolve inside the current bundle.
   Logical-path normalization alone can accept a machine-specific graph that fails
   after relocation. Preflight graph paths after incoming metadata and before policy

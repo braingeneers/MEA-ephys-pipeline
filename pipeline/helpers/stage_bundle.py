@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build and verify scientific stage boundaries over portable local bundles."""
 import argparse
+import csv
 from copy import deepcopy
 from datetime import datetime
 import importlib.util
@@ -67,6 +68,31 @@ def completion_record(data, recording, role):
         completed = False
     require(completed, message)
     return value
+
+
+def classification_record(data, recording, total_units):
+    """Require all analyzer-unit rows, or a header-only genuine zero-unit result."""
+    path = data / f"unit_classifier_{recording}.csv"
+    require(path.is_file(), f"Missing classifier outcome for {recording}")
+    message = f"Malformed classifier outcome for {recording}"
+    try:
+        with path.open(encoding="utf-8", newline="") as stream:
+            reader = csv.DictReader(stream, strict=True)
+            fields = reader.fieldnames
+            require(fields is not None and len(set(fields)) == len(fields)
+                    and {"decoder_label", "decoder_probability"}.issubset(fields), message)
+            count = 0
+            for row in reader:
+                require(None not in row and isinstance(row.get("decoder_label"), str)
+                        and bool(row["decoder_label"].strip()), message)
+                probability = float(row["decoder_probability"])
+                require(math.isfinite(probability) and 0 <= probability <= 1, message)
+                count += 1
+                require(count <= total_units, message)
+            require(count == total_units, message)
+    except (OSError, UnicodeError, csv.Error, TypeError, ValueError) as error:
+        raise portable.BundleError(message) from error
+    return count
 
 
 def verify_native_graph(value, base, native_nwb):
@@ -223,6 +249,7 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
             require(qc_path.is_file(), f"Missing curation outcome for {recording}")
             qc = np.load(qc_path, allow_pickle=False)
             require(qc.dtype == np.dtype(bool) and qc.shape == (analyzer.get_num_units(),), f"Invalid curation mask for {recording}")
+            classification_record(data, recording, analyzer.get_num_units())
             visualization = data / ("visualization_" + recording)
             viz_metadata = data / ("data_process_visualization_" + recording + ".json")
             require(visualization.is_dir() and any(path.is_file() and path.stat().st_size for path in visualization.iterdir())

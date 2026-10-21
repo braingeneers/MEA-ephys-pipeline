@@ -101,6 +101,9 @@ def execute(role, argv):
     elif role == "curation":
         analyzer = si.load_sorting_analyzer(data / ("postprocessed_" + RID + ".zarr"))
         np.save(out / ("qc_" + RID + ".npy"), np.zeros(analyzer.get_num_units(), dtype=bool))
+        # Explicit graph-probe data only; this does not execute a classifier.
+        rows = ["decoder_label,decoder_probability"] + ["stub,1.0"] * analyzer.get_num_units()
+        (out / ("unit_classifier_" + RID + ".csv")).write_text("\n".join(rows) + "\n")
     elif role == "visualization":
         folder = out / ("visualization_" + RID)
         folder.mkdir()
