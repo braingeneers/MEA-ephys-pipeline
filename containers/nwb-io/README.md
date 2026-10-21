@@ -1,13 +1,14 @@
-# Modeled NWB reader candidate
+# Modeled NWB reader build parent
 
-`braingeneers/mea-ephys-nwb:0.2.0` is a locally verified, unpublished candidate.
-It is not selected by workflow defaults yet. Typed reads pass for genuine
+`braingeneers/mea-ephys-nwb:0.2.0` is the published build parent for the configured
+[0.2.2 backend runtime](../nwb-backend/README.md). The runtime index records both
+immutable digests. Typed reads pass for genuine
 converter-produced MaxOne/MaxTwo NWBs with core2.10 and ndx-cell-culture1.0, and
-for older plain HDF5/Zarr files. Complete modeled export/append and the two real
-scientific producer CLIs still require acceptance before profile activation.
+for older plain HDF5/Zarr files. Its original build checks retain that reader scope;
+complete modeled writer/independent acceptance belongs to the final backend child.
 
 The original digest-pinned NWB image remains the parent. This recipe adds the
-same checksum-verified Maxwell plugin as [the codec candidates](../maxwell-codec/README.md)
+same checksum-verified Maxwell plugin as [the codec images](../maxwell-codec/README.md)
 and makes these explicit NWB I/O dependency changes:
 
 | Package | Original | Candidate | Reason |
@@ -26,6 +27,9 @@ change is made. The base image's independent optional PyNWB import mismatch is
 outside this writer-image repair.
 
 ## Build
+
+For a new build, select a new image version in `artifacts.lock.json` before running
+the historical builder. Published release tags identify the recorded image builds.
 
 Run from the repository root. Docker and the two public parent/plugin images in
 `artifacts.lock.json` must be available. The first step runs inside Docker and

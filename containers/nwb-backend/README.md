@@ -1,8 +1,8 @@
-# Owning-manager and schema-cache NWB candidate
+# Owning-manager and schema-cache NWB runtime
 
-`braingeneers/mea-ephys-nwb:0.2.2` is the configured local writer image, derived
-from the exact accepted [0.2.0 reader image](../nwb-io/README.md). Registry publication
-is pending; [the runtime index](../README.md) records this state. It retains every
+`braingeneers/mea-ephys-nwb:0.2.2` is the published writer image, derived
+from the exact accepted [0.2.0 reader image](../nwb-io/README.md).
+[The runtime index](../runtime-images.json) pins both published identities. It retains every
 parent layer, package version, numerical library, Maxwell codec and user setting.
 It makes two narrowly pinned backend changes:
 
@@ -24,8 +24,9 @@ candidate is retained separately; it is not the complete backend candidate.
 ## Build
 
 Build/pull the exact0.2.0 parent first, as documented beside its recipe. Its verified
-local config ID is locked here; publication must freeze the corresponding registry
-digest. From the repository root, choose a fresh evidence file outside Git:
+local config ID and registry digest are locked here. For a new build, choose a new
+image version in the build lock before running the historical builder; published
+release tags identify the recorded builds. Choose a fresh evidence file outside Git:
 
 ```bash
 python3 containers/nwb-backend/build.py --output /data/nwb-backend-build-01.json

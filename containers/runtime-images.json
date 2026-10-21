@@ -1,50 +1,69 @@
 {
   "schema_version": 1,
-  "status": "integrated_local_defaults_registry_publication_pending",
+  "status": "published_immutable_runtime_defaults",
   "workflow_version": "0.2.33",
   "defaults": "pipeline/container_images.json",
   "images": {
     "base": {
-      "reference": "braingeneers/mea-ephys-base:0.1.0",
+      "reference": "braingeneers/mea-ephys-base@sha256:32df3345e37711855626eb25a80b98bcd9fc718c1aa95279b42f14732f60b542",
       "local_image_id": "sha256:f09087aa24b5d3cc9ee09dd9c02ea180eeadb1be45ae043d99a32ee3c8bbc9d7",
-      "registry_digest": null,
+      "registry_digest": "sha256:32df3345e37711855626eb25a80b98bcd9fc718c1aa95279b42f14732f60b542",
       "build_records": [
         "containers/maxwell-codec/images.json"
-      ]
+      ],
+      "versioned_reference": "braingeneers/mea-ephys-base:0.1.0"
     },
     "ks4": {
-      "reference": "braingeneers/mea-ephys-kilosort4:0.1.0",
+      "reference": "braingeneers/mea-ephys-kilosort4@sha256:8384343f11a74394d7fb52b1c0eb4df880a1118d80e8a618927004321632751c",
       "local_image_id": "sha256:ded5c0676ff33116a4b3b83d064520aa3aed5c4f1a630a05f88e1dc67fa6598a",
-      "registry_digest": null,
+      "registry_digest": "sha256:8384343f11a74394d7fb52b1c0eb4df880a1118d80e8a618927004321632751c",
       "build_records": [
         "containers/maxwell-codec/images.json"
-      ]
+      ],
+      "versioned_reference": "braingeneers/mea-ephys-kilosort4:0.1.0"
     },
     "nwb": {
-      "reference": "braingeneers/mea-ephys-nwb:0.2.2",
+      "reference": "braingeneers/mea-ephys-nwb@sha256:cdb6f24fd8c98f5fbd87f1b535f931415e2c89fff00e4baa95fb3a66836ed21f",
       "local_image_id": "sha256:eecd0f294805f2098c5b29a8be821e3aa9184fd6381e006f8fda069df874921c",
-      "registry_digest": null,
+      "registry_digest": "sha256:cdb6f24fd8c98f5fbd87f1b535f931415e2c89fff00e4baa95fb3a66836ed21f",
       "build_records": [
         "containers/nwb-io/image.json",
         "containers/nwb-backend/image.json"
-      ]
+      ],
+      "versioned_reference": "braingeneers/mea-ephys-nwb:0.2.2"
     },
     "analysis": {
-      "reference": "braingeneers/mea-ephys-analysis:0.2.0",
+      "reference": "braingeneers/mea-ephys-analysis@sha256:19a16d6ed0e9d7f54c8d2baa1a06fbdc617aed195825fd53ddc314e2fc8065cf",
       "local_image_id": "sha256:b09b5525dda0d4c7047c1cda85b1af0051e92a02115069ec1cc317d4eba95488",
-      "registry_digest": null,
+      "registry_digest": "sha256:19a16d6ed0e9d7f54c8d2baa1a06fbdc617aed195825fd53ddc314e2fc8065cf",
       "build_records": [
         "containers/analysis/image.json",
         "containers/maxwell-codec/images.json"
-      ]
+      ],
+      "versioned_reference": "braingeneers/mea-ephys-analysis:0.2.0"
     },
     "export_verifier": {
-      "reference": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
+      "reference": "braingeneers/mea-ephys-export-verifier@sha256:8aff9afa912078ef337ed1e9ac4f3a18d4ff8df9d69aeccb0bbea8df404f1a3f",
       "local_image_id": "sha256:da10729c863cc4679e6e2c80b378822ffc4a6f1588c4fcb06632dc7c5dbb4c08",
-      "registry_digest": null,
+      "registry_digest": "sha256:8aff9afa912078ef337ed1e9ac4f3a18d4ff8df9d69aeccb0bbea8df404f1a3f",
       "build_records": [
         "containers/export-verifier/image.json"
-      ]
+      ],
+      "versioned_reference": "braingeneers/mea-ephys-export-verifier:0.1.0"
+    }
+  },
+  "build_parents": {
+    "report_parent": {
+      "reference": "braingeneers/mea-ephys-analysis@sha256:148ac7db1595d77a43ddbd61a724c639a813c94c9bc3aba4fef547531bda5cff",
+      "versioned_reference": "braingeneers/mea-ephys-analysis:0.1.0",
+      "local_image_id": "sha256:a372fb3a91f87543c4cc93a41ecb160056832b456dbfffcb0ceded675f54acaf",
+      "registry_digest": "sha256:148ac7db1595d77a43ddbd61a724c639a813c94c9bc3aba4fef547531bda5cff"
+    },
+    "nwb_parent": {
+      "reference": "braingeneers/mea-ephys-nwb@sha256:a1c77676989fc681c22e5c9f154847f1a7dccb3751c46d14fc89a3477110ed40",
+      "versioned_reference": "braingeneers/mea-ephys-nwb:0.2.0",
+      "local_image_id": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
+      "registry_digest": "sha256:a1c77676989fc681c22e5c9f154847f1a7dccb3751c46d14fc89a3477110ed40"
     }
   }
 }

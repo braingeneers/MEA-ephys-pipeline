@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "status": "locally_verified_backend_candidate_not_activated_or_published",
+  "status": "published_nwb_backend_runtime",
   "reference": "braingeneers/mea-ephys-nwb:0.2.2",
   "local_image_id": "sha256:eecd0f294805f2098c5b29a8be821e3aa9184fd6381e006f8fda069df874921c",
-  "registry_digest": null,
+  "registry_digest": "sha256:cdb6f24fd8c98f5fbd87f1b535f931415e2c89fff00e4baa95fb3a66836ed21f",
   "parent": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
   "parent_reference": "braingeneers/mea-ephys-nwb:0.2.0",
   "command": [
@@ -64,5 +64,7 @@
     "independent_pilot_schema_model_header_clock_spikes": true,
     "full_lfp_waveforms_metrics_independent": false,
     "full_writer_matrix_or_parent_acceptance": false
-  }
+  },
+  "pinned_reference": "braingeneers/mea-ephys-nwb@sha256:cdb6f24fd8c98f5fbd87f1b535f931415e2c89fff00e4baa95fb3a66836ed21f",
+  "published": true
 }

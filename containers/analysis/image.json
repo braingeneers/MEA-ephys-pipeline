@@ -1,16 +1,18 @@
 {
   "schema_version": 1,
   "version": "0.1.0",
-  "status": "built_and_locally_verified_not_published",
+  "status": "published_report_build_parent",
   "reference": "braingeneers/mea-ephys-analysis:0.1.0",
   "base": "ghcr.io/allenneuraldynamics/aind-ephys-pipeline-base@sha256:a9728fa63078b0429e4c85b5918d7286d4c3f6ed5def900f9876540513adec03",
   "local_image_id": "sha256:a372fb3a91f87543c4cc93a41ecb160056832b456dbfffcb0ceded675f54acaf",
   "dockerfile_sha256": "0d174af9c293a1d43f3a68a677149b12f612b9d492540da216161bcbc772dcc6",
-  "registry_digest": null,
+  "registry_digest": "sha256:148ac7db1595d77a43ddbd61a724c639a813c94c9bc3aba4fef547531bda5cff",
   "added_dependencies": {
     "openpyxl": "3.1.5",
     "et-xmlfile": "2.0.0"
   },
   "scientific_package_changes": [],
-  "offline_home_tmp_spreadsheet_check": true
+  "offline_home_tmp_spreadsheet_check": true,
+  "pinned_reference": "braingeneers/mea-ephys-analysis@sha256:148ac7db1595d77a43ddbd61a724c639a813c94c9bc3aba4fef547531bda5cff",
+  "published": true
 }

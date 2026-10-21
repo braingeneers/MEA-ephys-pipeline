@@ -100,9 +100,10 @@ mixed native invocation, reuse and adoption coordination are excluded. The expor
 copies its maintained fresh templates directly, without rewriting Nextflow source.
 Historical valid artifacts retain their original scientific producer identities.
 
-The selected owner revision is local during integration validation. Make that exact
-revision accessible from its maintained source repository before the upstream
-handoff; runtime launches use the already-bundled source and pinned image. MEA source
-and consumer image publication remain phase 05. Full original-versus-exported converter parity, refreshed pipeline-boundary
-acceptance and GPU/cluster acceptance remain separate requirements. Earlier real
-scientific producer acceptance keeps its actual source and image owners. Scientific fixtures/logs remain outside Git.
+The selected owner revision is published on the maintained source repository's
+`fix/ks4-native-claims` branch. Runtime launches use the already-bundled source and
+pinned image; collaborators need no Workflows checkout. Portable MEA source and
+consumer image publication are complete. Original-versus-exported converter and
+pipeline-boundary acceptance retain their exact producer/reader scopes, preserved
+original allocation/alias failures and reviewed motion-only comparison policy.
+GPU/cluster acceptance remains separate. Scientific fixtures/logs stay outside Git.

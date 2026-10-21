@@ -30,7 +30,7 @@ their Nextflow 23/NERSC path retain their interface.
 
 ## Local execution
 
-Build the [runtime images](../containers/README.md), install Docker and Nextflow,
+Use the published [runtime images](../containers/README.md), install Docker and Nextflow,
 and use an absolute POSIX output directory. Shared invocation settings select
 base/KS4/NWB/report images; the Docker config sets two CPU threads and forwards thread
 variables into task containers. Capsule `--n_jobs` is a separate explicit control.
@@ -102,8 +102,9 @@ See [process settings](MODULAR_PROCESSES.md).
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:
-SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:'0.2.21', step_id:'a'])
-SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:'0.2.21', step_id:'b'])
+// ownerVersion is the literal version from pipeline/nextflow.config.
+SORT_A(prepared_units, settings_a, [output_uri:'/data/a', workflow_version:ownerVersion, step_id:'a'])
+SORT_B(prepared_units, settings_b, [output_uri:'/data/b', workflow_version:ownerVersion, step_id:'b'])
 ```
 
 Context requires `output_uri` and the **owning** workflow version, with optional
@@ -202,8 +203,8 @@ The helper also checks cached source schema versions and gives each read its own
 namespace manager. The configured [NWB runtime](../containers/README.md) preserves
 the numerical/SI stack while supporting the converter's core2.10 and
 ndx-cell-culture1.0 files. Its reader layer and owning-manager/cache patches have
-separate pinned recipes. Local integration is active; registry publication remains
-pending. Full modeled writer and source Data verification remains distinct from
+separate pinned recipes. Shared defaults now use their published immutable digests.
+Full modeled writer and source Data verification remains distinct from
 schema validity or a reader-only check.
 
 Every complete bundle records ordered stage provenance, requested images/resources,

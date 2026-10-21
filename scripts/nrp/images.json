@@ -1,9 +1,9 @@
 {
   "driver": "braingeneers/workflows-nextflow-runner@sha256:0207c6c32f848e40987b04c6e2ee78f85c43aad2a694ac861ea64a998c2ae900",
   "transfer": "amazon/aws-cli@sha256:97cc5f847898f54432492c128408c62e0df2153d9ad36573be8e5a03826123b0",
-  "base": "braingeneers/mea-ephys-base:0.1.0",
-  "analysis": "braingeneers/mea-ephys-analysis:0.2.0",
-  "ks4": "braingeneers/mea-ephys-kilosort4:0.1.0",
-  "nwb": "braingeneers/mea-ephys-nwb:0.2.2",
-  "export_verifier": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate"
+  "base": "braingeneers/mea-ephys-base@sha256:32df3345e37711855626eb25a80b98bcd9fc718c1aa95279b42f14732f60b542",
+  "analysis": "braingeneers/mea-ephys-analysis@sha256:19a16d6ed0e9d7f54c8d2baa1a06fbdc617aed195825fd53ddc314e2fc8065cf",
+  "ks4": "braingeneers/mea-ephys-kilosort4@sha256:8384343f11a74394d7fb52b1c0eb4df880a1118d80e8a618927004321632751c",
+  "nwb": "braingeneers/mea-ephys-nwb@sha256:cdb6f24fd8c98f5fbd87f1b535f931415e2c89fff00e4baa95fb3a66836ed21f",
+  "export_verifier": "braingeneers/mea-ephys-export-verifier@sha256:8aff9afa912078ef337ed1e9ac4f3a18d4ff8df9d69aeccb0bbea8df404f1a3f"
 }

@@ -1,8 +1,8 @@
 {
-  "status": "locally_built_nwb_io_candidate_not_activated_or_published",
+  "status": "published_nwb_io_build_parent",
   "reference": "braingeneers/mea-ephys-nwb:0.2.0",
   "local_image_id": "sha256:a50d0c4895f4b9055be2452b2baf6e9b36cf006d4fbfd1b054028be1a4c39d6b",
-  "registry_digest": null,
+  "registry_digest": "sha256:a1c77676989fc681c22e5c9f154847f1a7dccb3751c46d14fc89a3477110ed40",
   "parent": "ghcr.io/allenneuraldynamics/aind-ephys-pipeline-nwb@sha256:03ad8e8572ad1e98da9d35c380e8fad23de895731d2d382fd9e18376dd61ab4b",
   "artifacts_lock_sha256": "7f374ddbc55a81cc5d1144fedf9bb09c40a34565335a73534abe39fc18c0d1f9",
   "dockerfile_sha256": "a3a9069d373f7dfb9f094a9dd8d467efef4e8576400ae6f7b99ea30fb26c4359",
@@ -50,5 +50,7 @@
     "legacy_fixed_byte_version_header": true,
     "full_modeled_export_append_or_producer_acceptance": false,
     "active_workflow_default": false
-  }
+  },
+  "pinned_reference": "braingeneers/mea-ephys-nwb@sha256:a1c77676989fc681c22e5c9f154847f1a7dccb3751c46d14fc89a3477110ed40",
+  "published": true
 }

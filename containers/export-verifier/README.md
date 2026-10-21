@@ -1,9 +1,10 @@
-# Export verifier runtime candidate
+# Export verifier runtime
 
-This recipe is a local candidate for complete exported-NWB verification. This
-branch selects it only for exported bundle boundaries; full boundary release and
-registry publication remain pending. Earlier boundaries and scientific writers
-retain their existing images.
+This published runtime supports complete exported-NWB verification. Only exported
+bundle boundaries select it. Earlier boundaries and scientific writers retain
+their own images. The stable release is `braingeneers/mea-ephys-export-verifier:0.1.0`;
+its immutable digest and accepted config ID are in [image.json](image.json) and
+[the runtime index](../runtime-images.json).
 It derives from `braingeneers/mea-ephys-base:0.1.0`, preserving that image's NumPy,
 SciPy, Pandas, SpikeInterface, HDF5 and Zarr packages. It updates only HDMF,
 HDMF-Zarr and PyNWB and adds the required platformdirs package, using the four
@@ -17,15 +18,18 @@ NWB model/Data/reference fields while retaining every original scientific
 fingerprint. No fingerprint tolerance, replacement reference class or scientific
 recomputation is part of this repair.
 
-The local candidate recorded in [image.json](image.json) passes the unchanged
+The build originally recorded as a local candidate in [image.json](image.json) passes the unchanged
 MaxOne LFP-export reference's 16 complete scientific receipts, 160 decoded derived
 nodes and 41 reference bindings, plus the real report train/burst checks. All 174
 unmodified distributions and 36,674 nonbytecode package files match the base exactly.
 Validation used the default `1000:1000` user, 2 CPUs, 8 GiB and two threads, with source and
 complete control input readonly. Both images pass `pip check`. The retained log
 also contains a late SI extractor finalizer warning after successful checks and
-input posthashes; the worker exited 0 and was removed. These checks do not establish
-full stage/API/Nextflow or every-layout acceptance, which remains a release gate.
+input posthashes; the worker exited 0 and was removed. Subsequent release checks
+cover ten original reference scopes/160 complete receipts, real valid/corrupt
+API/CLI inputs, ordinary assembly/capture/propagation, both-engine reported guards
+and the combined caller's exported assembly. They retain their exact source/data
+scope; no all-layout or GPU/Shifter acceptance is inferred.
 
 Stage exactly the four locked wheels under `wheelhouse/` in a fresh external build
 context with these recipe files. The wheels stay outside Git. Check the exact
@@ -39,7 +43,7 @@ which applies the requested limits to its installation container:
 DOCKER_BUILDKIT=0 docker build --network none --memory 8g \
   --cpu-period 100000 --cpu-quota 200000 \
   --build-arg MEA_SOURCE_REVISION="$MEA_RECIPE_REVISION" \
-  --tag braingeneers/mea-ephys-export-verifier:0.1.0-candidate .
+  --tag braingeneers/mea-ephys-export-verifier:development .
 ```
 
 Resolve `MEA_RECIPE_REVISION` with `git rev-parse HEAD` in the clean recipe checkout.
@@ -50,5 +54,7 @@ parent layers, then verify every unchanged nonbytecode package file and complete
 scientific receipts in default-user runtime containers. Build success alone is
 not full scientific or Nextflow acceptance.
 
-This candidate is unpublished. Root contribution publication must assign and
-verify its immutable registry identity before advertising portable launch examples.
+The published image is the exact validated config `da10729c…`; it was not rebuilt
+for release. Use the recorded digest for release execution. A new local build has
+its own config identity and recipe label; keep it under a distinct development tag
+until its own validation and release.

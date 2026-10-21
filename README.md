@@ -26,5 +26,5 @@ durable S3 transport for these MEA stages remains a separate adapter.
 - [Independent derived NWB stored-data checks](docs/NWB_DATA_VALIDATION.md)
 
 Scientific defaults, parameter precedence and original capsule pins are maintained
-beside the workflow in `pipeline/`. Build the documented runtime images before
-local development; their release records will freeze registry digests.
+beside the workflow in `pipeline/`. Shared defaults use published immutable runtime
+digests. The documented recipes and build records support local development.

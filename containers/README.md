@@ -3,15 +3,15 @@
 Both callers resolve task images from
 [`pipeline/container_images.json`](../pipeline/container_images.json), through
 shared invocation settings. [`runtime-images.json`](runtime-images.json) records
-the exact local builds and owning recipes. This development branch integrates
-these builds locally; registry publication and immutable registry digest pins
-remain pending. Versioned references must resolve to the listed local IDs during
-development validation. They are not yet published releases.
+the published registry digests, exact accepted image config IDs and owning recipes.
+Shared defaults and NRP helpers use immutable digest references. The versioned tags
+below identify those same published builds; two required build parents are also
+pinned in the index. Publication did not rebuild or change the accepted images.
 
 | Role | Image | Build path |
 | --- | --- | --- |
 | Base and earlier bundle boundaries | `braingeneers/mea-ephys-base:0.1.0` | [Offline codec](maxwell-codec/README.md) on the original scientific base |
-| Exported bundle boundaries | `braingeneers/mea-ephys-export-verifier:0.1.0-candidate` | [Compatible reader](export-verifier/README.md), preserving the base numerical stack; full stage release pending |
+| Exported bundle boundaries | `braingeneers/mea-ephys-export-verifier:0.1.0` | [Compatible reader](export-verifier/README.md), preserving the base numerical stack |
 | KS4 | `braingeneers/mea-ephys-kilosort4:0.1.0` | Same codec derivation on the original KS4 image |
 | Reports | `braingeneers/mea-ephys-analysis:0.2.0` | [Spreadsheet dependencies](analysis/README.md), then offline codec |
 | NWB writers | `braingeneers/mea-ephys-nwb:0.2.2` | [Reader dependencies](nwb-io/README.md), then [backend patches](nwb-backend/README.md) |
@@ -30,7 +30,8 @@ commands, source hashes, local IDs, parent-layer checks and offline plugin evide
 in fresh external output files. All final images contain the same pinned filter-401
 plugin. Tasks install no packages and need no public plugin download or host mount.
 
-For local development, supply a Nextflow params file such as:
+Defaults already select these published images by digest. For an explicit local
+development override, a Nextflow params file can use their stable versioned tags:
 
 ```json
 {
@@ -38,7 +39,7 @@ For local development, supply a Nextflow params file such as:
     "base": "braingeneers/mea-ephys-base:0.1.0",
     "ks4": "braingeneers/mea-ephys-kilosort4:0.1.0",
     "nwb": "braingeneers/mea-ephys-nwb:0.2.2",
-    "export_verifier": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
+    "export_verifier": "braingeneers/mea-ephys-export-verifier:0.1.0",
     "analysis": "braingeneers/mea-ephys-analysis:0.2.0"
   }
 }
@@ -56,12 +57,16 @@ compatibility of custom image overrides.
 Only exported bundle boundaries select `export_verifier`; earlier boundaries use
 `base` and scientific NWB writers keep `nwb`. Each role remains invocation-local.
 The candidate's exact package/file and existing scientific receipt compatibility
-is recorded beside its recipe. Its complete stage release remains a separate gate.
+is recorded beside its recipe. Representative original-reference, API/CLI,
+ordinary assembly and real Nextflow boundary checks pass at their recorded
+execution scopes. These do not claim all possible recording/layout combinations.
 
 Docker and NRP selectors follow each task's invocation settings. NERSC retains
 independent Shifter configuration and Nextflow 23. Common images do not establish
 real NERSC/Shifter or GPU acceptance. Older per-build image records retain their
 observed build-time scope; this index identifies the configured accepted artifacts.
-Do not retag a different build as a recorded version. Publication must verify every
-exact local ID, freeze registry digests in shared defaults and the NRP helper map,
-and retain parent publication dependencies before advertising the contribution.
+Do not retag a different build as a recorded version. Pull the recorded digest for
+a release run. Build recipe changes under a distinct development tag, retain the
+actual recipe revision/build ID, and validate them before assigning a new version.
+Historical per-build verification fields describe their original scope; the runtime
+index is the authoritative release map.

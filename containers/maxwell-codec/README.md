@@ -1,4 +1,4 @@
-# Offline Maxwell codec candidates
+# Offline Maxwell codec images
 
 These derived images add one checksum-verified `libcompression.so` and configure
 `HDF5_PLUGIN_PATH` inside each scientific image. They retain its Python packages,
@@ -11,15 +11,15 @@ The maintained converter installer records the vendor download provenance in
 
 ## Local development builds
 
-The accepted base/KS4/report builds are configured as local workflow defaults;
-registry publication remains pending. [The runtime index](../README.md) identifies
-their exact IDs and the final NWB backend child. The original
+The accepted base/KS4/report builds are published and selected by immutable digest.
+[The runtime index](../runtime-images.json) identifies their exact IDs and the final
+NWB backend child. The original
 three registry parents are digest-pinned in `build.py`. The report parent is the
-unchanged [report image recipe](../analysis/README.md); build it first when the
-recorded local image is unavailable:
+unchanged [report image recipe](../analysis/README.md). Pull the published parent
+before reproducing the historical build:
 
 ```bash
-docker build -f containers/analysis/Dockerfile -t braingeneers/mea-ephys-analysis:0.1.0 .
+docker pull braingeneers/mea-ephys-analysis:0.1.0
 python3 containers/maxwell-codec/build.py \
   --report-parent "$(docker image inspect --format '{{.Id}}' braingeneers/mea-ephys-analysis:0.1.0)" \
   --output /data/codec-build.json
@@ -31,6 +31,9 @@ the build record freezes the actual immutable input. Mutable parent tags are
 rejected. The three other parents and pinned plugin-source image must also be
 available locally for the offline builds. `--roles base ks4 analysis nwb` selects
 roles explicitly. Use a fresh build-record filename for each invocation.
+The builder retains its historical fixed tag assignments. For a new build, select
+distinct development/version tags in its `REFERENCES` map before running it; keep
+published release tags bound to their recorded images.
 BuildKit needs a named `FROM` reference for an unpublished image. The script gives
 a raw report content ID a local content-named alias, verifies that alias before
 and after the build, and checks the child's exact parent-layer prefix. Both the

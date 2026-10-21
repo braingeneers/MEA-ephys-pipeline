@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "status": "integrated_local_export_boundary_candidate_full_stage_release_and_registry_publication_pending",
-  "reference": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
+  "status": "published_export_boundary_runtime",
+  "reference": "braingeneers/mea-ephys-export-verifier:0.1.0",
   "local_image_id": "sha256:da10729c863cc4679e6e2c80b378822ffc4a6f1588c4fcb06632dc7c5dbb4c08",
-  "registry_digest": null,
+  "registry_digest": "sha256:8aff9afa912078ef337ed1e9ac4f3a18d4ff8df9d69aeccb0bbea8df404f1a3f",
   "recipe_revision": "7b603f83d0152c4cd6fec3215f2083e0cc621a0b",
   "parent": "braingeneers/mea-ephys-base:0.1.0",
   "parent_local_image_id": "sha256:f09087aa24b5d3cc9ee09dd9c02ea180eeadb1be45ae043d99a32ee3c8bbc9d7",
@@ -55,5 +55,8 @@
   "retained_diagnostics": {
     "writer_runtime_fingerprint_mismatch": "Exactly the two analyzer sorting/spikes/sha256 fields; 14 other descriptors/all other fields exact",
     "shutdown_warning": "After all successful checks, SI NWB extractor __del__ emitted ImportError: sys.meta_path is None during interpreter teardown. Worker exit 0, input posthashes exact, container removed. No scientific producer or passing negative control inferred from this warning."
-  }
+  },
+  "build_reference": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
+  "pinned_reference": "braingeneers/mea-ephys-export-verifier@sha256:8aff9afa912078ef337ed1e9ac4f3a18d4ff8df9d69aeccb0bbea8df404f1a3f",
+  "published": true
 }
