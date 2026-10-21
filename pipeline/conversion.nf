@@ -62,7 +62,7 @@ def conversionContext(Map settings, Map context) {
     conversionRuntime()
     settings = conversionSnapshot(settings)
     context = conversionSnapshot(context)
-    def allowed = ['output_uri','workflow_version','run_id','step_id','unit_bindings','runtime','local_bind_paths'] as Set
+    def allowed = ['output_uri','native_output_uri','workflow_version','run_id','step_id','unit_bindings','runtime','local_bind_paths'] as Set
     if (context.keySet() - allowed) error 'Unknown conversion context; source replacement/finalization is unsupported.'
     def nativeRoot = "${moduleDir}/components/maxwell"
     def defaults = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/defaults.json").toFile())
@@ -79,6 +79,13 @@ def conversionContext(Map settings, Map context) {
         error 'Portable conversion requires an existing absolute local output directory.'
     def output = directory.toPath().normalize().toUri().toString()
     if (!output.endsWith('/')) output += '/'
+    def nativeOutput = output
+    if (context.native_output_uri != null) {
+        if (!(context.native_output_uri instanceof String) ||
+            !context.native_output_uri.startsWith('s3://') || !context.native_output_uri.endsWith('/'))
+            error 'native_output_uri must be an explicit s3:// prefix ending in /.'
+        nativeOutput = context.native_output_uri
+    }
     if (!(context.unit_bindings instanceof List) || !context.unit_bindings) error 'Explicit unit_bindings are required.'
     def ids = []
     context.unit_bindings.each { binding ->
@@ -99,13 +106,14 @@ def conversionContext(Map settings, Map context) {
     localPaths += (context.local_bind_paths ?: []).collect { file(it,checkIfExists:true).toString() }
     def image = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/image.json").toFile()).pinned_reference
     def distribution = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/export-manifest.json").toFile())
-    def nativeContext = [output_base_uri:output,output_uri:output,run_id:context.run_id,step_id:context.step_id,
+    def nativeContext = [output_base_uri:nativeOutput,output_uri:nativeOutput,run_id:context.run_id,step_id:context.step_id,
         workflow_version:conversionVersion("${nativeRoot}/nextflow.config"),runtime:new LinkedHashMap(context.runtime ?: [:]),
         local_bind_paths:(localPaths+[directory.toString()]).unique()]
     def metadata = maxwellMetadata(settings,nativeContext,image)
     [native:[context:nativeContext,owner:metadata.owner,defaults:defaults,
              distribution:[source_commit:distribution.source_commit,content_sha256:distribution.content_sha256]],
      wrapper:[owner:[workflow_id:'MEA-ephys-pipeline',workflow_version:ownerVersion],
+              local_output_uri:output,
               publication_root:output+"bridge/${context.run_id}/${context.step_id}/",
               unit_bindings:context.unit_bindings],settings:new LinkedHashMap(settings),image:image]
 }
@@ -232,7 +240,7 @@ workflow MEA_MAXWELL_CONVERSION {
     def inputBindings = cfg.wrapper.unit_bindings.collect { it.input_uri }
     // Explicit paths supply Docker/local transport visibility, never unit identity.
     def paths = inputBindings.findAll { !it.startsWith('s3://') }.collect { file(it,checkIfExists:true) }
-    def root = file(cfg.native.context.output_base_uri,checkIfExists:true)
+    def root = file(cfg.wrapper.local_output_uri,checkIfExists:true)
     // Projections are carried with the complete recording dictionaries.
     projectionBindings = selection.map { request ->
         request.recordings.collectMany { (it.nwb_metadata ?: [:]).values().collect { projection -> projection.uri } }

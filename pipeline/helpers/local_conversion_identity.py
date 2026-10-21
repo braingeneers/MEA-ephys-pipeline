@@ -166,10 +166,13 @@ def verify_identity(root, expected=None, *, common_code=None, unit_meta=None, ar
                 'Local provenance differs from its native published object')
         return read_json(root/relative)
     envelope = frozen('conversion/native-artifacts.json', details['native_artifacts'])
-    validate_envelope(envelope, transport='local')
-    native_ref = selected_stage(envelope, 'conversion', transport='local')
+    reference = details['native_artifacts']
+    native_transport = 's3' if isinstance(reference.get('uri'), str) and reference['uri'].startswith('s3://') else 'local'
+    _api().validate_ref(reference, strong=True, transport=native_transport)
+    validate_envelope(envelope, transport=native_transport)
+    native_ref = selected_stage(envelope, 'conversion', transport=native_transport)
     stage = frozen('conversion/native-stage.json', native_ref['manifest'])
-    validate_stage(stage, transport='local')
+    validate_stage(stage, transport=native_transport)
     require(json_equal(stage['owner'], details['native_owner'])
             and json_equal(stage['settings'], details['settings']),
             'Local native ownership or settings changed')

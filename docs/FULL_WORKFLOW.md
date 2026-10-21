@@ -109,3 +109,9 @@ owning MEA version in `context.workflow_version`; native ownership remains separ
 The component source is already included, with [repeatable update provenance](CONVERTER_SOURCE.md).
 Package `pipeline/` and `capsules/` together, including image/pin metadata and the
 native library. No local Workflows-repository checkout is needed at runtime.
+
+For Maxwell input, optional `native_output_uri` publishes the native conversion
+artifacts to an explicit S3 prefix while the bridge and later stages retain local
+directories. Supply the native runtime's S3 and public-reader endpoints as described
+in [conversion context](MAXWELL_CONVERSION.md#inputs). This option is rejected for
+NWB input. Durable transport for the later MEA stages belongs to their S3 adapter.

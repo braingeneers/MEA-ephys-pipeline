@@ -10,6 +10,7 @@ params.unit_bindings_file = null
 params.settings = [:]
 params.settings_file = null
 params.output_uri = null
+params.native_output_uri = null
 params.run_id = null
 params.step_id = 'convert'
 params.local_bind_paths = []
@@ -24,7 +25,8 @@ workflow {
         'require_k8s_aws_secret_name','k8s_aws_secret_name'] as Set
     def runtime = params.findAll { key,value -> key in runtimeKeys } + conversionValue(params.runtime,null,'runtime',true)
     if (!params.output_uri) error 'Provide output_uri as an existing local output directory.'
-    def context = [output_uri:params.output_uri.toString(),workflow_version:conversionOwnerVersion(),
+    def context = [output_uri:params.output_uri.toString(),native_output_uri:params.native_output_uri,
+        workflow_version:conversionOwnerVersion(),
         run_id:params.run_id ?: java.util.UUID.randomUUID().toString(),step_id:params.step_id,
         unit_bindings:bindings,runtime:runtime,local_bind_paths:params.local_bind_paths]
     MEA_MAXWELL_CONVERSION(channel.value(records),settings,context)

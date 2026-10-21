@@ -18,7 +18,7 @@ from ephys_modular.contracts import (ContractError, EPHYS, MAX_JSON_BYTES, canon
 from ephys_modular.contracts import validate_envelope, validate_stage
 from ephys_modular.local import LocalStore
 from ephys_modular.publication import load_envelope, load_stage
-from ephys_modular.s3 import S3Error
+from ephys_modular.s3 import S3Error, S3Store
 from raw_selection import input_location
 from task_preparation import prepare_conversion
 from conversion_worker import commit_conversion
@@ -36,6 +36,16 @@ class PublishedOnly(LocalStore):
         require(json_equal(existing, value),
                 'Native publication is absent or differs; the bridge cannot repair it')
         return observed
+
+
+class PublishedS3Only(S3Store):
+    """Confirm an existing native S3 commit with the same no-repair rule."""
+    put_json = PublishedOnly.put_json
+
+
+def source_options(runtime):
+    return dict(endpoint=runtime.get('s3_endpoint') or None,
+                profile=runtime.get('aws_profile') or None)
 
 
 def write_json(path, value):
@@ -77,18 +87,21 @@ def prepare(reference, request):
     native, wrapper = request['native'], request['wrapper']
     context = native['context']
     root = context['output_base_uri']
-    parse_file(root, prefix=True)  # This portable bridge deliberately has local outputs.
-    require(wrapper['publication_root'] == root + 'bridge/' + context['run_id'] + '/' + context['step_id'] + '/',
+    local_root = wrapper.get('local_output_uri', root)
+    parse_file(local_root, prefix=True)
+    require(wrapper['publication_root'] == local_root + 'bridge/' + context['run_id'] + '/' + context['step_id'] + '/',
             'Bridge destination differs from its isolated native invocation')
-    assert_within(wrapper['publication_root'] + 'completion.json', root, transport='local')
+    assert_within(wrapper['publication_root'] + 'completion.json', local_root, transport='local')
     require(set(request['settings']) <= set(native['defaults']), 'Unknown/replacement scientific settings')
     desired = bindings(request['recordings'], wrapper['unit_bindings'])
-    store = PublishedOnly(root)
+    runtime = context.get('runtime', {})
+    store = (PublishedS3Only if root.startswith('s3://') else PublishedOnly)(
+        root, **source_options(runtime))
     envelope, envelope_ref = load_envelope(store, reference, root)
     records, _ = store.read_json(envelope['selection']['uri'], expected=envelope['selection'])
     require(json_equal(records, request['recordings']),
             'Native selection differs from the submitted complete recordings')
-    stage_ref = selected_stage(envelope, 'conversion', transport='local')
+    stage_ref = selected_stage(envelope, 'conversion', transport=store.transport)
     stage = load_stage(store, stage_ref, EPHYS, root, envelope['selection'])
     require(json_equal(stage['owner'], native['owner'])
             and json_equal(stage['settings']['submitted'], request['settings']),
@@ -141,6 +154,10 @@ def prepare(reference, request):
     result = dict(schema_version=1, document_type='mea_maxwell_bridge_plan',
         native_artifacts=envelope_ref, native_stage=stage_ref, wrapper=wrapper,
         units=units, commit_disk_bytes=sum(u['requested_bytes'] for u in units))
+    # Only non-secret connection selectors cross the separate materialization task.
+    connection = {key: runtime[key] for key in ('s3_endpoint', 'aws_profile') if runtime.get(key)}
+    if connection:
+        result['source_runtime'] = connection
     result['digest'] = digest(result)
     return result
 
@@ -197,7 +214,7 @@ def materialize(plan, unit_id, output, requested_bytes):
     require(not output.exists(), 'Materialization output must be a new directory')
     free = shutil.disk_usage(output.parent).free
     require(free >= 2 * row['copied_bytes'] + row['minimum_free_bytes'], 'Insufficient free materialization scratch')
-    store = LocalStore()
+    store = LocalStore(**source_options(plan.get('source_runtime', {})))
     for ref in row['unit_meta']['maxwell_conversion']['native_unit']['sources']:
         store.verify_contents(ref)
     for relative, ref in row['files'].items():

@@ -17,6 +17,7 @@ params.unit_bindings_file = null
 params.conversion_settings = [:]
 params.conversion_settings_file = null
 params.local_bind_paths = []
+params.native_output_uri = null
 params.runtime = [:]
 params.run_id = null
 params.step_id = 'full'
@@ -47,10 +48,11 @@ if (params.input_mode == 'maxwell') {
     def runtimeKeys = ['s3_endpoint','aws_profile','public_reader_endpoint','minimum_disk_gib',
         'require_k8s_aws_secret_name','k8s_aws_secret_name'] as Set
     def runtime = params.findAll { key,value -> key in runtimeKeys } + conversionValue(params.runtime,null,'runtime',true)
-    context += [unit_bindings:bindings,runtime:runtime,local_bind_paths:params.local_bind_paths]
+    context += [unit_bindings:bindings,runtime:runtime,local_bind_paths:params.local_bind_paths,
+        native_output_uri:params.native_output_uri]
 } else {
     if (params.recordings || params.recordings_file || params.unit_bindings || params.unit_bindings_file ||
-        params.conversion_settings || params.conversion_settings_file)
+        params.conversion_settings || params.conversion_settings_file || params.native_output_uri != null)
         error 'Conversion inputs require input_mode=maxwell.'
     def values
     if (params.units_file) {

@@ -69,7 +69,8 @@ recording dictionaries. Each recording names an original `.raw.h5` through an
 absolute POSIX path, canonical `file:///` URI or native-owned `s3://` source.
 Keep uploaded well inventories, filters, unknown fields and per-unit
 `nwb_metadata` projection references with their SHA-256 values. Generic native S3
-reads stay with the converter; this local bridge adds no KS4 service/S3 adapter.
+reads stay with the converter. The bridge can read completed native S3 publications;
+its output units are local directories for the portable MEA stages.
 
 `settings` is the native scientific settings map. `{}` remains submitted `{}`;
 effective defaults stay separately in provenance. Use the native `defaults.json`
@@ -85,6 +86,14 @@ The bridge accepts no source replacement, finalization or deletion option.
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.
   Use separate roots or distinct run/step identities for independent invocations.
+- Optional `native_output_uri`: an explicit `s3://bucket/prefix/` ending in `/`.
+  Native conversion publishes its complete verified artifacts there, while
+  `output_uri` still receives the bridge's local units. Without this option native
+  artifacts use the local output root as before. S3 output requires an explicit
+  `runtime.public_reader_endpoint` for the LINDI reader URLs. Set
+  `runtime.s3_endpoint` and, when needed, `runtime.aws_profile` for signed object
+  access; these same connection selectors reach bridge materialization. Credentials
+  use the ordinary runtime credential chain and are never carried in bridge plans.
 - `run_id` and `step_id`: stable path-safe identifiers.
 - `unit_bindings`: an exact binding for every selected recording URI/well, with
   `input_uri`, `unit_name` and `metadata.unit_id`. Max One uses `recording`; Max Two
@@ -142,7 +151,8 @@ rejected before native tasks schedule.
 - `completion`: the bridge's create-only completion JSON URI, including verified
   unit receipts and an ordinary `units.json` file accepted by `--units_file`.
 
-Native artifacts stay in the owning `derived/` namespace. Local copies publish
+Native artifacts stay in the owning `derived/` namespace under `native_output_uri`
+when supplied, otherwise under `output_uri`. Local copies publish
 beneath `<output_uri>/bridge/<run_id>/<step_id>/units/<unit_id>/`. Completion and
 `units.json` live beside `units/`. Existing different content is rejected. Exact
 interrupted copies can confirm the same deterministic receipt. Free-space
