@@ -180,6 +180,26 @@ sort requires a completed successful sorter log; `no_spikes_detected` requires t
 exact owned zero-detection error, completed detection evidence and explicit status.
 Its frame counts and sampling rate must retain their exact encoded numeric types.
 
+Reported and exported bundles additionally require `metadata.reported_science`,
+with exact-integer `schema_version: 1` and ordered per-recording identities. Reported
+assembly creates it after checking every reported train against its actual analyzer
+unit and sample clock. Report selection remains independent of the external QC mask.
+The receipt contains the ordered typed unit keys, complete train dtype/shape/value
+identities, and an identity for each decoded summary and burst field. The
+`mea.typed-json/v1` field encoding preserves object membership, array order, scalar
+types and binary64 signs; it includes events, diagnostics and plotting values.
+These are scientific value identities, separate from encoded-file inventory hashes.
+Exported assembly retains the predecessor's report receipt without recapturing it.
+
+The shared verifier requires the receipt and rejects exact differing scientific
+fields. It does not create missing expectations. Historical v2 bundles predating
+this requirement retain their original reader and scientific attribution; explicit
+QA metadata-only authoring must bind immutable original science independently.
+Run `scripts/modular/check_report_science.py --output <new-directory>` in the pinned
+base runtime for focused contract regressions, optionally supplying both
+`--positive-bundle` and `--zero-bundle` for readonly real report inputs. These checks
+run no scientific capsules and do not substitute for full bundle or Nextflow acceptance.
+
 For an explicit caller claim, use the scientific stage helper in the pinned base
 runtime, supplying the owning sorter outcome classifier:
 

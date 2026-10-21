@@ -140,6 +140,12 @@
   retain the required header. An ordinary resealed file inventory does not prove
   that required classifier work exists. Keep this policy shared by build/verify
   and retain explicit test-only classifier markers in graph probes.
+- Bind every reported train to its analyzer unit and exact sample clock, preserving
+  the report capsule's separate curation selection. Freeze complete typed report
+  and burst scientific fields in the reported receipt, carry it unchanged into
+  final export, and compare existing expectations during verification. Empty burst
+  results retain empty events in all three families; unit counts follow nonempty
+  trains. A resealed transport inventory never creates scientific expectations.
 - Reject absolute executable paths even when they resolve inside the current bundle.
   Logical-path normalization alone can accept a machine-specific graph that fails
   after relocation. Preflight graph paths after incoming metadata and before policy

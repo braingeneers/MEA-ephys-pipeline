@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 
 import portable_bundle as portable
+import reported_science
 
 
 PREVIOUS = {"prepared": "nwb", "sorted": "prepared", "analyzed": "sorted", "reported": "analyzed", "exported": "reported"}
@@ -272,12 +273,9 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
             for values in times.values():
                 values = np.asarray(values)
                 require(values.ndim == 1 and np.isfinite(values).all() and (values >= 0).all(), f"Invalid reported spike times for {recording}")
+            reported_science.bind_trains(times, analyzer, recording)
             bursts = json.loads((data / "bursts" / recording / "network_results.json").read_text())
-            has_spikes = any(len(values) for values in times.values())
-            require(checked_int(bursts.get("n_units"), "burst units") == count and bursts.get("status") == ("ok" if has_spikes else "no_spikes"),
-                    f"Burst outcome differs from report for {recording}")
-            if not has_spikes:
-                require(bursts.get("network_bursts", {}).get("events") == [], f"Nonempty burst events without spikes for {recording}")
+            reported_science.validate_bursts(bursts, times, recording)
             outcome.update(reported_units=count, report_status=summary["status"], burst_status=bursts["status"])
         outcomes[recording] = outcome
     if ORDER.index(phase) >= 3:
@@ -331,6 +329,8 @@ def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None)
     outcomes = scientific_policy(root, record, no_spikes, common_code, unit_meta)
     require(portable.encoded(outcomes) == portable.encoded(record["metadata"].get("outcomes")),
             "Scientific outcome receipt differs from current payload")
+    if record["metadata"]["phase"] in ("reported", "exported"):
+        reported_science.verify(root / "data", record)
     portable.verify_science(root, record)
     return record
 
@@ -350,6 +350,8 @@ def build(request, paths, output, no_spikes, common_code=None):
                        unit_meta=metadata["unit_meta"], common_code=common_code)
         require(prior["metadata"]["completed_stages"] == ORDER[:ORDER.index(phase)], "Predecessor history is incomplete")
         metadata['stage_provenance'] = deepcopy(prior['metadata']['stage_provenance'])
+        if phase == "exported":
+            metadata["reported_science"] = deepcopy(prior["metadata"]["reported_science"])
         payloads.append({"source": str(previous / "data"), "destination": "data"})
         for item in prior["serializations"]:
             descriptors.append(dict(item, source=str(previous / item["path"]), base=str(previous / item.get("relative_to", "data"))))
@@ -405,6 +407,8 @@ def build(request, paths, output, no_spikes, common_code=None):
     record = portable.pack(spec, output)
     outcomes = scientific_policy(output, record, no_spikes, common_code)
     record["metadata"]["outcomes"] = outcomes
+    if phase == "reported":
+        record["metadata"]["reported_science"] = reported_science.capture(output / "data", ids)
     record.pop("content_sha256")
     import hashlib
     record["content_sha256"] = hashlib.sha256(portable.encoded(record)).hexdigest()

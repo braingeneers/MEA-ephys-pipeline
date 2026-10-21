@@ -174,6 +174,17 @@ publishing or releasing a stage input. Reporting preserves
 expected report/burst recording. Export requires NWB structure and unit/spike counts
 matching curation. Full scientific NWB validation is a separate integration check.
 
+Reported bundles also require `metadata.reported_science` schema1. Assembly binds
+each reported unit and its complete float64 train to the analyzer's sorting and
+sample clock, preserving the report's separate curation selection. It freezes the
+ordered unit/train identities and every decoded typed report-summary and burst
+field, including events, diagnostics and plot data. Burst unit counts follow the
+capsule's nonempty-train selection; genuine `no_spikes` retains empty events in all
+three families. Final export carries the verified report receipt unchanged.
+Verification checks existing expectations and never creates a missing receipt.
+Historical bundles without it keep their original reader and evidence; explicit
+QA metadata authoring is separate from an ordinary workflow launch.
+
 Final export reads an NWB source header from the declared recording graph, retaining
 authored subject/session metadata, identifiers and existing electrode/device
 bindings. Importing metadata does not enable raw export. Existing flat NWB inputs
