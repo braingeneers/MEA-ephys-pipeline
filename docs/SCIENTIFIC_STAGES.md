@@ -369,3 +369,33 @@ preprocessing process metadata. Omission keeps the original unseeded behavior.
 This controls diagnostic peak detection even when motion application is disabled;
 only `random_slices_kwargs` is accepted, preserving raw MAD estimation, the detection
 threshold and motion algorithm.
+
+### Bounded motion-displacement validation
+
+`scripts/modular/check_motion_comparison.py` implements the reviewed comparison
+for float64 motion displacement in micrometers. It requires matching dtype, shape
+and finite masks, finite values throughout, absolute tolerance `1e-12` micrometers
+and relative tolerance `1e-12` against the reference. Both arrays must also have
+global scaled backward error at most eight float64 machine epsilons under the
+same independently frozen motion equations. Recording, spike, model and other
+scientific comparisons retain their exact policy. Estimation and production
+settings are unchanged.
+
+Supply time-by-window displacement `.npy` arrays, an independently constructed
+float64 CSR matrix saved with SciPy's `save_npz`, and its float64 RHS vector `.npy`.
+The equations stack each spatial window's time series (`displacement.T.ravel()`).
+Freeze the equation inputs and identities independently of the measured candidate.
+Run in the pinned scientific image:
+
+```bash
+python scripts/modular/check_motion_comparison.py --self-test
+python scripts/modular/check_motion_comparison.py \
+  --reference reference-displacement.npy --candidate candidate-displacement.npy \
+  --system frozen-system.npz --rhs frozen-rhs.npy --output motion-comparison.json
+```
+
+The result distinguishes byte identity from numerical equivalence and records
+complete array/matrix/RHS hashes, per-window differences and each array's backward
+error. The tool reads saved products and leaves them unchanged. Its controls cover
+out-of-tolerance displacement, bad candidate or reference backward error, malformed
+shape/dtype and nonfinite or masked values.
