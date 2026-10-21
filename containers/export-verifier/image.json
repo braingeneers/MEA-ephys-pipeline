@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "status": "locally_verified_reader_candidate_not_selected_or_published",
+  "reference": "braingeneers/mea-ephys-export-verifier:0.1.0-candidate",
+  "local_image_id": "sha256:da10729c863cc4679e6e2c80b378822ffc4a6f1588c4fcb06632dc7c5dbb4c08",
+  "registry_digest": null,
+  "recipe_revision": "7b603f83d0152c4cd6fec3215f2083e0cc621a0b",
+  "parent": "braingeneers/mea-ephys-base:0.1.0",
+  "parent_local_image_id": "sha256:f09087aa24b5d3cc9ee09dd9c02ea180eeadb1be45ae043d99a32ee3c8bbc9d7",
+  "build_inputs": {
+    "Dockerfile": "d1b8087f9e9716cbb92e4e9711d8650dccaa116abf82ada7924604513edb8a18",
+    "install.py": "65138f3a1e84f71bee0f0936c740238864e41f616279ccfda02c537d61508f10",
+    "requirements.lock": "d2f37281af8b9feff069fc5748c982101d8981f69e87d070c5713e16a548b53f",
+    "artifacts.lock.json": "dd949c1eba6f522e637fc630c679011ddc8c3fd16dbc3669acfe41c814de17f3"
+  },
+  "exact_parent_layers": true,
+  "actual_build_cpu_max": "200000 100000",
+  "actual_build_memory_max": "8589934592",
+  "final_user": "pipelineuser",
+  "incremental_image_bytes": 7526322,
+  "dependency_changes": {
+    "hdmf": "6.1.0",
+    "hdmf-zarr": "0.12.0",
+    "platformdirs": "4.2.2",
+    "pynwb": "4.0.0"
+  },
+  "unchanged_distributions": 174,
+  "unchanged_nonbytecode_files": 36674,
+  "preserved_numerical_packages": {
+    "numpy": "2.4.4",
+    "scipy": "1.17.1",
+    "pandas": "2.3.3",
+    "spikeinterface": "0.103.2",
+    "h5py": "3.16.0",
+    "zarr": "2.18.7",
+    "numcodecs": "0.15.1"
+  },
+  "verification_scope": {
+    "actual_UID": 1000,
+    "actual_GID": 1000,
+    "cpus": 2,
+    "memory_bytes": 8589934592,
+    "threads": 2,
+    "pip_check_exit": 0,
+    "exact_full_scientific_receipts": 16,
+    "complete_derived_nodes": 160,
+    "complete_reference_bindings": 41,
+    "fixture": "Native MaxOne positive LFP exported; original scientific producer attribution retained",
+    "real_report_train_and_burst_bindings": true,
+    "full_candidate_original_posthashes_exact": true,
+    "full_stage_API_CLI_NF_release": false,
+    "all_layouts_and_branches_release": false,
+    "scientific_producers": 0
+  },
+  "retained_diagnostics": {
+    "writer_runtime_fingerprint_mismatch": "Exactly the two analyzer sorting/spikes/sha256 fields; 14 other descriptors/all other fields exact",
+    "shutdown_warning": "After all successful checks, SI NWB extractor __del__ emitted ImportError: sys.meta_path is None during interpreter teardown. Worker exit 0, input posthashes exact, container removed. No scientific producer or passing negative control inferred from this warning."
+  }
+}

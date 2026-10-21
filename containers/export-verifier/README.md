@@ -15,6 +15,16 @@ NWB model/Data/reference fields while retaining every original scientific
 fingerprint. No fingerprint tolerance, replacement reference class or scientific
 recomputation is part of this repair.
 
+The local candidate recorded in [image.json](image.json) passes the unchanged
+MaxOne LFP-export reference's 16 complete scientific receipts, 160 decoded derived
+nodes and 41 reference bindings, plus the real report train/burst checks. All 174
+unmodified distributions and 36,674 nonbytecode package files match the base exactly.
+Validation used the default `1000:1000` user, 2 CPUs, 8 GiB and two threads, with source and
+complete control input readonly. Both images pass `pip check`. The retained log
+also contains a late SI extractor finalizer warning after successful checks and
+input posthashes; the worker exited 0 and was removed. These checks do not establish
+full stage/API/Nextflow or every-layout acceptance, which remains a release gate.
+
 Stage exactly the four locked wheels under `wheelhouse/` in a fresh external build
 context with these recipe files. The wheels stay outside Git. Check the exact
 parent image ID against the lock before and after building. Use an actual clean

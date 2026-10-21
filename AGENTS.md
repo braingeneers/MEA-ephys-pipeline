@@ -154,6 +154,13 @@
   consumption. Create tiny NWB contract fixtures in the pinned NWB image, validate
   them there, and consume them in the actual base runtime. Do not patch dependencies
   or replace that runtime to make a packaging test import its fixture generator.
+- Complete exported-NWB verification needs compatible concrete reference readers
+  and the original base scientific fingerprints. The writer image can decode
+  references yet change analyzer spike-vector identities. Use the separately
+  validated base-derived export-verifier candidate for that role only after its
+  full release gate; preserve the writer image and all other base package files.
+  Keep exact package/file and complete scientific receipt compatibility proof,
+  rather than normalizing a different runtime's spike vector.
 - Keep executable references distinct from historical provenance. Rebase the exact
   lazy recording graph, including its raw NWB and binary dependencies, using explicit
   serialization bases. Do not substitute a binary cache or infer a producing task
