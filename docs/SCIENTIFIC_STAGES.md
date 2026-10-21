@@ -17,7 +17,8 @@ The named sorting interface selects Kilosort4 explicitly.
 and bursts for every expected recording. Deferring its raw/LFP branch changes
 execution order and preserves the original algorithms. Source NWBs remain under
 `data/ecephys_session/`; final derived exports are under `data/derived-nwb/`.
-Conversion from vendor acquisitions is separate.
+The [full entry](FULL_WORKFLOW.md) additionally composes native Maxwell conversion
+before these same stages, using its separately scoped Nextflow26 runtime.
 
 The complete maintained native Maxwell converter is available as a
 [generated source component](CONVERTER_SOURCE.md). It has its own standalone

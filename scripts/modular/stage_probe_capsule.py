@@ -24,6 +24,23 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2, default=lambda item:item.tolist() if isinstance(item,np.ndarray) else item.item()))
 
 
+def source_nwb(data):
+    paths = sorted(path for path in (data / 'ecephys_session').glob('*.nwb') if path.is_file())
+    if len(paths) != 1:
+        raise ValueError('The graph probe requires one explicit source NWB.')
+    return paths[0]
+
+
+def completion(out, role):
+    # Constructed test evidence, never a claim that a scientific capsule ran.
+    name = 'preprocessing' if role == 'preprocessing' else 'spikesorting'
+    parameters = {'recording_name': RID} if role == 'preprocessing' else {'sorter_name':'kilosort4'}
+    write(out / f'data_process_{name}_{RID}.json', {
+        'object_type':'Data process', 'process_type':'Ephys preprocessing' if role == 'preprocessing' else 'Spike sorting',
+        'stage':'Processing', 'code':{'parameters':parameters}, 'output_parameters':{'graph_probe':True},
+        'start_date_time':'2026-01-01T00:00:00+00:00', 'end_date_time':'2026-01-01T00:00:01+00:00'})
+
+
 def fixture(root):
     from neuroconv.tools.spikeinterface import add_recording_to_nwbfile
     from probeinterface import generate_linear_probe
@@ -54,7 +71,7 @@ def execute(role, argv):
     raw = None
     if role == "job_dispatch":
         import h5py
-        path = data / "ecephys_session/recording.nwb"
+        path = source_nwb(data)
         raw = se.read_nwb_recording(path)
         with h5py.File(path) as nwb:
             unit = nwb["identifier"][()].decode()
@@ -74,8 +91,9 @@ def execute(role, argv):
         saved.dump_to_json(out / ("binary_" + RID + ".json"), relative_to=out)
         raw.dump_to_json(out / ("preprocessed_" + RID + ".json"), relative_to=out)
     elif role == "kilosort4":
+        binary = si.load(data / ("binary_" + RID + ".json"), base_folder=data)
         empty = np.array([], dtype="int64")
-        sorting = si.NumpySorting.from_samples_and_labels([empty], [empty], 30000, unit_ids=empty)
+        sorting = si.NumpySorting.from_samples_and_labels([empty], [empty], binary.get_sampling_frequency(), unit_ids=empty)
         folder = out / ("spikesorted_" + RID)
         sorting.save(folder=folder)
         # Deliberately exercise the precise owned zero-detection outcome. The
@@ -83,9 +101,8 @@ def execute(role, argv):
         write(folder / "spikeinterface_log.json", {"sorter_name":"kilosort4", "error":True,
               "error_trace":["ValueError: No spikes detected, cannot continue sorting."],
               "runtime_trace":["0 spikes extracted in 0.01s", "st0 shape: (0, 6)"]})
-        binary = si.load(data / ("binary_" + RID + ".json"), base_folder=data)
         write(folder / "sorting_status.json", {"status":"no_spikes_detected", "units":0, "spikes":0,
-              "empty_units":0, "frames":[binary.get_num_samples()], "sample_rate":30000.0,
+              "empty_units":0, "frames":[binary.get_num_samples()], "sample_rate":float(binary.get_sampling_frequency()),
               "detector_log":"spikeinterface_log.json"})
     elif role == "postprocessing":
         sorting = si.load(data / ("spikesorted_" + RID))
@@ -144,7 +161,9 @@ def execute(role, argv):
                     zarr.consolidate_metadata(group.store)
         write(out / "processing.json", {"stub":True,"unit":unit})
     elif role in ("nwb_ecephys","nwb_units"):
-        shutil.copy2(data / "ecephys_session/recording.nwb", out / (role + ".nwb"))
+        shutil.copy2(source_nwb(data), out / (role + ".nwb"))
+    if role in ('preprocessing','kilosort4'):
+        completion(out, role)
     write(out / ("probe_" + role + ".json"), {"role":role,"unit":unit,"argv":argv,
           "threads":{key:os.environ.get(key) for key in ("CO_CPUS","N_JOBS_EXT","OMP_NUM_THREADS",
                                                        "OPENBLAS_NUM_THREADS","MKL_NUM_THREADS","NUMBA_NUM_THREADS")}})

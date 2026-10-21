@@ -7,10 +7,12 @@ branches remain available in `pipeline/main_multi_backend.nf`.
 Use [scientific stages](docs/SCIENTIFIC_STAGES.md) to run stages independently or
 compose named subworkflows in one Nextflow graph. They use the same scientific
 processes as the original entry point. These stages accept NWB/session directories;
-Maxwell acquisition conversion has a separate entry with its own runtime profile;
+The full Nextflow26 entry also composes raw Maxwell conversion with those stages.
+Conversion retains its independently runnable entry and native runtime policy;
 durable S3 transport for these MEA stages remains a separate adapter.
 
 - [Named stages and local Docker examples](docs/SCIENTIFIC_STAGES.md)
+- [Complete Maxwell or NWB workflow](docs/FULL_WORKFLOW.md)
 - [Maxwell conversion, bindings and completed local units](docs/MAXWELL_CONVERSION.md)
 - [Process settings, resources and compatibility](docs/MODULAR_PROCESSES.md)
 - [Portable dependency bundles](docs/PORTABLE_BUNDLES.md)

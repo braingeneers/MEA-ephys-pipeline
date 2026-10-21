@@ -58,6 +58,10 @@ Its ordinary local `units.json` can feed `main_stages.nf --stage all --units_fil
 codec/model validation and complete scientific acceptance remain distinct from
 conversion-entry validation.
 
+To connect conversion and all later stages in one run, use the
+[full raw-capable entry](FULL_WORKFLOW.md). It calls this same conversion workflow
+and preserves the separate native ownership and completion barrier.
+
 ## Inputs
 
 `recordings` is a finite channel emitting **one complete nonempty array** of native
@@ -75,7 +79,8 @@ The bridge accepts no source replacement, finalization or deletion option.
 
 `context` has these explicit fields:
 
-- `workflow_version`: the owning MEA release, currently `0.2.25`. Native version
+- `workflow_version`: the owning MEA release from `conversionOwnerVersion()` and
+  the literal `pipeline/nextflow.config` version. Native version
   `0.1.39` is read independently from its generated config, never replaced by the
   caller's MEA version or an enclosing Recipe revision.
 - `output_uri`: an existing absolute POSIX directory or canonical local file URI.
