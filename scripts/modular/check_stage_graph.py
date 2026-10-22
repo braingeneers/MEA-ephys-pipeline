@@ -14,6 +14,19 @@ import shutil
 import subprocess
 
 
+def check_dispatch_inputs(root, rows):
+    dispatch = [row for row in rows if ':PACK_DISPATCH ' in row['name']]
+    assert len(dispatch) == 4
+    for row in dispatch:
+        prefix, suffix = row['hash'].split('/')
+        matches = list((root / 'work' / prefix).glob(suffix + '*'))
+        assert len(matches) == 1
+        work = matches[0]
+        request = json.loads((work / 'request.json').read_text())
+        source = work / 'inputs' / ('item%02d' % (request['source'] + 1))
+        assert source.resolve() == (root / 'data' / request['unit_id']).resolve()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -128,6 +141,7 @@ workflow {{
     with (root/"trace.tsv").open() as stream:
         rows=list(csv.DictReader(stream,delimiter="\t"))
     assert len(rows)==84 and all(row["status"]=="COMPLETED" and row["exit"]=="0" for row in rows)
+    check_dispatch_inputs(root, rows)
     result={"passed":True,"tasks":len(rows),"legacy_runtime":bool(args.legacy_runtime),
             "scientific_capsules_stubbed":True,"real_report_and_burst_capsules":True,
             "real_bundle_verifiers":True,"alias_unit_settings_publication_isolation":True,"emitted":emitted}

@@ -210,7 +210,10 @@ Dispatch emits absolute incoming recording references until stage packaging. Thi
 keeps references to shared inputs valid when Nextflow moves a task's output from
 pod-local scratch. The portable packer verifies each declared dependency and
 rewrites it relative to the published bundle; published artifacts still reject
-absolute or undeclared executable paths. Recording data and scientific settings
+absolute or undeclared executable paths. Dispatch packaging joins each producer to
+its original declared input by unit ID, retaining that input after scratch stage-out
+copies the producer layout. Producer-side copies remain byte-checked aliases.
+Recording data and scientific settings
 are unchanged. Run `scripts/modular/check_dispatch_scratch.py --output <fresh-root>`
 in the pinned base scientific image to reproduce the old failure and check raw and
 scaled samples, clocks, geometry, IDs, annotations and JSON/pickle relocation.

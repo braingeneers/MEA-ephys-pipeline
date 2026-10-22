@@ -113,21 +113,51 @@ def check(output, nwb=None):
         descriptors = portable.capsule_serializations(producer, 'data', moved_base)
         assert {tuple(item['pointer']) for item in descriptors} == {
             ('recording_dict',), ('recording_lfp_dict',)}
-        packed = output / ('packed-' + suffix[1:])
-        manifest = portable.pack({'schema_version': 1, 'stage': 'nwb', 'unit_id': 'scratch-unit',
+        copied_input = output / ('copied-input-' + suffix[1:])
+        shutil.copytree(raw.parent, copied_input)
+        packing = {'schema_version': 1, 'stage': 'nwb', 'unit_id': 'scratch-unit',
             'recording_ids': ['scratch-recording'],
             'payloads': [{'source': str(raw.parent), 'destination': 'data/ecephys_session'},
                          {'source': str(producer), 'destination': 'data'}],
-            'serializations': descriptors}, packed)
+            'serializations': descriptors}
+        copied_only = dict(packing, payloads=[
+            {'source': str(copied_input), 'destination': 'data/ecephys_session'},
+            {'source': str(producer), 'destination': 'data'}])
+        try:
+            portable.pack(copied_only, output / ('undeclared-original-' + suffix[1:]))
+        except portable.BundleError as error:
+            assert 'Undeclared recording dependency' in str(error)
+        else:
+            raise AssertionError('A same-byte copy silently authorized an undeclared original path')
+        # The workflow must supply the original declared unit, not guess its
+        # location from producer output. Its copied layout is independently bound.
+        packing['dependency_aliases'] = [
+            {'source': str(copied_input), 'destination': 'data/ecephys_session'}]
+        packed = output / ('packed-' + suffix[1:])
+        manifest = portable.pack(packing, packed)
         portable.verify(packed)
         assert len(manifest['scientific_fingerprints']) == 2
         for pointer in ('recording_dict', 'recording_lfp_dict'):
             assert portable.read_serialization(packed / 'data' / ('job_0' + suffix))[pointer]['relative_paths'] is True
+        changed_copy = copied_input / raw.name
+        with changed_copy.open('r+b') as stream:
+            first = stream.read(1)
+            stream.seek(0)
+            stream.write(bytes([first[0] ^ 1]))
+        try:
+            portable.register_alias(changed_copy, packed / 'data/ecephys_session' / raw.name, {})
+        except portable.BundleError as error:
+            assert 'Dependency alias content differs' in str(error)
+        else:
+            raise AssertionError('A changed producer copy was accepted as the declared input')
     (output / 'result.json').write_text(json.dumps({
         'original_scratch_relative_failure_reproduced': True,
         'actual_dispatch_serializer': results, 'published_relative_only': True,
         'complete_samples_clocks_geometry_dtype_ids_exact': True,
         'undeclared_dependencies_rejected': True,
+        'copied_layout_missing_original_rejected': True,
+        'original_input_and_copy_explicitly_bound': True,
+        'changed_copy_rejected': True,
         'main_and_optional_lfp_complete_pack_verify': 'json and pickle passed'}, indent=2) + '\n')
     print((output / 'result.json').read_text())
 

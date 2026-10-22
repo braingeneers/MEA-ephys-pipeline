@@ -106,11 +106,18 @@ workflow MEA_PREPROCESSING {
     valid = stageInputs(units)
     calls = valid.map{ meta,path -> tuple(taskOptions('job_dispatch',settings,context,meta),path) }
     job_dispatch(calls.map{ cfg,path -> cfg },channel.value(meaCodeInput(file("${moduleDir}/../capsules/job_dispatch/code"))),calls.map{ cfg,path -> path })
-    dispatch_requests = job_dispatch.out.unit_results.map{ cfg,execution,results,inputs,max_duration ->
+    dispatch_join = job_dispatch.out.unit_results.map{ cfg,execution,results,inputs,max_duration ->
+        tuple(cfg.unit_id,producer(cfg,execution,results,inputs)+[duration:max_duration])
+    }.join(keyedUnits(valid),failOnDuplicate:true,failOnMismatch:true)
+    dispatch_requests = dispatch_join.map{ id,p,original ->
+        def cfg = p.settings
         def request = [schema_version:1,phase:'dispatch',unit_id:cfg.unit_id,unit_meta:cfg.unit_meta,context:stageContext(context),
             pieces:[[results:0,inputs:1]],duration:2,source:3,input_count:4,
-            processes:[[name:'job_dispatch',execution:execution,capsule_pin:cfg.capsule_pin,args:cfg.args]]]
-        tuple(boundaryOptions('nwb',settings,context,cfg.unit_meta,false),request,[results,inputs,max_duration,inputs.resolve('ecephys_session')])
+            processes:[[name:'job_dispatch',execution:p.execution,capsule_pin:cfg.capsule_pin,args:cfg.args]]]
+        // Scratch stage-out can copy the producer's input layout. Retain the
+        // original declared unit, just as later stages retain their predecessor.
+        // The packer byte-checks producer-side copies as dependency aliases.
+        tuple(boundaryOptions('nwb',settings,context,cfg.unit_meta,false),request,[p.results,p.inputs,p.duration,original.path])
     }
     PACK_DISPATCH(dispatch_requests,channel.value(meaCodeInput(file("${moduleDir}/helpers"))),channel.value(meaCodeInput(file("${moduleDir}/../capsules/kilosort4/code/outcomes.py"))),channel.value(meaCodeInput(file("${moduleDir}/components/maxwell/components/common/python"))))
     dispatched = PACK_DISPATCH.out.units.map{ cfg,path -> tuple(cfg.unit_meta,path) }
