@@ -99,8 +99,7 @@ def remap_extractor_path(recording_dict, base_folder, relative_to=None):
             access_path = path_iter.access_path
             access_paths[access_path] = path_iter.value
     # make paths absolute
-    if relative_to is None:
-        recording_dict["relative_paths"] = False
+    recording_dict["relative_paths"] = relative_to is not None
     for access_path, path in access_paths.items():
         # check if the absolute path is a symlink
         absolute_path = base_folder / path

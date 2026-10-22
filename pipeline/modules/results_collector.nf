@@ -36,6 +36,10 @@ process results_collector {
     execution_record = [container: task.container ?: '', cpus: task.cpus,
         memory: task.memory?.toString(), time: task.time?.toString(), disk: task.disk?.toString(),
         accelerator: task.accelerator ? [request: task.accelerator.request, limit: task.accelerator.limit] : null]
+    def producer_context = groovy.json.JsonOutput.toJson([
+        input_base: task_settings.input_path.toString(),
+        publication_base: task_settings.results_path.toString()
+    ]).getBytes('UTF-8').encodeBase64().toString()
     """
     #!/usr/bin/env bash
     # MEA staged-code SHA-256: ${staged_code_identity}
@@ -64,6 +68,7 @@ process results_collector {
     cd "\$MEA_PRODUCER_TASK_ROOT"
     # MEA producer-location recorder SHA-256: ${task_settings.producer_location_identity}
     export MEA_PRODUCER_LOCATION_SHA="${task_settings.producer_location_identity}"
+    export MEA_PRODUCER_CONTEXT='${producer_context}'
     ${task_settings.producer_location_script}
 
     echo "[${task.tag}] completed!"

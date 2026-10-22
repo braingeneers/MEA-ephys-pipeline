@@ -19,3 +19,9 @@ before computing relative paths. A symlinked `verified/data/ecephys_session` bas
 otherwise produces paths whose `..` traversal escapes the actual raw directory.
 Future publication directories may still be absent; resolution does not require
 their creation. This retains the original recording graphs and payloads.
+
+The remapper explicitly sets `relative_paths=True` when a relative target base
+is supplied, including when the incoming graph uses absolute paths. Producer
+wrappers now normalize executable output dependencies before scratch stage-out;
+the collector must declare the mode of the relative paths it subsequently writes.
+This changes only path transport, not the collector's scientific computations.

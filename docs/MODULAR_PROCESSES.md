@@ -106,7 +106,17 @@ Internal ports alone are not a verified portable bundle or stage-completion rece
 Graph-producing processes also capture their actual execution location before
 scratch is retired. `pipeline/producer_locations.nf` supplies the recorder text
 and SHA-256 as explicit settings inputs, so recorder edits invalidate cached
-producers. After successful science, the wrapper records the physical capsule
+producers. After successful science, `helpers/producer_serializations.py` first
+normalizes owned executable JSON/pickle/Zarr metadata while the actual scratch
+coordinates and input symlinks still exist. Dependencies become stable absolute
+references to declared shared inputs or output ports. This lets intermediate
+capsules load artifacts after stage-out, before portable bundle assembly. Native
+binary-folder sidecars retain their required relative, co-located representation.
+The helper sources are part of the recorder value input and task cache identity.
+No numerical payload is rewritten; owned metadata replacement protects linked
+source files. Collector input/publication bases follow its actual CLI settings.
+
+The wrapper then records the physical capsule
 root, the shared `.command.sh` directory, the separate `unit-results` output port
 and actual input/output symlink targets. It publishes a unique hidden origin
 record atomically in that shared port; payload stage-out uses `copy` to merge
@@ -118,7 +128,9 @@ Named-stage input selection excludes reserved origin records. Assembly binds the
 record to the declared results port, expected recorder identity and copied file
 inventory before resolving old graph paths. It resolves recorded symlinks before
 parent traversal, then applies the ordinary declared-dependency and complete
-scientific checks. Scientific capsules and their source graphs are unchanged.
+scientific checks. Scientific arrays, extension data, settings and images remain
+unchanged. The collector's disclosed pure remapping patch explicitly declares
+relative mode when it writes paths against a supplied target base.
 See [producer origins](PORTABLE_BUNDLES.md#producer-origins) for the bundle contract.
 
 Every publishing module restricts publication to `capsule/results/*`. The separate

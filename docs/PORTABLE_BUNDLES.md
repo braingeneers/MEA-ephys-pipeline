@@ -121,6 +121,16 @@ rebases them. Existing valid v2 receipts keep their format and scientific identi
 
 ## Producer origins
 
+Before stage-out, the producer wrapper normalizes owned executable dependency
+metadata using its live scratch directory and declared inputs. This keeps raw
+intermediate artifacts loadable by ordinary scientific capsules. It preserves
+dictionary order, non-path metadata, numerical arrays and extension data; native
+binary-folder sidecars keep their required co-located relative representation.
+Missing or undeclared dependencies fail before the output port is emitted.
+The helper sources and collector's explicit CLI bases participate in task identity.
+These intermediate absolute paths are subsequently rebased into the portable
+bundle's strictly relative executable paths by the existing full validator.
+
 Scratch execution can leave a valid lazy graph relative to a directory that no
 longer exists after stage-out. New producer wrappers record that original
 coordinate explicitly before returning. The reserved

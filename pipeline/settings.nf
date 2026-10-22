@@ -203,12 +203,19 @@ def loadLaunchSettings(Map parameters, pipelineRoot) {
     def resources = options.get('process_resources', options.get('nrp_resources', [:]))
     if (!(resources instanceof Map)) error 'process_resources must be a map keyed by process name.'
     def effective_device = options.torch_device ?: json_params.spikesorting?.kilosort4?.sorter?.torch_device ?: 'auto'
+    // Inline the maintained transport helpers into the recorder value input.
+    // Workers need no undeclared source mount, and nested helper edits change
+    // producer cache identities in Gitless/ConfigMap launches too.
+    def serialization_sources = ['portable_bundle', 'producer_serializations'].collectEntries { name ->
+        [(name): new File("${pipelineRoot}/helpers/${name}.py").text]
+    }
 
     return [sorter: sorter, runmode: runmode, container_tag: options.container_tag,
         versions: versions, executor_mode: options.executor,
         torch_device: effective_device, resources: resources,
         input_path: options.ecephys_path, results_path: options.results_path,
         publish_overwrite: options.publish_overwrite,
+        producer_serialization_sources: serialization_sources,
         git_repo_prefix: options.git_repo_prefix,
         container_images: images, report_container_image: images.analysis,
         job_args: job_args, arguments: [job_dispatch: job_dispatch_args,
@@ -272,6 +279,6 @@ def processOptions(String name, Map launch) {
             Boolean.parseBoolean(launch.publish_overwrite.toString())
     }
     if (name == 'results_collector') result.input_path = launch.input_path
-    result.putAll(producerLocationOptions(name))
+    result.putAll(producerLocationOptions(name, launch.producer_serialization_sources ?: [:]))
     return result
 }

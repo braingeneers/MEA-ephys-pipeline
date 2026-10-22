@@ -18,7 +18,17 @@ def main():
     source=Path(__file__).resolve().parents[2];root=args.output.resolve();root.mkdir(exist_ok=False)
     snapshot=root/'source';shutil.copytree(source/'pipeline',snapshot/'pipeline')
     code=root/'capsule';code.mkdir()
-    (code/'run').write_text("#!/usr/bin/env bash\npython3 - <<'PYTHON'\nfrom pathlib import Path\nPath('../results/job_0.json').write_text('{\"recording_name\":\"cache-probe\"}')\nPYTHON\n")
+    (code/'run').write_text("""#!/usr/bin/env bash
+python3 - <<'PYTHON'
+from pathlib import Path
+import json
+graph={'class':'spikeinterface.core.binaryrecordingextractor.BinaryRecordingExtractor',
+ 'module':'spikeinterface.core','version':'0.103.2','relative_paths':True,
+ 'kwargs':{'file_paths':['ecephys_session/sentinel.txt'],'sampling_frequency':20000,
+           'num_channels':1,'dtype':'int16'}}
+Path('../results/job_0.json').write_text(json.dumps({'recording_name':'cache-probe','recording_dict':graph}))
+PYTHON
+""")
     (code/'get_max_recording_duration_min.py').write_text("print('3')\n")
     (root/'input').mkdir();(root/'input/sentinel.txt').write_text('unchanged\n')
     (root/'main.nf').write_text(f'''nextflow.enable.dsl=2
@@ -40,11 +50,14 @@ workflow {{
         assert hashlib.sha256(executable.read_bytes()).hexdigest()=='4f667c0ce1b939133baadd18678c83651e06f4bc676112af3b42d2c940ce5ac2'
         command=[str(executable)];env.update(JAVA_HOME=str(cache/'jdk-17.0.16+8-jre'),NXF_HOME=str(cache/'home'),NXF_DIST=str(cache/'framework'),NXF_PLUGINS_DIR=str(cache/'plugins'),NXF_VER='23.08.0-edge');env.pop('NXF_SYNTAX_PARSER',None)
     runs=[]
-    for index in range(3):
+    for index in range(4):
         if index==2:
             helper=snapshot/'pipeline/producer_locations.nf';text=helper.read_text()
             needle='MEA_PRODUCER_LOCATION\n';assert text.count(needle)==1
             helper.write_text(text.replace(needle,'# cache probe: recorder-only edit\n'+needle))
+        if index==3:
+            helper=snapshot/'pipeline/helpers/producer_serializations.py'
+            helper.write_text(helper.read_text()+'\n# cache probe: normalization-helper-only edit\n')
         cmd=command+['-C',str(root/'probe.config'),'run',str(root/'main.nf'),'-ansi-log','false','-with-trace',str(root/f'trace-{index}.tsv')]
         if index:cmd+=['-resume']
         (root/f'command-{index}.json').write_text(json.dumps(cmd,indent=2)+'\n')
@@ -54,6 +67,7 @@ workflow {{
         runs.append(dict(status=rows[0]['status'],hash=rows[0]['hash'],identity=(root/'identity.txt').read_text()))
     assert runs[0]['hash']==runs[1]['hash'] and runs[0]['hash']!=runs[2]['hash']
     assert runs[0]['identity']==runs[1]['identity'] and runs[0]['identity']!=runs[2]['identity']
+    assert runs[2]['hash']!=runs[3]['hash'] and runs[2]['identity']!=runs[3]['identity']
     protected = root/'protected-input'; protected.mkdir()
     with (root/'probe.config').open('a') as stream:
         stream.write("params.escape_probe=true\nprocess.scratch='"+str(root/'scratch')+"'\n")
@@ -66,7 +80,8 @@ workflow {{
     assert not list(protected.iterdir()), 'Recorder wrote into a protected input through an escaping output symlink'
     result=dict(passed=True,shared_output_escape_rejected=True,protected_input_unchanged=True,
                 legacy_runtime=bool(args.legacy_runtime),runs=runs,
-        unchanged_resume_cached=True,recorder_only_edit_invalidates_producer=True,scientific_capsule_stubbed=True)
+        unchanged_resume_cached=True,recorder_only_edit_invalidates_producer=True,
+        normalization_helper_edit_invalidates_producer=True,scientific_capsule_stubbed=True)
     (root/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))
 
 
