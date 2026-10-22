@@ -248,7 +248,8 @@ def processOptions(String name, Map launch) {
         name == 'report_generation' ? launch.container_images.analysis : launch.container_images.base
     def result = [container: image,
         executor_mode: launch.executor_mode, capsule_pin: launch.versions[pinKeys[name]] ?: 'checkout']
-    def resources = launch.get('resources', [:]).get(name, [:])
+    def resourceMap = launch.get('resources') ?: [:]
+    def resources = resourceMap.containsKey(name) ? resourceMap[name] : [:]
     if (!(resources instanceof Map)) error "Resources for ${name} must be a map."
     result.resources = new LinkedHashMap(resources)
     if (name == 'spikesort_kilosort4') result.torch_device = launch.torch_device ?: 'auto'

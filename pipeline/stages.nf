@@ -43,9 +43,25 @@ def stageContext(Map context) {
      run_id:context.get('run_id'), step_id:context.get('step_id')]
 }
 
+// Deployment estimates can arrive from an upstream preflight task. Keep them
+// outside scientific unit metadata, and resolve one broadcast value per call.
+def unitResources(String process, Map settings, Map context, Map meta) {
+    def resources = new LinkedHashMap(settings.resources?.get(process) ?: [:])
+    def units = context.containsKey('unit_resources') ? context.unit_resources : [:]
+    if (units instanceof groovyx.gpars.dataflow.DataflowVariable) units = units.getVal()
+    if (!(units instanceof Map)) error 'unit_resources must be a map or a value channel containing a map.'
+    def selected = units.containsKey(meta.unit_id) ? units[meta.unit_id] : [:]
+    if (!(selected instanceof Map)) error 'Each unit_resources entry must map process names to resource maps.'
+    def overrides = selected.containsKey(process) ? selected[process] : [:]
+    if (!(overrides instanceof Map) || overrides.keySet() - ['cpus','memory','disk','time'])
+        error 'Unit resource overrides support only cpus, memory, disk and time.'
+    resources + new LinkedHashMap(overrides)
+}
+
 def taskOptions(String name, Map settings, Map context, Map meta, Map overrides=[:]) {
     def ctx = stageContext(context)
     def result = processOptions(name, settings) + [unit_id:meta.unit_id, unit_meta:new LinkedHashMap(meta), owning_version:ctx.workflow_version]
+    result.resources = unitResources(name,settings,context,meta)
     if (result.containsKey('results_path')) result.results_path = "${ctx.output_uri}/artifacts/${meta.unit_id}".toString()
     result + overrides
 }
@@ -54,7 +70,7 @@ def boundaryOptions(String kind, Map settings, Map context, Map meta, boolean pu
     def ctx = stageContext(context)
     [unit_id:meta.unit_id, unit_meta:new LinkedHashMap(meta), stage:kind, publish:publish,
      container:kind == 'exported' ? settings.container_images.export_verifier : settings.container_images.base,
-     resources:new LinkedHashMap(settings.resources?.get('bundle_stage',[:]) ?: [:]),
+     resources:unitResources('bundle_stage',settings,context,meta),
      results_path:"${ctx.output_uri}/bundles".toString(), publish_overwrite:settings.publish_overwrite]
 }
 

@@ -99,6 +99,21 @@ Imported processes receive invocation-local maps. `process_resources` uses canon
 process names; `bundle_stage` controls packaging and verification resources.
 See [process settings](MODULAR_PROCESSES.md).
 
+Imported callers can also pass `context.unit_resources`, a map keyed by
+`metadata.unit_id`, then canonical process name. Its `cpus`, `memory`, `disk` and
+`time` values override that unit's invocation-wide deployment resources. For
+example, `[acquisition_a:[preprocessing:[disk:'64 GB']]]` sizes one preprocessing
+unit without changing its scientific metadata or another unit. Use `bundle_stage`
+for packaging/verification. Scientific options are not accepted in these maps.
+
+A single-value channel containing that map is supported when an upstream preflight
+computes estimates. Resolve it before the corresponding unit data arrives; a queue
+channel is rejected. Settings, unit metadata and resource maps are read without
+inserting missing defaults. The full named MEA workflow forwards these deployment
+estimates to its scientific stages; native Maxwell tasks retain their own policy.
+The ordinary CLI resource maps and scientific defaults retain their precedence
+when `unit_resources` is omitted.
+
 ```groovy
 include { MEA_KILOSORT4 as SORT_A; MEA_KILOSORT4 as SORT_B } from './pipeline/stages'
 // Inside a workflow, pass separate parsed settings and output destinations:

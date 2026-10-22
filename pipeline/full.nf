@@ -6,7 +6,8 @@ include { MEA_PREPROCESSING; MEA_KILOSORT4; MEA_ANALYSIS; MEA_REPORTING; MEA_FIN
 def fullStageContext(Map context, String stage) {
     def owner = stageContext(context)
     owner + [output_uri:"${owner.output_uri}/${stage}".toString(),
-             step_id:"${owner.step_id ?: 'full'}-${stage}".toString()]
+             step_id:"${owner.step_id ?: 'full'}-${stage}".toString()] +
+        (stage != 'conversion' && context.containsKey('unit_resources') ? [unit_resources:context.unit_resources] : [:])
 }
 
 // The same maintained stages used by independent callers; no duplicate science.
@@ -25,7 +26,7 @@ workflow MEA_FULL_NWB {
 workflow MEA_FULL_MAXWELL {
     take: recordings; conversion_settings; settings; context
     main:
-    def conversion_context = context + fullStageContext(context,'conversion')
+    def conversion_context = context.findAll { key,value -> key != 'unit_resources' } + fullStageContext(context,'conversion')
     MEA_MAXWELL_CONVERSION(recordings,conversion_settings,conversion_context)
     MEA_FULL_NWB(MEA_MAXWELL_CONVERSION.out.units,settings,context)
     emit:
