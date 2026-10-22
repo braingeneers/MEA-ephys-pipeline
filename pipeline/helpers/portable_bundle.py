@@ -504,6 +504,8 @@ def capsule_serializations(source, destination, data_base):
                 add(path, source)
             elif path.name.startswith("job_"):
                 add(path, data_base, ("recording_dict",))
+                if read_serialization(path).get("recording_lfp_dict") is not None:
+                    add(path, data_base, ("recording_lfp_dict",))
             elif path.name.startswith("preprocessedviz_"):
                 for recording, content in read_serialization(path).items():
                     skipped = (source / ("preprocessed_" + recording) / "error.txt").exists()

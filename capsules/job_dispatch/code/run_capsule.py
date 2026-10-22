@@ -29,6 +29,14 @@ except ImportError:
     HAVE_AIND_LOG_UTILS = False
 
 
+def serialize_recording(recording, *, include_annotations=False):
+    # Nextflow moves capsule outputs out of task-local scratch. Incoming files
+    # remain in the shared workspace, so a scratch-relative path would acquire
+    # the wrong base after that move. The stage packer verifies these absolute
+    # source references and rewrites them into bundle-relative dependencies.
+    return recording.to_dict(recursive=True, include_annotations=include_annotations)
+
+
 # here we define some constants used for defining if timestamps are ok
 # or should be skipped
 ACCEPTED_NEGATIVE_DEVIATION_MS = 0.2  # we allow for small negative timestamps diff glitches
@@ -695,7 +703,7 @@ if __name__ == "__main__":
                     job_dict = dict(
                         session_name=session_name,
                         recording_name=str(recording_name_group),
-                        recording_dict=recording_group.to_dict(recursive=True, include_annotations=include_annotations, relative_to=data_folder),
+                        recording_dict=serialize_recording(recording_group, include_annotations=include_annotations),
                         skip_times=skip_times,
                         duration=duration,
                         input_folder=input_folder,
@@ -704,9 +712,7 @@ if __name__ == "__main__":
                     rec_str = f"\t{recording_name_group}\n\t\tDuration {duration} s - Num. channels: {recording_group.get_num_channels()}"
                     if HAS_LFP:
                         recording_lfp_group = recording_lfp.split_by("group")[group_name]
-                        job_dict["recording_lfp_dict"] = recording_lfp_group.to_dict(
-                            recursive=True, relative_to=data_folder
-                        )
+                        job_dict["recording_lfp_dict"] = serialize_recording(recording_lfp_group)
                         rec_str += f" (with LFP stream)"
                     logging.info(rec_str)
                     job_dict_list.append(job_dict)
@@ -714,16 +720,16 @@ if __name__ == "__main__":
                 job_dict = dict(
                     session_name=session_name,
                     recording_name=str(recording_name_segment),
-                    recording_dict=recording.to_dict(recursive=True, include_annotations=include_annotations, relative_to=data_folder),
+                    recording_dict=serialize_recording(recording, include_annotations=include_annotations),
                     skip_times=skip_times,
                     duration=duration,
                     input_folder=input_folder,
                     debug=DEBUG,
                 )
-                print(f"Relative to: {data_folder}")
+                print("Recording sources use absolute filesystem paths until stage packaging")
                 rec_str = f"\t{recording_name_segment}\n\t\tDuration: {duration} s - Num. channels: {recording.get_num_channels()}"
                 if HAS_LFP:
-                    job_dict["recording_lfp_dict"] = recording_lfp.to_dict(recursive=True, relative_to=data_folder)
+                    job_dict["recording_lfp_dict"] = serialize_recording(recording_lfp)
                     rec_str += f" (with LFP stream)"
                 logging.info(rec_str)
                 job_dict_list.append(job_dict)

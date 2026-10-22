@@ -13,3 +13,10 @@ probe annotations on the returned recording and in generic-reader job JSON, so
 combined NWB electrode and unit exports retain well identity. SpikeInterface
 0.103.2's `set_probegroup` annotates the original recording rather than its
 returned clone. The NWB-specific loader and default parameters are unchanged.
+
+Incoming recording dictionaries use absolute source references until the portable
+stage packer verifies and rebases them. Nextflow can move dispatch output from
+pod-local scratch to the shared workspace; references relative to the old scratch
+directory become invalid after that move. Published stage bundles still require
+relative paths and exact verified dependencies. This changes serialization only;
+recording samples, clocks, geometry, annotations and scientific settings are retained.

@@ -206,7 +206,18 @@ The runtime checks use `SOURCE_DIR` and `TEST_ROOT` for source/evidence location
 as described in [README_NRP.md](../README_NRP.md). Evidence and generated acquisitions
 belong outside Git. Use the producing scientific image for analyzer/extension checks.
 
-The direct graph retains its original serialized recording references.
+Dispatch emits absolute incoming recording references until stage packaging. This
+keeps references to shared inputs valid when Nextflow moves a task's output from
+pod-local scratch. The portable packer verifies each declared dependency and
+rewrites it relative to the published bundle; published artifacts still reject
+absolute or undeclared executable paths. Recording data and scientific settings
+are unchanged. Run `scripts/modular/check_dispatch_scratch.py --output <fresh-root>`
+in the pinned base scientific image to reproduce the old failure and check raw and
+scaled samples, clocks, geometry, IDs, annotations and JSON/pickle relocation.
+`--nwb <existing-self-contained.nwb>` also checks the maintained NWB reader using
+a fixture created by the pinned writer image.
+
+The direct graph retains the same recording graphs and source identities.
 [Portable local bundles](PORTABLE_BUNDLES.md) package and verify their complete
 dependencies for relocation. Independent stage entry points must use that tested
 contract before claiming execution without the producing workspace.
