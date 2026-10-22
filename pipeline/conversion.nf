@@ -57,11 +57,30 @@ def conversionSnapshot(value) {
     }
 }
 
+def conversionBindings(value) {
+    if (!(value instanceof List) || !value) error 'Explicit unit_bindings are required.'
+    def bindings = conversionSnapshot(value)
+    def ids = []
+    bindings.each { binding ->
+        if (!(binding instanceof Map) || binding.keySet() != (['input_uri','unit_name','metadata'] as Set) ||
+            !(binding.metadata instanceof Map) || !(binding.metadata.unit_id instanceof String) ||
+            !(binding.metadata.unit_id ==~ /[A-Za-z0-9][A-Za-z0-9_.-]{0,159}/) || binding.metadata.containsKey('maxwell_conversion'))
+            error 'Each unit binding requires input_uri, unit_name and metadata with an unreserved stable unit_id.'
+        ids.add(binding.metadata.unit_id)
+    }
+    if (ids.toSet().size() != ids.size()) error 'Conflicting conversion unit identities.'
+    bindings
+}
+
 // This separate module deliberately does not enter the five-stage Nextflow 23 path.
 def conversionContext(Map settings, Map context) {
     conversionRuntime()
     settings = conversionSnapshot(settings)
-    context = conversionSnapshot(context)
+    // Deferred S3 selections arrive from upstream tasks. Keep their pure binding
+    // factory outside JSON requests; evaluate it only after the selection arrives.
+    def bindingFactory = context.unit_bindings instanceof Closure ? context.unit_bindings : null
+    context = conversionSnapshot(bindingFactory ? context.findAll { key,value -> key != 'unit_bindings' } : context)
+    context.unit_bindings = bindingFactory ? [] : conversionBindings(context.unit_bindings)
     def allowed = ['output_uri','native_output_uri','workflow_version','run_id','step_id','unit_bindings','runtime','local_bind_paths'] as Set
     if (context.keySet() - allowed) error 'Unknown conversion context; source replacement/finalization is unsupported.'
     def nativeRoot = "${moduleDir}/components/maxwell"
@@ -86,16 +105,6 @@ def conversionContext(Map settings, Map context) {
             error 'native_output_uri must be an explicit s3:// prefix ending in /.'
         nativeOutput = context.native_output_uri
     }
-    if (!(context.unit_bindings instanceof List) || !context.unit_bindings) error 'Explicit unit_bindings are required.'
-    def ids = []
-    context.unit_bindings.each { binding ->
-        if (!(binding instanceof Map) || binding.keySet() != (['input_uri','unit_name','metadata'] as Set) ||
-            !(binding.metadata instanceof Map) || !(binding.metadata.unit_id instanceof String) ||
-            !(binding.metadata.unit_id ==~ /[A-Za-z0-9][A-Za-z0-9_.-]{0,159}/) || binding.metadata.containsKey('maxwell_conversion'))
-            error 'Each unit binding requires input_uri, unit_name and metadata with an unreserved stable unit_id.'
-        ids.add(binding.metadata.unit_id)
-    }
-    if (ids.toSet().size() != ids.size()) error 'Conflicting conversion unit identities.'
     def runtimeKeys = ['s3_endpoint','aws_profile','public_reader_endpoint','minimum_disk_gib',
         'require_k8s_aws_secret_name','k8s_aws_secret_name'] as Set
     if (context.runtime != null && (!(context.runtime instanceof Map) || context.runtime.keySet() - runtimeKeys))
@@ -110,17 +119,27 @@ def conversionContext(Map settings, Map context) {
         workflow_version:conversionVersion("${nativeRoot}/nextflow.config"),runtime:new LinkedHashMap(context.runtime ?: [:]),
         local_bind_paths:(localPaths+[directory.toString()]).unique()]
     def metadata = maxwellMetadata(settings,nativeContext,image)
-    [native:[context:nativeContext,owner:metadata.owner,defaults:defaults,
+    def result = [native:[context:nativeContext,owner:metadata.owner,defaults:defaults,
              distribution:[source_commit:distribution.source_commit,content_sha256:distribution.content_sha256]],
      wrapper:[owner:[workflow_id:'MEA-ephys-pipeline',workflow_version:ownerVersion],
               local_output_uri:output,
               publication_root:output+"bridge/${context.run_id}/${context.step_id}/",
               unit_bindings:context.unit_bindings],settings:new LinkedHashMap(settings),image:image]
+    if (bindingFactory) result.binding_factory = bindingFactory
+    result
 }
 
 def conversionSelection(Map request, records) {
     if (!(records instanceof List) || !records) error 'Expected one nonempty complete recordings selection.'
     records = conversionSnapshot(records)
+    if (request.binding_factory != null) {
+        def bindings = conversionBindings(request.binding_factory.call(conversionSnapshot(records)))
+        request = request.findAll { key,value -> key != 'binding_factory' } +
+            [wrapper:request.wrapper + [unit_bindings:bindings]]
+        if (records.any { !it.input_uri?.startsWith('s3://') ||
+            (it.nwb_metadata ?: [:]).values().any { !it.uri?.startsWith('s3://') } })
+            error 'Deferred unit bindings require S3 recording and projection URIs; use static bindings for local inputs.'
+    }
     def normalize = { value ->
         if (!(value instanceof String) || !value) error 'Explicit recording/binding input_uri is required.'
         if (value.startsWith('s3://') || value.startsWith('file:///')) return value
@@ -237,16 +256,14 @@ workflow MEA_MAXWELL_CONVERSION {
         if (values.size() != 1) error 'Expected one complete recordings selection.'
         conversionSelection(cfg,values[0])
     }
-    def inputBindings = cfg.wrapper.unit_bindings.collect { it.input_uri }
-    // Explicit paths supply Docker/local transport visibility, never unit identity.
-    def paths = inputBindings.findAll { !it.startsWith('s3://') }.collect { file(it,checkIfExists:true) }
     def root = file(cfg.wrapper.local_output_uri,checkIfExists:true)
-    // Projections are carried with the complete recording dictionaries.
-    projectionBindings = selection.map { request ->
-        request.recordings.collectMany { (it.nwb_metadata ?: [:]).values().collect { projection -> projection.uri } }
-            .findAll { it && !it.startsWith('s3://') }.collect { file(it,checkIfExists:true) }
+    // Explicit paths supply Docker/local visibility, never unit identity.
+    localBindings = selection.map { request ->
+        def uris = request.wrapper.unit_bindings.collect { it.input_uri } +
+            request.recordings.collectMany { (it.nwb_metadata ?: [:]).values().collect { projection -> projection.uri } }
+        def paths = uris.findAll { it && !it.startsWith('s3://') }.collect { file(it,checkIfExists:true) }
+        (paths+[root]).unique()
     }
-    localBindings = projectionBindings.map { projections -> (paths+[root]+projections).unique() }
     // Native exports take a value list; their context bindings must be static.
     // Complete parent directories make projection/source URIs visible in local tasks.
     def nativeContext = cfg.native.context

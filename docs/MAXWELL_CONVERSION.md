@@ -99,6 +99,13 @@ The bridge accepts no source replacement, finalization or deletion option.
   `input_uri`, `unit_name` and `metadata.unit_id`. Max One uses `recording`; Max Two
   uses selected well names such as `well002`. Unit IDs are distinct path-safe
   strings; binding order and duplicate raw basenames do not establish identity.
+  Imported Nextflow callers whose S3 selection arrives from an upstream task may
+  instead supply a pure closure: `unit_bindings: { records -> /* binding list */ }`.
+  It receives an independent snapshot of the complete selection after arrival.
+  The returned list passes the same exact coverage and identity checks; only the
+  resulting JSON bindings enter native/bridge requests. Deferred bindings require
+  S3 sources and projections. Local callers retain the explicit static list so
+  their task visibility can be declared before execution.
 - Optional `local_bind_paths`: existing files/directories for projections outside
   the original recording directories. These are explicit local task dependencies.
 - Optional `runtime`: only the native transport/runtime options `s3_endpoint`,

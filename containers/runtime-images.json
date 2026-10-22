@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "published_immutable_runtime_defaults",
-  "workflow_version": "0.2.35",
+  "workflow_version": "0.2.36",
   "defaults": "pipeline/container_images.json",
   "images": {
     "base": {
