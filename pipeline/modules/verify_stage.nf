@@ -5,6 +5,8 @@ include { meaCodeDigest } from '../code_identity'
 process verify_stage {
     tag { "${task_settings.unit_id}:${task_settings.stage}" }
     container { task_settings.container }
+    // Verification returns a read-only alias of an already shared bundle.
+    scratch false
 
     input:
     tuple val(task_settings), path(bundle, stageAs: 'input-bundle')

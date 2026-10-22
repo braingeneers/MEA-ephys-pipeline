@@ -417,7 +417,7 @@ def build(request, paths, output, no_spikes, common_code=None):
     record.pop("content_sha256")
     import hashlib
     record["content_sha256"] = hashlib.sha256(portable.encoded(record)).hexdigest()
-    (output / "bundle.json").write_bytes(portable.encoded(record) + b"\n")
+    portable.write_manifest(output / "bundle.json", record)
     verify(output, record["stage"], record["unit_id"], no_spikes, common_code=common_code)
     return record
 

@@ -16,6 +16,7 @@ from pathlib import Path, PurePosixPath
 import pickle
 import re
 import shutil
+import uuid
 
 
 CONTRACT = "mea.local-stage-bundle/v2"
@@ -604,8 +605,26 @@ def pack(spec, output):
               "original_serializations": original_serializations,
               "historical_provenance_paths": "Retained as evidence; not executable dependencies."}
     record["content_sha256"] = hashlib.sha256(encoded(record)).hexdigest()
-    (output / "bundle.json").write_bytes(encoded(record) + b"\n")
+    write_manifest(output / "bundle.json", record)
     return record
+
+
+def write_manifest(path, record):
+    """Expose complete manifest bytes with one rename on the destination filesystem."""
+    path = Path(path)
+    temporary = path.with_name('.' + path.name + '.' + uuid.uuid4().hex + '.tmp')
+    try:
+        # Unlike mkstemp's fixed 0600, retain ordinary output permissions under
+        # the caller's umask so downstream image users can read staged metadata.
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(encoded(record) + b'\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def verify_manifest(root):

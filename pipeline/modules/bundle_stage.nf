@@ -5,6 +5,9 @@ include { meaCodeDigest } from '../code_identity'
 process bundle_stage {
     tag { "${task_settings.unit_id}:${task_settings.stage}" }
     container { task_settings.container }
+    // This is the shared output handoff. Preserve atomic manifest publication
+    // instead of copying it in place from a separate scratch filesystem.
+    scratch false
     publishDir { task_settings.results_path }, mode: 'copy', pattern: 'bundle', saveAs: { name -> task_settings.publish && task_settings.publish_overwrite == null ? "${task_settings.unit_id}.${task_settings.stage}" : null }
     publishDir { task_settings.results_path }, mode: 'copy', pattern: 'bundle', overwrite: true, saveAs: { name -> task_settings.publish && task_settings.publish_overwrite == true ? "${task_settings.unit_id}.${task_settings.stage}" : null }
     publishDir { task_settings.results_path }, mode: 'copy', pattern: 'bundle', overwrite: false, saveAs: { name -> task_settings.publish && task_settings.publish_overwrite == false ? "${task_settings.unit_id}.${task_settings.stage}" : null }

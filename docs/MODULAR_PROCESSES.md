@@ -220,6 +220,17 @@ scaled samples, clocks, geometry, IDs, annotations and JSON/pickle relocation.
 `--nwb <existing-self-contained.nwb>` also checks the maintained NWB reader using
 a fixture created by the pinned writer image.
 
+Bundle assembly and verification run directly in the shared task workspace. Their
+outputs are the handoff to later tasks, so a second in-place copy from scratch
+would discard the manifest writer's atomic publication. Both manifest writes use
+a same-directory temporary file, flush and rename; failed writes retain the prior
+complete bytes. Scientific capsule scratch behavior is unchanged. Keep these two
+processes' `scratch false` directives when adding executor selectors.
+`scripts/modular/check_manifest_publication.py` checks concurrent reads, ordinary
+permissions and injected write failures. `check_boundary_storage.py` runs the actual
+boundary modules with a scratch-enabled control on both supported engines; it uses
+tiny test-only capsules and makes no scientific claim.
+
 The direct graph retains the same recording graphs and source identities.
 [Portable local bundles](PORTABLE_BUNDLES.md) package and verify their complete
 dependencies for relocation. Independent stage entry points must use that tested
