@@ -1,6 +1,7 @@
 nextflow.enable.dsl = 2
 
 include { meaReadJson } from './json_values'
+include { producerLocationOptions } from './producer_locations'
 
 // Direct-call compatibility parsing, also usable by independent stage callers.
 // All values are invocation-local; imported processes receive only their own map.
@@ -271,5 +272,6 @@ def processOptions(String name, Map launch) {
             Boolean.parseBoolean(launch.publish_overwrite.toString())
     }
     if (name == 'results_collector') result.input_path = launch.input_path
+    result.putAll(producerLocationOptions(name))
     return result
 }

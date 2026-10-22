@@ -5,6 +5,8 @@ include { meaCodeDigest } from '../code_identity'
 process spikesort_kilosort4 {
     tag 'spikesort-kilosort4'
     container { task_settings.container }
+    // Merge payloads into the output port holding its atomic origin record.
+    stageOutMode 'copy'
 
     input:
     val task_settings
@@ -25,6 +27,7 @@ process spikesort_kilosort4 {
     #!/usr/bin/env bash
     # MEA staged-code SHA-256: ${staged_code_identity}
     set -e
+    MEA_PRODUCER_TASK_ROOT=\$(pwd -P)
     ln -s capsule/results unit-results
 
     mkdir -p capsule
@@ -46,6 +49,11 @@ process spikesort_kilosort4 {
     cd capsule/code
     chmod +x run
     ./run ${task_settings.args} ${task_settings.job_args}
+
+    cd "\$MEA_PRODUCER_TASK_ROOT"
+    # MEA producer-location recorder SHA-256: ${task_settings.producer_location_identity}
+    export MEA_PRODUCER_LOCATION_SHA="${task_settings.producer_location_identity}"
+    ${task_settings.producer_location_script}
 
     echo "[${task.tag}] completed!"
     """

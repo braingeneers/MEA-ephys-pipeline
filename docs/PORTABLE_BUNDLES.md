@@ -119,6 +119,30 @@ these graph paths after incoming metadata and before native/work policy construc
 extractors. Assembly still accepts the original capsules' absolute source paths and
 rebases them. Existing valid v2 receipts keep their format and scientific identities.
 
+## Producer origins
+
+Scratch execution can leave a valid lazy graph relative to a directory that no
+longer exists after stage-out. New producer wrappers record that original
+coordinate explicitly before returning. The reserved
+`.mea-producer-location-<binding>.json` file is historical provenance, copied with
+the scientific payload. It records the actual producer capsule root, shared
+publication root, separate emitted results port, role, recorder code identity
+and observed symlink bindings. No origin is inferred from filenames or task hashes.
+
+An assembly-time serialization descriptor may include `producer_location` with
+the decoded `record`, its declared `source` file and complete `sha256`. The packer
+requires the source and copied inventory bytes to match that record before using
+it. Recorded links resolve before `..` traversal; paths owned by the retired
+producer then map to its declared shared outputs. Every resulting dependency
+still needs an ordinary declared payload or byte-checked alias. An origin cannot
+authorize an undeclared file or replace a recording with a binary cache.
+
+Active portable descriptors omit these source instructions. The corresponding
+`original_serializations` entry retains the record and copied provenance binding;
+all active graph paths remain relative to the bundle. Existing valid artifacts
+without producer records keep their explicit-base behavior. New wrappers require
+their own matching record, rejecting missing, ambiguous or malformed origins.
+
 ## Verification scope
 
 Before accepting a bundle, assembly compares the original and portable graphs:

@@ -374,6 +374,14 @@ def build(request, paths, output, no_spikes, common_code=None):
         require(source.is_dir(), "Declared scientific result is not a directory")
         layout = paths[piece["inputs"]]
         piece_descriptors = portable.capsule_serializations(source, destination, layout)
+        from producer_locations import load as load_producer_location, LocationError
+        try:
+            producer_location = load_producer_location(source, piece.get('producer_location_identity'))
+        except (LocationError, OSError, ValueError) as error:
+            raise portable.BundleError(f'Producer location: {error}') from error
+        if producer_location is not None:
+            for descriptor in piece_descriptors:
+                descriptor['producer_location'] = producer_location
         if piece.get('role') == 'collector':
             require(piece.get('publication'), 'Collector needs its explicit publication serialization base')
             for descriptor in piece_descriptors:
@@ -385,6 +393,8 @@ def build(request, paths, output, no_spikes, common_code=None):
                 descriptors.append({"format": "extractor_json", "source": str(path),
                                     "path": str(Path(destination) / path.relative_to(source)),
                                     "base": str(layout / "ecephys_session"), "relative_to": "data/ecephys_session"})
+                if producer_location is not None:
+                    descriptors[-1]['producer_location'] = producer_location
     # Declare equivalent producer-side copies explicitly. The portable layer
     # checks every byte (or unchanged JSON value) before adding these bindings.
     destinations = set()

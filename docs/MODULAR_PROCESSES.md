@@ -103,6 +103,24 @@ references. The portable bundle helper dereferences them and uses their actual
 serialization bases; a downstream stage must not guess a predecessor work directory.
 Internal ports alone are not a verified portable bundle or stage-completion receipt.
 
+Graph-producing processes also capture their actual execution location before
+scratch is retired. `pipeline/producer_locations.nf` supplies the recorder text
+and SHA-256 as explicit settings inputs, so recorder edits invalidate cached
+producers. After successful science, the wrapper records the physical capsule
+root, the shared `.command.sh` directory, the separate `unit-results` output port
+and actual input/output symlink targets. It publishes a unique hidden origin
+record atomically in that shared port; payload stage-out uses `copy` to merge
+alongside it. Under scratch, the emitted port can be a separate real directory,
+even though the wrapper originally created a symlink. It must not be treated as
+the physical `capsule/results` directory.
+
+Named-stage input selection excludes reserved origin records. Assembly binds the
+record to the declared results port, expected recorder identity and copied file
+inventory before resolving old graph paths. It resolves recorded symlinks before
+parent traversal, then applies the ordinary declared-dependency and complete
+scientific checks. Scientific capsules and their source graphs are unchanged.
+See [producer origins](PORTABLE_BUNDLES.md#producer-origins) for the bundle contract.
+
 Every publishing module restricts publication to `capsule/results/*`. The separate
 internal alias avoids overlapping its directory with the original published child
 paths: Nextflow deduplicates overlapping outputs before publication filtering.
@@ -153,6 +171,20 @@ the default engine behavior without adding a changing resume flag to task inputs
 
 ## Checks
 
+- `scripts/modular/check_producer_locations.py --output <new-directory>`: tiny
+  real recording/analyzer JSON, pickle and Zarr graphs, exact full fingerprints
+  after scratch retirement, and malformed/missing/undeclared-origin controls.
+  Run in the base scientific image; `--nwb <self-contained.nwb>` also exercises
+  its NWB reader with a fixture created in the owning writer image.
+- `scripts/modular/check_producer_location_cache.py --output <new-directory>`:
+  actual dispatch module, unchanged cached resume, recorder-only invalidation
+  and rejection of an output port escaping into protected input storage.
+  Its scientific capsule is stubbed. Run in the pinned driver with Docker;
+  `--legacy-runtime <cache>` selects the supported older engine.
+- `scripts/modular/check_stage_graph.py --output <new-directory> --scratch`:
+  two units and two aliases through the maintained stage graph with real bundle
+  verification, reporting and bursts, plus stubbed scientific producers. Both
+  supported engines must pass actual scratch stage-out; this is not GPU science.
 - `scripts/nrp/check_parameter_cache.py`: actual imported module inputs and seven
   setting/pin/cache cases, using stub scientific capsules.
 - `scripts/nrp/check_compatibility.py local`: publication/resume and module-cache

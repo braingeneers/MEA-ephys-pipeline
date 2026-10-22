@@ -186,40 +186,17 @@ def register_alias(source, target, mappings):
     mappings[source] = target
 
 
-def rebase_extractor(value, old_base, new_base, mappings, bundle_root, *, require_relative=False):
-    """Rebase executable kwargs, leaving annotations and provenance untouched.
-
-    A root relative_paths flag applies to every nested extractor, as in the pinned
-    BaseExtractor.from_dict. NWB electrical_series_path is an HDF5 path, not a file.
-    """
+def extractor_relative(value):
     if (not isinstance(value, dict) or not isinstance(value.get("class"), str)
             or not isinstance(value.get("kwargs"), dict) or not isinstance(value.get("relative_paths", False), bool)):
         raise BundleError("Malformed extractor dictionary or relative_paths flag")
-    result = deepcopy(value)
-    relative = value.get("relative_paths", False)
+    return value.get("relative_paths", False)
 
-    def dependency(path):
-        if not isinstance(path, (str, Path)) or not str(path):
-            raise BundleError("Extractor filesystem dependency must be a non-empty string")
-        original = Path(path)
-        if require_relative and original.is_absolute():
-            raise BundleError(f"Portable extractor requires relative filesystem paths: {path}")
-        if relative:
-            original = old_base / original
-        elif not original.is_absolute():
-            raise BundleError(f"Non-absolute dependency without relative_paths: {path}")
-        try:
-            # A producer may serialize relative to its future publication base.
-            # Normalize that declared base before requiring the final dependency.
-            original = original.resolve().resolve(strict=True)
-        except FileNotFoundError as error:
-            raise BundleError(f"Missing recording dependency: {original}") from error
-        target = mappings.get(original)
-        if target is None:
-            raise BundleError(f"Undeclared recording dependency: {original}")
-        if not target.resolve().is_relative_to((bundle_root / "data").resolve()):
-            raise BundleError(f"Recording dependency escapes bundle data: {target}")
-        return os.path.relpath(target, new_base)
+
+def map_extractor_dependencies(value, dependency, relative_paths):
+    """Rewrite only executable paths with the existing strict constructor policy."""
+    extractor_relative(value)
+    result = deepcopy(value)
 
     def visit(node):
         if isinstance(node, list):
@@ -248,8 +225,73 @@ def rebase_extractor(value, old_base, new_base, mappings, bundle_root, *, requir
             node["folder_metadata"] = dependency(node["folder_metadata"])
 
     visit(result)
-    result["relative_paths"] = True
+    result["relative_paths"] = relative_paths
     return result
+
+
+def source_dependency(path, base, relative, producer_location=None):
+    if not isinstance(path, (str, Path)) or not str(path):
+        raise BundleError("Extractor filesystem dependency must be a non-empty string")
+    original = Path(path)
+    if relative:
+        if producer_location is not None:
+            from producer_locations import old_base
+            base = old_base(base, producer_location)
+        original = Path(base) / original
+    elif not original.is_absolute():
+        raise BundleError(f"Non-absolute dependency without relative_paths: {path}")
+    try:
+        if producer_location is not None:
+            from producer_locations import resolve
+            return resolve(original, producer_location)
+        # A collector can serialize relative to its explicit future publication
+        # base. Normalize that base before requiring the actual final dependency.
+        return original.resolve().resolve(strict=True)
+    except FileNotFoundError as error:
+        raise BundleError(f"Missing recording dependency: {original}") from error
+    except ValueError as error:
+        raise BundleError(f"Producer location: {error}") from error
+
+
+def source_extractor(value, base, producer_location):
+    relative = extractor_relative(value)
+    return map_extractor_dependencies(value,
+        lambda path: str(source_dependency(path, base, relative, producer_location)), False)
+
+
+def rebase_extractor(value, old_base, new_base, mappings, bundle_root, *, require_relative=False,
+                     producer_location=None):
+    """Rebase executable kwargs, retaining annotations and explicit producer origins."""
+    relative = extractor_relative(value)
+
+    def dependency(path):
+        if require_relative and isinstance(path, (str, Path)) and Path(path).is_absolute():
+            raise BundleError(f"Portable extractor requires relative filesystem paths: {path}")
+        original = source_dependency(path, old_base, relative, producer_location)
+        target = mappings.get(original)
+        if target is None:
+            raise BundleError(f"Undeclared recording dependency: {original}")
+        if not target.resolve().is_relative_to((bundle_root / "data").resolve()):
+            raise BundleError(f"Recording dependency escapes bundle data: {target}")
+        return os.path.relpath(target, new_base)
+
+    return map_extractor_dependencies(value, dependency, True)
+
+
+def check_producer_location(provenance, mappings, output):
+    from producer_locations import absolute, decode, validate, LocationError
+    try:
+        if not isinstance(provenance, dict) or set(provenance) != {'record', 'source', 'sha256'}:
+            raise BundleError('Malformed producer location source binding')
+        validate(provenance['record'])
+        source = absolute(provenance['source']).resolve(strict=True)
+        target = mappings.get(source)
+        if (target is None or not target.resolve().is_relative_to((output / 'data').resolve())
+                or sha256(source) != provenance['sha256'] or sha256(target) != provenance['sha256']
+                or encoded(decode(target.read_bytes())) != encoded(provenance['record'])):
+            raise BundleError('Producer location differs from its declared payload and copied inventory')
+    except LocationError as error:
+        raise BundleError(f'Producer location: {error}') from error
 
 
 def assert_local_extractor(value, base, root):
@@ -403,6 +445,8 @@ def fingerprint(descriptor, root, portable=False):
         value = group["recording"][0]
         if portable:
             assert_local_extractor(value, location, root)
+        elif descriptor.get('producer_location') is not None:
+            value = source_extractor(value, base, descriptor['producer_location'])
         recording = si.load(value, base_folder=base)
         analyzer = si.SortingAnalyzer.load_from_zarr(location, recording=recording)
         if analyzer.recording is None:
@@ -422,6 +466,8 @@ def fingerprint(descriptor, root, portable=False):
     value = at_pointer(read_serialization(location), descriptor.get("pointer", []))
     if portable:
         assert_local_extractor(value, base, root)
+    elif descriptor.get('producer_location') is not None:
+        value = source_extractor(value, base, descriptor['producer_location'])
     extractor = si.load(value, base_folder=base)
     if isinstance(extractor, si.BaseRecording):
         return {"recording": recording_identity(extractor)}
@@ -568,12 +614,16 @@ def pack(spec, output):
             raise BundleError("Source and destination serialization formats disagree")
         if mappings.get(original) != destination:
             raise BundleError(f"Serialization is not bound to its declared payload: {original}")
+        provenance = descriptor.get('producer_location')
+        if provenance is not None:
+            check_producer_location(provenance, mappings, output)
         if descriptor["format"] == "analyzer_zarr":
             import zarr
             group = zarr.open(str(destination), mode="r+")
             source_group = zarr.open(str(original), mode="r")
             value = source_group["recording"][0]
-            replacement = rebase_extractor(value, Path(descriptor["base"]), destination, mappings, output)
+            replacement = rebase_extractor(value, Path(descriptor["base"]), destination, mappings, output,
+                                           producer_location=provenance)
             expected = fingerprint(descriptor, output)
             group["recording"][0] = replacement
             zarr.consolidate_metadata(group.store)
@@ -582,24 +632,29 @@ def pack(spec, output):
             pointer = descriptor.get("pointer", [])
             extractor = at_pointer(value, pointer)
             replacement = rebase_extractor(extractor, Path(descriptor["base"]),
-                                           within(output, descriptor.get("relative_to", "data")), mappings, output)
+                                           within(output, descriptor.get("relative_to", "data")), mappings, output,
+                                           producer_location=provenance)
             expected = fingerprint(descriptor, output)
             if pointer:
                 at_pointer(value, pointer[:-1])[pointer[-1]] = replacement
             else:
                 value = replacement
             write_serialization(destination, value)
-        portable_descriptor = {key: value for key, value in descriptor.items() if key not in {"source", "base"}}
+        portable_descriptor = {key: value for key, value in descriptor.items() if key not in {"source", "base", "producer_location"}}
         if encoded(fingerprint(portable_descriptor, output, portable=True)) != encoded(expected):
             raise BundleError(f"Scientific identity changed during packaging: {descriptor['path']}")
         science.append(expected)
         original_serializations.append({"path": descriptor["path"], "pointer": descriptor.get("pointer", []),
                                         "sha256": sha256(original) if original.is_file() else None})
+        if provenance is not None:
+            original_serializations[-1]['producer_location'] = {
+                'path': str(mappings[Path(provenance['source']).resolve()].relative_to(output)),
+                'sha256': provenance['sha256'], 'record': provenance['record']}
     payload_inventory = inventory(output / "data")
     record = {"schema_version": BUNDLE_SCHEMA, "contract": CONTRACT, "unit_id": unit, "stage": spec["stage"],
               "recording_ids": spec["recording_ids"], "metadata": spec.get("metadata", {}),
               "files": payload_inventory, "bytes": sum(item["bytes"] for item in payload_inventory.values()),
-              "serializations": [{key: value for key, value in item.items() if key not in {"source", "base"}}
+              "serializations": [{key: value for key, value in item.items() if key not in {"source", "base", "producer_location"}}
                                  for item in descriptors], "scientific_fingerprints": science,
               "executable_bindings": [executable_binding(item, output) for item in descriptors],
               "original_serializations": original_serializations,

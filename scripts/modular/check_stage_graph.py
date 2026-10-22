@@ -31,6 +31,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--legacy-runtime", type=Path)
+    parser.add_argument("--scratch", action="store_true", help="Exercise producer origins through actual scratch stage-out")
     args = parser.parse_args()
     source = Path(__file__).resolve().parents[2]
     root = args.output.resolve()
@@ -99,6 +100,9 @@ workflow {{
     overlay = root / "probe.config"
     overlay.write_text("executor.queueSize=8\nexecutor.pollInterval='1 sec'\n"
         + "docker.runOptions='--user 1000:1000 --network none -e HOME=/tmp -e MPLBACKEND=Agg'\n")
+    if args.scratch:
+        with overlay.open('a') as stream:
+            stream.write("process.scratch='" + str(root / 'scratch') + "'\n")
     command = ["nextflow"]
     env = os.environ.copy()
     if args.legacy_runtime:
@@ -143,6 +147,7 @@ workflow {{
     assert len(rows)==84 and all(row["status"]=="COMPLETED" and row["exit"]=="0" for row in rows)
     check_dispatch_inputs(root, rows)
     result={"passed":True,"tasks":len(rows),"legacy_runtime":bool(args.legacy_runtime),
+            "scratch_stage_out_exercised":args.scratch,
             "scientific_capsules_stubbed":True,"real_report_and_burst_capsules":True,
             "real_bundle_verifiers":True,"alias_unit_settings_publication_isolation":True,"emitted":emitted}
     (root/"result.json").write_text(json.dumps(result,indent=2)+"\n")

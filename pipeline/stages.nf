@@ -75,7 +75,7 @@ def boundaryOptions(String kind, Map settings, Map context, Map meta, boolean pu
 }
 
 def bundleRecord(path) { meaReadJson(path.resolve('bundle.json')) }
-def children(path) { path.toFile().listFiles().sort{ a,b -> a.name <=> b.name }.collect{ file(it.toString()) } }
+def children(path) { path.toFile().listFiles().findAll{ !it.name.startsWith('.mea-producer-location-') }.sort{ a,b -> a.name <=> b.name }.collect{ file(it.toString()) } }
 def family(path, String prefix) { children(path.resolve('data')).findAll{ it.name.startsWith(prefix) } }
 def rawSession(path) { path.resolve('data/ecephys_session') }
 def duration(path) { bundleRecord(path).metadata.max_duration_minutes.toString() }
@@ -89,6 +89,7 @@ def assemble(String phase, Map meta, Map settings, Map context, previous, List p
     if (previous != null) { request.previous=paths.size(); paths.add(previous) }
     pieces.each { piece ->
         def item = [results:paths.size(),destination:piece.get('destination','data'),role:piece.get('role','scientific')]
+        if (piece.settings.get('producer_location_identity')) item.producer_location_identity=piece.settings.producer_location_identity
         paths.add(piece.results)
         item.inputs=paths.size(); paths.add(piece.inputs)
         if (piece.get('role') == 'collector') item.publication=piece.settings.results_path
@@ -112,7 +113,7 @@ workflow MEA_PREPROCESSING {
     dispatch_requests = dispatch_join.map{ id,p,original ->
         def cfg = p.settings
         def request = [schema_version:1,phase:'dispatch',unit_id:cfg.unit_id,unit_meta:cfg.unit_meta,context:stageContext(context),
-            pieces:[[results:0,inputs:1]],duration:2,source:3,input_count:4,
+            pieces:[[results:0,inputs:1,producer_location_identity:cfg.producer_location_identity]],duration:2,source:3,input_count:4,
             processes:[[name:'job_dispatch',execution:p.execution,capsule_pin:cfg.capsule_pin,args:cfg.args]]]
         // Scratch stage-out can copy the producer's input layout. Retain the
         // original declared unit, just as later stages retain their predecessor.

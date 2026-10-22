@@ -5,6 +5,8 @@ include { meaCodeDigest } from '../code_identity'
 process results_collector {
     tag 'result-collector'
     container { task_settings.container }
+    // Merge payloads into the output port holding its atomic origin record.
+    stageOutMode 'copy'
 
     // Keep option booleans static for Nextflow 23; saveAs selects one policy.
     publishDir { "${task_settings.results_path}" }, mode: 'copy', pattern: 'capsule/results/*', saveAs: { filename -> task_settings.publish_overwrite == null ? new File(filename).getName() : null }
@@ -38,6 +40,7 @@ process results_collector {
     #!/usr/bin/env bash
     # MEA staged-code SHA-256: ${staged_code_identity}
     set -e
+    MEA_PRODUCER_TASK_ROOT=\$(pwd -P)
     ln -s capsule/results unit-results
 
     mkdir -p capsule
@@ -57,6 +60,11 @@ process results_collector {
     cd capsule/code
     chmod +x run
     ./run --pipeline-data-path ${task_settings.input_path} --pipeline-results-path ${task_settings.results_path}
+
+    cd "\$MEA_PRODUCER_TASK_ROOT"
+    # MEA producer-location recorder SHA-256: ${task_settings.producer_location_identity}
+    export MEA_PRODUCER_LOCATION_SHA="${task_settings.producer_location_identity}"
+    ${task_settings.producer_location_script}
 
     echo "[${task.tag}] completed!"
     """
