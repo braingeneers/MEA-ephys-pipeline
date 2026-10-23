@@ -75,6 +75,12 @@ distinct. Identical raw filenames/internal recording IDs in different units are
 supported. Each finite stage input channel is collected once to validate unit
 uniqueness before scheduling its scientific tasks.
 
+A closed zero-item channel is an inactive conditional branch: the named stage emits
+nothing and schedules no tasks. Nonempty inputs retain all metadata, path and unique
+unit checks. `scripts/modular/check_empty_branches.py` checks inactive branches and
+malformed/populated inputs in isolated Nextflow26 and, with `--legacy-runtime`,
+Nextflow23/Java17. It does not run scientific capsules or NERSC/Shifter.
+
 The standalone unit/prior-bundle reader and scientific `--params_file` reader use
 `pipeline/json_values.nf`. Original JSON integers retain arbitrary precision;
 floating tokens use finite binary64, including negative zero. Duplicate keys,

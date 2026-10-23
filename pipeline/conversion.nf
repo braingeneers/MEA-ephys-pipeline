@@ -252,7 +252,7 @@ workflow MEA_MAXWELL_CONVERSION {
     take: recordings; settings; context
     main:
     def cfg = conversionContext(settings,context)
-    selection = recordings.toList().map { values ->
+    selection = recordings.collect(flat:false).map { values ->
         if (values.size() != 1) error 'Expected one complete recordings selection.'
         conversionSelection(cfg,values[0])
     }

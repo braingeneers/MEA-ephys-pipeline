@@ -184,7 +184,7 @@ workflow PREPARE_MAXWELL_SELECTION {
     def image = new groovy.json.JsonSlurper().parse(file("${moduleDir}/image.json").toFile()).pinned_reference
     def meta = maxwellMetadata(settings, context, image)
     def bindings = (context.local_bind_paths ?: []).collect { file(it, checkIfExists: true) }
-    MAXWELL_RAW_SELECTION(recordings.toList().map { values ->
+    MAXWELL_RAW_SELECTION(recordings.collect(flat:false).map { values ->
         if (values.size() != 1) error 'Expected one complete recordings selection'
         tuple(meta, values[0])
     }, file("${moduleDir}/runtime"), file("${moduleDir}/components/common/python"), bindings)
@@ -205,7 +205,7 @@ workflow MAXWELL_TO_NWB {
     def bindings = (context.local_bind_paths ?: []).collect { file(it, checkIfExists: true) }
     def policy = new groovy.json.JsonSlurper().parse(file("${moduleDir}/process-policy.json").toFile())
     def cpus = policy.processes.CONVERT_MAXONE_TO_NWB.cpus == 'available_processors' ? Runtime.runtime.availableProcessors() : policy.processes.CONVERT_MAXONE_TO_NWB.cpus
-    MAXWELL_PREPARE(artifacts.toList().map { values ->
+    MAXWELL_PREPARE(artifacts.collect(flat:false).map { values ->
         if (values.size() != 1) error 'Expected one complete artifact envelope'
         tuple(meta, values[0])
     }, runtime, common, bindings)

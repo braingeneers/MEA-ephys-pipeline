@@ -72,6 +72,10 @@ Keep uploaded well inventories, filters, unknown fields and per-unit
 reads stay with the converter. The bridge can read completed native S3 publications;
 its output units are local directories for the portable MEA stages.
 
+A closed channel with no items represents an inactive conditional branch. Conversion
+and its native exports emit no units/artifacts/completion and start no tasks in that
+case. This differs from an emitted empty recordings array, which remains invalid.
+
 `settings` is the native scientific settings map. `{}` remains submitted `{}`;
 effective defaults stay separately in provenance. Use the native `defaults.json`
 as the maintained option definition. Companion creation follows the native

@@ -21,7 +21,7 @@ include { verify_stage as VERIFY_PREPARED; verify_stage as VERIFY_SORTED;
           verify_stage as VERIFY_ANALYZED; verify_stage as VERIFY_REPORTED } from './modules/verify_stage'
 
 def stageInputs(units) {
-    units.toList().flatMap { rows ->
+    units.collect(flat:false).flatMap { rows ->
         if (!rows) error 'A scientific stage requires at least one unit.'
         def ids = []
         rows.each { meta, path ->
