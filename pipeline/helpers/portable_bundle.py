@@ -23,6 +23,7 @@ CONTRACT = "mea.local-stage-bundle/v2"
 BUNDLE_SCHEMA = 2
 # This is part of the scientific receipt, not a tunable sampling parameter.
 RECORDING_BLOCK_FRAMES = 65536
+SORTING_VECTOR_ORDER = "segment_sample_unit/v1"
 STAGES = {"nwb", "prepared", "sorted", "analyzed", "reported", "exported"}
 FORMATS = {"extractor_json", "extractor_pickle", "analyzer_zarr"}
 SERIALIZATION_SUFFIXES = {".json", ".pkl", ".pickle"}
@@ -428,8 +429,30 @@ def executable_binding(descriptor, root):
 
 
 def sorting_identity(sorting):
+    """Bind exact events and ordered trains independently of equal-time tie order.
+
+    SpikeInterface reconstructs some sortings with NumPy's default unstable
+    argsort. CPU dispatch can reorder simultaneous events without changing any
+    unit's spike train. Only the fingerprint copy receives a total event order;
+    scientific objects, persisted vectors and capsule calculations stay intact.
+    """
+    import numpy as np
+
+    spikes = sorting.to_spike_vector()
+    if spikes.ndim != 1:
+        raise BundleError("Sorting spike vector must be one-dimensional")
+    segments = spikes["segment_index"]
+    samples = spikes["sample_index"]
+    if np.any(segments[1:] < segments[:-1]) or np.any(
+            (segments[1:] == segments[:-1]) & (samples[1:] < samples[:-1])):
+        raise BundleError("Sorting spike vector must follow segment/time order")
+    order = np.lexsort((spikes["unit_index"], samples, segments))
+    trains = [[array_identity(sorting.get_unit_spike_train(unit_id, segment_index=segment))
+               for unit_id in sorting.unit_ids]
+              for segment in range(sorting.get_num_segments())]
     return {"sampling_frequency": sorting.get_sampling_frequency(), "unit_ids": jsonable(sorting.unit_ids),
-            "segments": sorting.get_num_segments(), "spikes": array_identity(sorting.to_spike_vector())}
+            "segments": sorting.get_num_segments(), "spikes": array_identity(spikes[order]),
+            "spike_vector_order": SORTING_VECTOR_ORDER, "spike_trains": trains}
 
 
 def fingerprint(descriptor, root, portable=False):
@@ -709,6 +732,11 @@ def verify_manifest(root):
 def verify_science(root, record):
     """Check immutable producer receipts after stage metadata/policy preflight."""
     root = Path(root).resolve()
+    for identity in record["scientific_fingerprints"]:
+        if "sorting" in identity and (identity["sorting"].get("spike_vector_order") != SORTING_VECTOR_ORDER
+                                      or "spike_trains" not in identity["sorting"]):
+            raise BundleError("Legacy sorting fingerprint: audit with its frozen producer reader or "
+                              "re-run the named stage producer for exact event/train receipts")
     identities = [fingerprint(item, root, portable=True) for item in record["serializations"]]
     if encoded(identities) != encoded(record["scientific_fingerprints"]):
         raise BundleError("Bundle scientific fingerprint mismatch")

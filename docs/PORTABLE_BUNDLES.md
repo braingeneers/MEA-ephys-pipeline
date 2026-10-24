@@ -164,6 +164,20 @@ serialization changes. Saved scientific arrays/extensions are not recomputed.
 Fingerprints preserve nullable Pandas values, NaN and infinity as distinct values;
 they do not remove or repair undefined scientific measurements.
 
+Sorting receipts use the explicit `segment_sample_unit/v1` event order and exact
+ordered per-unit spike-train fingerprints. SpikeInterface can reconstruct an
+analyzer's vector with NumPy's unstable default argsort: CPU dispatch may change
+the order of simultaneous events. The fingerprint sorts a copy by segment, sample
+and unit; the capsule's sorting, stored vector and products retain their original
+bytes. Nonchronological vectors are rejected. Unit identity/order, every ordered
+per-unit sample (including duplicates), train/vector dtypes and shapes, segment
+count and sampling frequency remain exact. This adds no numeric tolerance.
+Receipts without this explicit event/train policy require their frozen producer
+reader or a fresh named-stage production; verification never upgrades them in place.
+
+Run `scripts/modular/check_sorting_identity.py --output <new-report.json>` in the
+pinned base image for simultaneous-event, changed-science and zero-unit controls.
+
 Recording arrays use exact shape/dtype and streaming SHA-256 of all ordered values.
 The fixed `mea.recording-stream/v1` policy reads 65,536 frames per block, including
 the final partial block; it never samples or shortens recordings. Explicit clocks
