@@ -95,6 +95,37 @@ JsonSlurper can already have lost large integer values or negative zero before a
 stage receives a map. The helper works on both supported Nextflow releases and
 has no converter runtime/library dependency.
 
+### Kilosort predefined templates
+
+The Kilosort capsule launch verifies and prepares the official3432-byte
+`wTEMP.npz` input in a task-local cache before importing Kilosort4.0.38. Its existing
+`KILOSORT_LOCAL_DOWNLOADS_PATH` selects that verified copy. The exact numerical
+input, official source and SHA256 are retained in the
+[capsule provenance](../capsules/kilosort4/UPSTREAM.md). This makes predefined mode
+independent of a live OSF download. `templates_from_data` retains its scientific
+meaning and default; the sorter image, thresholds and algorithms are unchanged.
+Corrupt or missing asset data and corrupt existing cache contents stop the launch
+before the scientific command.
+
+The offline controls compare the installed Kilosort reader's complete arrays and
+CPU tensors against an independently downloaded official file. From the repository
+root, provide that file and run:
+
+```bash
+docker run --rm --network none \
+  -v "$PWD:/repo:ro" \
+  -v /path/to/official/wTEMP.npz:/reference/wTEMP.npz:ro \
+  -e KILOSORT_TEMPLATE_REFERENCE=/reference/wTEMP.npz \
+  -e PYTHONDONTWRITEBYTECODE=1 -e OMP_NUM_THREADS=1 \
+  --entrypoint python \
+  braingeneers/mea-ephys-kilosort4@sha256:8384343f11a74394d7fb52b1c0eb4df880a1118d80e8a618927004321632751c \
+  /repo/tests/test_kilosort_templates.py
+```
+
+These controls cover input identity, preparation/reuse, corruption rejection,
+concurrent preparation and launch ordering. Full scientific sorting remains a
+separate validation.
+
 ## Composition interface
 
 Each export takes `(units, settings, context)` and emits `units`. Units are tuples
