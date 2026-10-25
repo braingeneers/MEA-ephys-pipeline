@@ -133,6 +133,8 @@ class RecordingGraphTests(unittest.TestCase):
 
     def test_real_parent_chain_values_and_serialization_are_exact(self):
         raw, recording = self.graph()
+        expected_locations = np.column_stack((np.array([15, 0, 2, 4, 8, 12]) * 17.5, np.zeros(6)))
+        np.testing.assert_array_equal(recording.get_channel_locations(), expected_locations)
         segment = raw._recording_segments[0]
         original = segment.electrical_series_data
         before = portable.encoded(recording.to_dict(recursive=True))
@@ -141,6 +143,7 @@ class RecordingGraphTests(unittest.TestCase):
                     for scaled in (False, True)]
         with bounded_nwb_reads(recording, 1024):
             self.assertIsInstance(segment.electrical_series_data, ContiguousChannelReads)
+            np.testing.assert_array_equal(recording.get_channel_locations(), expected_locations)
             for scaled, values in zip((False, True), expected):
                 actual = recording.get_traces(start_frame=37, end_frame=20049,
                                               channel_ids=["ch8", "ch15", "ch0"], return_scaled=scaled)

@@ -20,10 +20,12 @@ nwb = NWBFile("Identity reader regression", "mea-identity-reader",
 device = nwb.create_device("MEA")
 group = nwb.create_electrode_group("electrodes", "Reader fixture", "culture", device)
 nwb.add_electrode_column("channel_name", "Acquisition channel name")
+nwb.add_electrode_column("rel_x", "Relative electrode x coordinate in micrometers")
+nwb.add_electrode_column("rel_y", "Relative electrode y coordinate in micrometers")
 for channel in range(16):
     nwb.add_electrode(id=channel, x=channel * 17.5, y=0.0, z=0.0,
                       imp=float("nan"), location="culture", filtering="none",
-                      group=group, channel_name=f"ch{channel}")
+                      group=group, channel_name=f"ch{channel}", rel_x=channel * 17.5, rel_y=0.0)
 frames = np.arange(131251, dtype="int64")[:, None]
 channels = np.arange(16, dtype="int64")[None, :]
 values = ((frames * 17 + channels * 3) % 2048 - 1024).astype("int16")
