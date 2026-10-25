@@ -305,6 +305,13 @@ def assert_local_extractor(value, base, root):
 
 
 def recording_identity(recording):
+    from nwb_identity_reader import bounded_nwb_reads
+
+    with bounded_nwb_reads(recording):
+        return _recording_identity_values(recording)
+
+
+def _recording_identity_values(recording):
     import numpy as np
 
     result = {"sampling_frequency": recording.get_sampling_frequency(),

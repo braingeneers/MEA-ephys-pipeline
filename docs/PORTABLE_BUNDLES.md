@@ -186,6 +186,24 @@ exact float64 global-index/rate/start equation. Read boundaries are fixed so laz
 extractors receive the same calls before and after relocation. No numeric tolerance
 or scientific algorithm change is introduced by packaging.
 
+During identity checks, `nwb_identity_reader.py` temporarily adapts loaded NWB/HDF5
+leaves to read contiguous channel runs instead of HDF5 fancy selections. Source
+read buffers are bounded to8MiB. Each leaf returns the complete requested frame
+range before upstream filters run, preserving their margins, channel order and
+every value. The outer65,536-frame policy, scientific fingerprints and serialized
+graphs are unchanged. Readers are restored on success or failure; scientific
+capsules and other storage backends keep their original readers. Stage the helper
+alongside `portable_bundle.py`, as the maintained whole-helpers inputs already do.
+The buffer bound does not describe total process memory or HDF5's internal caches.
+
+For focused regression, generate and validate a fixture with
+`python tests/create_identity_nwb.py <fixture.nwb>` in the pinned native NWB image.
+In the pinned base image, set `NWB_IDENTITY_FIXTURE` to that mounted file and run
+`python -m unittest discover -s tests -p test_nwb_identity_reader.py -v`. These tests
+compare complete fingerprints through real filtered/reference/channel-selection
+graphs, exact values and dtypes, bounded source reads and exception restoration.
+They supplement full-size scientific and Nextflow acceptance.
+
 After all serialization rewrites, assembly freezes each active graph's class,
 module, version, kwargs, path mode and folder metadata. These bindings preserve
 selector types and dictionary order, normalize paths to logical locations under
