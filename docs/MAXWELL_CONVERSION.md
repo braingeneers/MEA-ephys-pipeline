@@ -191,6 +191,14 @@ delete shared raw sources or recording caches. Existing preprocessing packaging
 copies the whole input directory into `data/ecephys_session`, and subsequent
 bundles retain it, so missing siblings or provenance remain detectable.
 
+The driver gives freshly completed task plan/result files up to 10 seconds to
+become nonempty after scratch stage-out. This covers an observed empty initial
+read followed by valid retained metadata; it does not identify a filesystem cause.
+Missing files and nonempty invalid JSON fail immediately. A permanently empty
+file fails when the finite grace expires. Caller-supplied files retain their
+immediate validation, and every successful read uses the original strict Jackson
+decoder with unchanged numeric and completion checks.
+
 For an independent relocated check, run `pipeline/helpers/maxwell_bridge.py verify
 /path/to/unit` in the pinned converter image with its runtime/common helpers on
 `PYTHONPATH`. It verifies native reference hashes, the exact local inventory,
@@ -210,6 +218,15 @@ separate requirements.
 Bridge plans and completed result JSON use this same decoder. The emitted
 Nextflow unit tuple preserves original metadata types and signs; validating the
 persisted JSON alone does not prove that downstream port value.
+
+`tests/test_conversion_task_json.nf` exercises immediate and delayed file reads,
+the exact copied bridge metadata, numeric types/bits and targeted rejection cases.
+Run it with Nextflow26, the owning `-lib`, and explicit `--fixture_json`,
+`--temporary_dir` and `--output_json` paths. The fixture is a private copied
+six-unit `bridge-result.json`; the temporary directory must not exist. This test
+simulates an empty visibility view and verifies the metadata handoff only. It does
+not reproduce a kernel cause or execute scientific conversion. Library-only
+compatibility can also be checked on23; raw conversion still requires26.04.6.
 
 `scripts/modular/check_bridge_claims.py` checks real format1 units against their
 original plans/bindings, including type/version drift and the independent verifier's

@@ -7,6 +7,24 @@ def conversionJson(String text) { maxwellJson(text) }
 
 def conversionReadJson(path) { conversionJson(path.getText('UTF-8')) }
 
+// A completed scratch task's copied metadata can initially read as empty on a
+// shared filesystem. Only fresh task outputs get a finite empty-read grace;
+// missing files, nonempty invalid JSON and ordinary caller input still fail.
+def conversionTaskJson(path, long visibilityTimeoutMillis = 10000L) {
+    if (visibilityTimeoutMillis < 0L || visibilityTimeoutMillis > 60000L)
+        throw new IllegalArgumentException('Task JSON visibility timeout must be between 0 and 60000 ms.')
+    long started = System.nanoTime()
+    long budget = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(visibilityTimeoutMillis)
+    while (true) {
+        def text = path.getText('UTF-8')
+        if (!text.isEmpty()) return conversionJson(text)
+        long remaining = budget - (System.nanoTime() - started)
+        if (remaining <= 0L)
+            throw new IOException("Completed conversion task JSON stayed empty for ${visibilityTimeoutMillis} ms: ${path}")
+        java.util.concurrent.TimeUnit.NANOSECONDS.sleep(Math.min(remaining, 100000000L))
+    }
+}
+
 def conversionValue(value, filename, String name, boolean object) {
     if (filename != null) {
         if (value != null && !(object && value instanceof Map && value.isEmpty()))
@@ -276,18 +294,18 @@ workflow MEA_MAXWELL_CONVERSION {
     MEA_MAXWELL_PREPARE_UNITS(MAXWELL_TO_NWB.out.artifacts.combine(selection).map { uri,request -> tuple(request,uri) },
         bridge,runtime,common,localBindings)
     calls = MEA_MAXWELL_PREPARE_UNITS.out.plan.flatMap { request,plan ->
-        def value = conversionReadJson(plan)
+        def value = conversionTaskJson(plan)
         value.units.collect { unit -> tuple([unit_id:unit.unit_meta.unit_id,step_id:nativeContext.step_id,
             image:cfg.image,requested_bytes:unit.requested_bytes],plan) }
     }
     MEA_MAXWELL_MATERIALIZE_UNIT(calls,bridge,runtime,common,localBindings)
     commitPlan = MEA_MAXWELL_PREPARE_UNITS.out.plan.map { request,plan ->
-        def value = conversionReadJson(plan)
+        def value = conversionTaskJson(plan)
         tuple(request+[commit_disk_bytes:value.commit_disk_bytes],plan)
     }
     finished = MEA_MAXWELL_MATERIALIZE_UNIT.out.units.collect(flat:false).map { rows -> rows.sort { a,b -> a[0].unit_id <=> b[0].unit_id }.collect { it[1] } }
     MEA_MAXWELL_COMMIT_UNITS(commitPlan,finished,bridge,runtime,common,localBindings)
-    completed = MEA_MAXWELL_COMMIT_UNITS.out.result.map { conversionReadJson(it) }
+    completed = MEA_MAXWELL_COMMIT_UNITS.out.result.map { conversionTaskJson(it) }
     emit:
     units = completed.flatMap { result -> result.units.collect { unit -> tuple(unit.metadata,file(unit.input,checkIfExists:true)) } }
     artifacts = completed.map { it.native_artifacts.uri }
