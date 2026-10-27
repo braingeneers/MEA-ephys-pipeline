@@ -149,6 +149,10 @@ def execute(role, argv):
                     from spikeinterface.core.core_tools import extractor_dict_iterator, set_value_in_extractor_dict
                     analyzer = si.load_sorting_analyzer(path)
                     assert analyzer.recording is not None
+                    # Match the collector's all-unit sorting/QC output contract.
+                    rid = path.stem[len("postprocessed_"):]
+                    analyzer.sorting.set_property("default_qc", np.load(data / ("qc_" + rid + ".npy")))
+                    analyzer.sorting.save(folder=out / "curated" / rid)
                     group = zarr.open(str(target), mode="r+")
                     value = zarr.open(str(path),mode='r')['recording'][0]
                     base = args.pipeline_results_path / family / path.name

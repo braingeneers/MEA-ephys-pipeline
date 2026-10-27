@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+from collections import Counter
 
 import portable_bundle as portable
 
@@ -17,6 +18,111 @@ BLOCK_ROWS = 65536
 def require(condition, message):
     if not condition:
         raise portable.BundleError(message)
+
+
+def bind_units(data, sources):
+    """Bind every exported unit/train/QC flag to the complete source sorting.
+
+    The collector calls its saved sorting 'curated', but retains all analyzer
+    units with a boolean default_qc property. QC selection belongs to reports.
+    Compare the complete row inventory across stores; the decoded receipt below
+    additionally freezes each store's row order, properties and reference graph.
+    """
+    import numpy as np
+    import spikeinterface as si
+
+    def unit_key(value):
+        if isinstance(value, bytes):
+            value = value.decode("utf-8")
+        if isinstance(value, np.generic):
+            value = value.item()
+        require(type(value) in (int, str), "Invalid derived NWB source unit identity")
+        return [type(value).__name__, value]
+
+    def row_key(unit, qc, times):
+        return encoded([unit_key(unit), bool(qc), array_identity(times)])
+
+    expected = Counter()
+    source_lengths = {}
+    for name, analyzer, recording, qc in sources:
+        require(isinstance(qc, np.ndarray) and qc.dtype == np.dtype(bool)
+                and qc.shape == analyzer.unit_ids.shape,
+                f"Invalid source QC mask for derived NWB: {name}")
+        sorting = si.load(data / "collected/curated" / name)
+        require(sorting.get_num_segments() == analyzer.sorting.get_num_segments() == 1,
+                f"Derived NWB requires one sorting segment for {name}")
+        require(array_identity(sorting.unit_ids) == array_identity(analyzer.unit_ids)
+                and sorting.sampling_frequency == analyzer.sorting.sampling_frequency,
+                f"Collected unit identity differs from analyzer for {name}")
+        saved_qc = sorting.get_property("default_qc")
+        require(isinstance(saved_qc, np.ndarray) and saved_qc.dtype == qc.dtype
+                and saved_qc.shape == qc.shape and saved_qc.tobytes() == qc.tobytes(),
+                f"Collected QC flags differ from curation for {name}")
+        for unit in sorting.unit_ids:
+            actual = sorting.get_unit_spike_train(unit)
+            original = analyzer.sorting.get_unit_spike_train(unit)
+            require(actual.dtype == original.dtype and actual.shape == original.shape
+                    and actual.tobytes() == original.tobytes(),
+                    f"Collected spike train differs from analyzer for {name}: {unit!r}")
+        # Match the writer's register_recording call, including explicit clocks.
+        sorting.register_recording(recording)
+        for unit, flag in zip(sorting.unit_ids, qc):
+            times = sorting.get_unit_spike_train(unit, return_times=True)
+            key = row_key(unit, flag, times)
+            expected[key] += 1
+            source_lengths[key] = len(times)
+
+    observed = Counter()
+    paths = sorted((data / "derived-nwb").glob("*.nwb*"))
+    require(paths, "Final export produced no derived NWB")
+    for path in paths:
+        if path.is_dir():
+            import zarr
+            group = zarr.open_group(str(path), mode="r")
+        else:
+            import h5py
+            group = h5py.File(path, "r")
+        try:
+            require("nwb_version" in group.attrs, f"Derived export is not NWB: {path.name}")
+            if "units" not in group:
+                continue
+            table = group["units"]
+            require(all(key in table for key in ("id", "ks_unit_id", "default_qc", "spike_times", "spike_times_index")),
+                    f"Incomplete derived NWB unit columns: {path.name}")
+            count = len(table["id"])
+            require(all(table[key].shape == (count,) for key in ("id", "ks_unit_id", "default_qc", "spike_times_index"))
+                    and table["id"].dtype == np.dtype("int64")
+                    and np.array_equal(table["id"][:], np.arange(count, dtype="int64"))
+                    and table["default_qc"].dtype == np.dtype(bool)
+                    and table["spike_times"].ndim == 1
+                    and table["spike_times"].dtype == np.dtype("float64"),
+                    f"Invalid derived NWB unit column dtype/shape/IDs: {path.name}")
+            indices = table["spike_times_index"][:]
+            lengths = []
+            start = 0
+            for unit, flag, end in zip(table["ks_unit_id"][:], table["default_qc"][:], indices):
+                require(isinstance(end, np.integer) and start <= int(end) <= len(table["spike_times"]),
+                        f"Invalid derived NWB spike index: {path.name}")
+                end = int(end)
+                key = row_key(unit, flag, table["spike_times"][start:end])
+                observed[key] += 1
+                require(observed[key] <= expected[key],
+                        f"Derived NWB unit/train/QC differs from complete sorting: {path.name}")
+                # Expected cumulative indices/dtype follow matched source trains,
+                # never the produced buffer's own declared size.
+                lengths.append(source_lengths[key])
+                start = end
+            require(start == len(table["spike_times"]), f"Unclaimed derived NWB spike buffer tail: {path.name}")
+            bits = 8
+            while start > 2 ** bits - 1:
+                bits *= 2
+            require(bits <= 64 and indices.dtype == np.dtype(f"uint{bits}")
+                    and np.array_equal(indices, np.cumsum(lengths, dtype="uint64")),
+                    f"Derived NWB spike index dtype/values differ: {path.name}")
+        finally:
+            if not path.is_dir():
+                group.close()
+    require(observed == expected, "Derived NWB unit/train/QC inventory differs from complete sorting")
 
 
 def encoded(value):

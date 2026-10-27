@@ -186,6 +186,7 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
     require(isinstance(duration, (int, float, str)) and not isinstance(duration, bool), "Missing declared recording duration")
     require(math.isfinite(float(duration)) and float(duration) > 0, "Invalid declared recording duration")
     outcomes = {}
+    export_sources = []
     for recording in ids:
         job = next(job for job in dispatched if job["recording_name"] == recording)
         raw = si.load(job["recording_dict"], base_folder=data)
@@ -261,6 +262,8 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
             outcome.update(analyzed_units=int(analyzer.get_num_units()), curated_units=int(qc.sum()),
                            curated_spikes=sum(len(analyzer.sorting.get_unit_spike_train(unit, segment_index=segment))
                                               for unit in curated_ids for segment in range(analyzer.sorting.get_num_segments())))
+            if phase == "exported":
+                export_sources.append((recording, analyzer, raw, qc))
         if ORDER.index(phase) >= 4:
             report_path = data / "reports" / recording
             summary = json.loads((report_path / "report_summary.json").read_text())
@@ -288,26 +291,7 @@ def scientific_policy(root, record, no_spikes, common_code=None, unit_meta=None)
         for family in ("reports", "bursts"):
             require({path.name for path in (data / family).iterdir() if path.is_dir()} == set(ids), f"Incomplete {family} recording set")
     if phase == "exported":
-        exports = sorted((data / "derived-nwb").glob("*.nwb*"))
-        require(exports, "Final export produced no derived NWB")
-        units = spikes = 0
-        for path in exports:
-            if path.is_dir():
-                import zarr
-                group = zarr.open(str(path), mode="r")
-                require("nwb_version" in group.attrs, f"Derived export is not NWB Zarr: {path.name}")
-                if "units" in group:
-                    units += len(group["units/id"])
-                    spikes += len(group["units/spike_times"])
-            else:
-                import h5py
-                with h5py.File(path, "r") as group:
-                    require("nwb_version" in group.attrs, f"Derived export is not NWB HDF5: {path.name}")
-                    if "units" in group:
-                        units += len(group["units/id"])
-                        spikes += len(group["units/spike_times"])
-        require(units == sum(item["curated_units"] for item in outcomes.values())
-                and spikes == sum(item["curated_spikes"] for item in outcomes.values()), "Derived NWB unit/spike inventory differs from curation")
+        exported_science.bind_units(data, export_sources)
     return outcomes
 
 

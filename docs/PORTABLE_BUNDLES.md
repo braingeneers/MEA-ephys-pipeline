@@ -267,6 +267,18 @@ base runtime for focused contract regressions, optionally supplying both
 run no scientific capsules and do not substitute for full bundle or Nextflow acceptance.
 
 Exported bundles require `metadata.derived_science`, with exact-integer schema1.
+Final export retains **all analyzer units**, including silent units and units that
+fail QC. The collector's `curated` sorting records `default_qc` as a flag; it does
+not filter rows. Report selection remains separate, so a report with zero curated
+units can legitimately accompany a nonempty NWB Units table.
+
+The exported-stage boundary binds the complete unit/train/QC inventory to the
+analyzer, saved sorting and original recording clock. It checks saved QC flags,
+source unit IDs and trains, every exported float64 train and boolean QC value,
+generated table IDs, complete ragged buffers and HDMF's adaptive index dtype.
+The inventory spans all output stores; the decoded receipt below separately
+freezes each store's row order, properties and complete reference graph.
+
 Assembly freezes the complete output set, formats and every stored group/dataset,
 physical attribute, typed Data buffer and ordered reference binding. Numeric arrays
 use bounded C-order reads; object arrays retain complete typed values and reference
@@ -300,6 +312,10 @@ integration currently uses the versioned candidate documented in
 registry publication remain pending. Focused contract checks run through
 `scripts/modular/check_export_science.py --output <new-directory>` in that image;
 its tiny schema-valid fixtures are separate from full scientific acceptance.
+`scripts/modular/check_export_units.py --output <new-directory>` additionally
+checks source-bound all-unit export, mixed/all-failing QC, silent/empty units,
+explicit clocks, multiple source sortings and schema-valid corruption controls
+in both HDF5 and Zarr. These tiny format controls do not run scientific capsules.
 
 Omitting `--unit-meta` retains the independent contents-only verification API. All
 maintained named stage callers supply it; that check must happen before downstream
