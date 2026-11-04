@@ -139,6 +139,7 @@ def verify_native_admission(report, details, stage, native_ref):
     _api().validate_ref(admission['source_current'], strong=True, transport='local')
     require(any(all(ref.get(k) == admission['source_current'].get(k)
                     for k in ('uri', 'size', 'etag', 'version_id'))
+                and ('sha256' not in ref or ref['sha256'] == admission['source_current']['sha256'])
                 for ref in details['native_unit']['sources']), 'Native admission source changed')
     kind = report.get('document_type')
     basis = {'maxwell_conversion_evidence': 'owned_conversion',

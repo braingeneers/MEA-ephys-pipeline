@@ -64,6 +64,7 @@ class NativeAdmission(unittest.TestCase):
         report = self.report('maxwell_reused_conversion_evidence')
         for field, value in [('unit_id', 'foreign'), ('settings', {}), ('evidence', dict(self.ref, etag='changed')),
                              ('source_current', dict(self.ref, etag='changed')),
+                             ('source_current', dict(self.ref, sha256='b' * 64)),
                              ('direct_origin', dict(self.origin, stage_id='foreign'))]:
             with self.subTest(field=field):
                 self.admit('owned_reuse')
