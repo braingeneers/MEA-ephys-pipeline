@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "model": "maxwell-native-task-files-v1",
+  "json_document_limit_bytes": 33554432,
+  "native_json_slots": 8,
+  "native_log_allowance_bytes": 67108864,
+  "native_cache_allowance_bytes": 67108864,
+  "staged_copy_multiplier": 2,
+  "max_forks": 4,
+  "max_retries": 2,
+  "roles": {
+    "raw": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": 86400000},
+    "discover": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": 14400000},
+    "prepare": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": 14400000},
+    "freeze-bindings": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": 14400000},
+    "commit": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": 14400000},
+    "fresh": {"cpus": "available_processors", "memory_bytes": 17179869184, "time_millis": "scientific_phase_sum"},
+    "adopt": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": "scientific_phase_sum"},
+    "reuse": {"cpus": 1, "memory_bytes": 17179869184, "time_millis": 14400000}
+  }
+}

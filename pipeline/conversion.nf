@@ -1,6 +1,6 @@
 nextflow.enable.dsl = 2
 
-include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellMetadata; maxwellJson } from './components/maxwell/component'
+include { PREPARE_MAXWELL_SELECTION; MAXWELL_TO_NWB; maxwellMetadata; maxwellJson } from './components/maxwell-native/component'
 
 // Use before constructing value channels; preserves the original JSON numbers.
 def conversionJson(String text) { maxwellJson(text) }
@@ -101,7 +101,7 @@ def conversionContext(Map settings, Map context) {
     context.unit_bindings = bindingFactory ? [] : conversionBindings(context.unit_bindings)
     def allowed = ['output_uri','native_output_uri','workflow_version','run_id','step_id','unit_bindings','runtime','local_bind_paths'] as Set
     if (context.keySet() - allowed) error 'Unknown conversion context; source replacement/finalization is unsupported.'
-    def nativeRoot = "${moduleDir}/components/maxwell"
+    def nativeRoot = "${moduleDir}/components/maxwell-native"
     def defaults = new groovy.json.JsonSlurper().parse(file("${nativeRoot}/defaults.json").toFile())
     if (settings.keySet() - defaults.keySet()) error 'Unknown conversion settings; source replacement/finalization is unsupported.'
     def ownerVersion = conversionOwnerVersion()
@@ -207,6 +207,7 @@ process MEA_MAXWELL_PREPARE_UNITS {
     tuple val(cfg), val(artifacts)
     path bridge
     path runtime
+    path owner_metadata, stageAs: '*'
     path common
     path local_bindings, stageAs: 'local-bindings??/*'
     output:
@@ -216,7 +217,8 @@ process MEA_MAXWELL_PREPARE_UNITS {
     cat > bridge-request.json <<'MEA_CONVERSION_REQUEST'
     ${groovy.json.JsonOutput.toJson(cfg)}
     MEA_CONVERSION_REQUEST
-    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' prepare --request bridge-request.json --artifacts '${artifacts}'
+    MAXWELL_OWNER_METADATA_ROOT="\$PWD" MAXWELL_POLICY_ROOT="\$PWD/${runtime}" \
+    PYTHONPATH="/opt/ephys-modular/maxwell-worker/runtime:\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' prepare --request bridge-request.json --artifacts '${artifacts}'
     """
 }
 
@@ -232,6 +234,7 @@ process MEA_MAXWELL_MATERIALIZE_UNIT {
     tuple val(meta), path(plan)
     path bridge
     path runtime
+    path owner_metadata, stageAs: '*'
     path common
     path local_bindings, stageAs: 'local-bindings??/*'
     output:
@@ -239,7 +242,8 @@ process MEA_MAXWELL_MATERIALIZE_UNIT {
     path 'materialization-telemetry.json', emit: telemetry
     script:
     """
-    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' materialize --plan '${plan}' --unit-id '${meta.unit_id}' --requested-bytes '${task.disk.toBytes()}'
+    MAXWELL_OWNER_METADATA_ROOT="\$PWD" MAXWELL_POLICY_ROOT="\$PWD/${runtime}" \
+    PYTHONPATH="/opt/ephys-modular/maxwell-worker/runtime:\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' materialize --plan '${plan}' --unit-id '${meta.unit_id}' --requested-bytes '${task.disk.toBytes()}'
     """
 }
 
@@ -256,13 +260,15 @@ process MEA_MAXWELL_COMMIT_UNITS {
     path units, stageAs: 'materialized/unit??'
     path bridge
     path runtime
+    path owner_metadata, stageAs: '*'
     path common
     path local_bindings, stageAs: 'local-bindings??/*'
     output:
     path 'bridge-result.json', emit: result
     script:
     """
-    PYTHONPATH="\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' commit --plan '${plan}' --units materialized
+    MAXWELL_OWNER_METADATA_ROOT="\$PWD" MAXWELL_POLICY_ROOT="\$PWD/${runtime}" \
+    PYTHONPATH="/opt/ephys-modular/maxwell-worker/runtime:\$PWD/${runtime}:\$PWD/${common}:/opt/ephys-modular/maxwell/scripts" python '${bridge}/maxwell_bridge.py' commit --plan '${plan}' --units materialized
     """
 }
 
@@ -289,22 +295,23 @@ workflow MEA_MAXWELL_CONVERSION {
         [step_id:nativeContext.step_id+'-raw',collection_uri:cfg.native.context.output_base_uri+'derived/nwb/'])
     MAXWELL_TO_NWB(PREPARE_MAXWELL_SELECTION.out.artifacts,cfg.settings,nativeContext)
     def bridge = file("${moduleDir}/helpers")
-    def runtime = file("${moduleDir}/components/maxwell/runtime")
-    def common = file("${moduleDir}/components/maxwell/components/common/python")
+    def runtime = file("${moduleDir}/components/maxwell-native/runtime")
+    def ownerFiles = ['nextflow.config','image.json','process-policy.json'].collect { file("${moduleDir}/components/maxwell-native/"+it) }
+    def common = file("${moduleDir}/components/maxwell-native/components/common/python")
     MEA_MAXWELL_PREPARE_UNITS(MAXWELL_TO_NWB.out.artifacts.combine(selection).map { uri,request -> tuple(request,uri) },
-        bridge,runtime,common,localBindings)
+        bridge,runtime,ownerFiles,common,localBindings)
     calls = MEA_MAXWELL_PREPARE_UNITS.out.plan.flatMap { request,plan ->
         def value = conversionTaskJson(plan)
         value.units.collect { unit -> tuple([unit_id:unit.unit_meta.unit_id,step_id:nativeContext.step_id,
             image:cfg.image,requested_bytes:unit.requested_bytes],plan) }
     }
-    MEA_MAXWELL_MATERIALIZE_UNIT(calls,bridge,runtime,common,localBindings)
+    MEA_MAXWELL_MATERIALIZE_UNIT(calls,bridge,runtime,ownerFiles,common,localBindings)
     commitPlan = MEA_MAXWELL_PREPARE_UNITS.out.plan.map { request,plan ->
         def value = conversionTaskJson(plan)
         tuple(request+[commit_disk_bytes:value.commit_disk_bytes],plan)
     }
     finished = MEA_MAXWELL_MATERIALIZE_UNIT.out.units.collect(flat:false).map { rows -> rows.sort { a,b -> a[0].unit_id <=> b[0].unit_id }.collect { it[1] } }
-    MEA_MAXWELL_COMMIT_UNITS(commitPlan,finished,bridge,runtime,common,localBindings)
+    MEA_MAXWELL_COMMIT_UNITS(commitPlan,finished,bridge,runtime,ownerFiles,common,localBindings)
     completed = MEA_MAXWELL_COMMIT_UNITS.out.result.map { conversionTaskJson(it) }
     emit:
     units = completed.flatMap { result -> result.units.collect { unit -> tuple(unit.metadata,file(unit.input,checkIfExists:true)) } }

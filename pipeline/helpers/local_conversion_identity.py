@@ -112,6 +112,70 @@ def completed_phases(report, settings):
             and all(type(p.get('exit_code')) is int and p['exit_code'] == 0 for p in phases))
 
 
+def verify_native_admission(report, details, stage, native_ref):
+    """Bind the owner's verified completion to this relocated local unit.
+
+    Full scientific/source proof validation happens in maxwell_bridge.prepare
+    using the owning runtime. This consumer checks the exact saved admission,
+    publication and evidence identities without scientific imports or network I/O.
+    Historical fresh-only local units retain their original phase checks.
+    """
+    admission = details.get('native_validation')
+    if admission is None:
+        require(completed_phases(report, details['settings']), 'Local native science is incomplete')
+        return
+    fields = {'schema_version', 'document_type', 'basis', 'native_artifacts', 'native_stage',
+              'evidence', 'unit_id', 'owner', 'settings', 'artifacts', 'source_current',
+              'direct_origin', 'digest'}
+    schema_one(admission, 'native admission', 'mea_verified_native_completion')
+    require(set(admission) == fields and admission['digest'] == digest(
+        {k: v for k, v in admission.items() if k != 'digest'}), 'Changed native admission')
+    for key, expected in dict(native_artifacts=details['native_artifacts'],
+            evidence=details['native_evidence'], unit_id=details['native_unit']['unit_id'],
+            owner=stage['owner'], settings=stage['settings'], native_stage=native_ref).items():
+        require(json_equal(admission[key], expected), 'Native admission lost its ' + key + ' binding')
+    require(json_equal({a['kind']: a['object'] for a in admission['artifacts']}, details['artifacts']),
+            'Native admission artifact coverage changed')
+    _api().validate_ref(admission['source_current'], strong=True, transport='local')
+    require(any(all(ref.get(k) == admission['source_current'].get(k)
+                    for k in ('uri', 'size', 'etag', 'version_id'))
+                for ref in details['native_unit']['sources']), 'Native admission source changed')
+    kind = report.get('document_type')
+    basis = {'maxwell_conversion_evidence': 'owned_conversion',
+             'maxwell_source_bound_conversion_evidence': 'owned_source_conversion',
+             'maxwell_adopted_conversion_evidence': 'owned_adoption',
+             'maxwell_reused_conversion_evidence': 'owned_reuse'}
+    require(kind in basis and admission['basis'] == basis[kind], 'Unsupported native scientific origin')
+    if kind != 'maxwell_reused_conversion_evidence':
+        require(json_equal(admission['direct_origin'], dict(kind='modular',
+            envelope=details['native_artifacts'], stage_id=stage['id'])),
+            'Native completion lost its direct scientific origin')
+    if kind == 'maxwell_conversion_evidence':
+        require(completed_phases(report, details['settings']), 'Local native science is incomplete')
+    else:
+        require(report.get('evidence_digest') == digest(
+            {k: v for k, v in report.items() if k != 'evidence_digest'}), 'Changed native scientific evidence')
+        if kind == 'maxwell_source_bound_conversion_evidence':
+            require(report.get('scientific_execution_complete') is True
+                    and completed_phases(report.get('science'), details['settings']),
+                    'Source-bound native science is incomplete')
+            bound = report['science']
+        else:
+            bound = report
+            require(report.get('scientific_execution_complete') is (kind == 'maxwell_adopted_conversion_evidence'),
+                    'Native completion misstates new scientific execution')
+            if kind == 'maxwell_adopted_conversion_evidence':
+                require(report.get('durable_publication_verified') is True, 'Adoption publication is incomplete')
+            else:
+                require(report.get('original_scientific_execution_complete') is True
+                        and json_equal(report.get('origin'), admission['direct_origin']),
+                        'Reuse lost its direct scientific origin')
+        for key, expected in dict(owner=stage['owner'], unit_id=details['native_unit']['unit_id'],
+                settings=stage['settings'], stage_signature=stage['signature'],
+                artifacts=admission['artifacts']).items():
+            require(json_equal(bound.get(key), expected), 'Native evidence lost its ' + key + ' binding')
+
+
 def read_json(path):
     with Path(path).open('rb') as stream:
         return _api().decode_json(stream.read(_api().MAX_JSON_BYTES + 1))
@@ -186,7 +250,7 @@ def verify_identity(root, expected=None, *, common_code=None, unit_meta=None, ar
             and json_equal({a['kind']: a['object'] for a in outcomes[0]['artifacts']}, details['artifacts']),
             'Local conversion lost its complete native outcome')
     report = frozen('conversion/native-evidence.json', details['native_evidence'])
-    require(completed_phases(report, details['settings']), 'Local native science is incomplete')
+    verify_native_admission(report, details, stage, native_ref)
     if 'projection' in details['native_unit']:
         frozen('conversion/projection.json', details['native_unit']['projection'])
     if expected is not None:

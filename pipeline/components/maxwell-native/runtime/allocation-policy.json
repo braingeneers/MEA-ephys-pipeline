@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "signal_payload_headroom_percent": 25,
+  "metadata_payload_headroom_percent": 25,
+  "encoded_chunk_allowance_bytes": 4096,
+  "hdf5_object_allowance_bytes": 16384,
+  "hdf5_attribute_allowance_bytes": 4096,
+  "hdf5_variable_value_allowance_bytes": 256,
+  "nwb_structure_allowance_bytes": 1073741824,
+  "companion_structure_allowance_bytes": 1048576,
+  "lindi_structure_allowance_bytes": 67108864,
+  "lindi_chunk_reference_allowance_bytes": 512,
+  "metadata_json_expansion_allowance": 6,
+  "validation_report_allowance_bytes": 67108864,
+  "workspace_headroom_percent": 20
+}

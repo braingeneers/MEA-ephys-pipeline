@@ -170,8 +170,17 @@ interrupted copies can confirm the same deterministic receipt. Free-space
 observations and disk requests remain separate task telemetry; CPU/memory requests
 remain in the Nextflow trace.
 
+The bridge uses the maintained native mixed entry point. Fresh raw inputs convert;
+completed compatible inputs pass the owner's full source, artifact and scientific
+completion validation before adoption or reuse. A linked companion can discover
+off-root finalization evidence through a strong reference in its dataset's
+`derived/manifests/source-finalization/<recording_id>/<signature>.ref.json`.
+Missing or changed referenced evidence fails validation. This discovery does not
+grant source replacement or finalization permission to the bridge.
+
 Each unit contains the unchanged NWB, original LINDI sidecar, validation sidecar,
-and declared compact companion. `conversion/` retains the complete uploaded
+and any declared compact companion. Adoption may legitimately retain only the
+first three artifacts. `conversion/` retains the complete uploaded
 selection, native envelope/stage/unit/evidence, and supplied projection bytes.
 `conversion-unit.json` binds the complete file inventory and both owner versions.
 Bridge plans, local receipts and their `maxwell_conversion` metadata use integer
@@ -180,6 +189,10 @@ Frozen claims retain key presence and encoded JSON values, including integer/flo
 boolean distinctions, large integers, nulls and signed zero. Native phase exits
 must be integers. These checks preserve valid authored metadata and do not change
 scientific normalization or conversion settings.
+The additive `native_validation` claim binds the owner-validated completion to
+its current source, evidence, settings and artifacts. Fresh, adopted and reused
+results retain their actual phase records and direct origin; reuse never claims
+that conversion science executed again. Historical fresh receipts remain readable.
 The original LINDI URL retains its native published NWB identity; it is preserved
 as native artifact evidence. Local NWB/companion execution uses the declared local
 pair. The bridge's relocation check does not claim a new LINDI URL or full

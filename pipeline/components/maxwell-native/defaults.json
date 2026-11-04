@@ -1,0 +1,15 @@
+{
+  "session_description": "Maxwell Max One recording converted with NeuroConv",
+  "session_identifier_prefix": "maxone",
+  "session_start_time": "",
+  "subject_id": "",
+  "subject_species": "",
+  "subject_description": "",
+  "nwb_chunk_duration_ms": 1000,
+  "nwb_chunk_channels": 1,
+  "nwb_buffer_chunks": 10,
+  "maxwell_raw_dataset_path": "auto",
+  "lindi_num_dataset_chunks_threshold": "none",
+  "lindi_contiguous_dataset_max_chunk_size": 20000000,
+  "create_linked_maxwell_companion": true
+}

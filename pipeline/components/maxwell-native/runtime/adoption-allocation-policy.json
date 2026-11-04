@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "model": "maxwell-adoption-complete-files-v1",
+  "metadata_payload_headroom_percent": 25,
+  "hdf5_object_allowance_bytes": 16384,
+  "hdf5_attribute_allowance_bytes": 4096,
+  "nwb_growth_structure_allowance_bytes": 1073741824,
+  "reader_view_structure_allowance_bytes": 1048576,
+  "lindi_structure_allowance_bytes": 67108864,
+  "lindi_path_allowance_bytes": 4096,
+  "lindi_reference_allowance_bytes": 512,
+  "metadata_json_expansion_allowance": 6,
+  "authored_model_object_multiplier": 8,
+  "authored_model_reference_multiplier": 8,
+  "modeled_path_depth_allowance": 8,
+  "modeled_path_fixed_allowance_bytes": 2048,
+  "phase_logs_and_checks_allowance_bytes": 536870912,
+  "private_runtime_cache_allowance_bytes": 67108864,
+  "workspace_headroom_percent": 20
+}

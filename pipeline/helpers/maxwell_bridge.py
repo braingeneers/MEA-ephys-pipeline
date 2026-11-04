@@ -20,8 +20,9 @@ from ephys_modular.local import LocalStore
 from ephys_modular.publication import load_envelope, load_stage
 from ephys_modular.s3 import S3Error, S3Store
 from raw_selection import input_location
-from task_preparation import prepare_conversion
-from conversion_worker import commit_conversion
+from reuse_decision import _modular
+from reuse_source import verify_source
+from recordings_selection import source_state_for_unit
 
 from local_conversion_identity import (NAMES, PHASES, require, json_equal, schema_one,
     expected_phases, completed_phases, read_json, inventory, verify_identity)
@@ -108,12 +109,9 @@ def prepare(reference, request):
             'Native scientific ownership/settings differ from the invocation')
     require(json_equal(stage['execution'], {k: context[k] for k in ('run_id', 'step_id')}),
             'Native conversion belongs to another run or step')
-    # Reconstruct the exact owning plan, including routing, projections, source
-    # hashes, allocations and destinations. Reuse its complete commit validation.
-    plan = prepare_conversion(store, envelope['parent'], request['settings'], context, native['owner'])
-    confirmed = commit_conversion(store, plan, stage['outcomes'])
-    require(json_equal(confirmed, envelope_ref), 'Native completion does not bind the supplied artifact envelope')
-    prepared = {task['unit']['unit_id']: task for task in plan['tasks']}
+    # The native mixed barrier has already committed. Reopen the actual owner
+    # proof and every artifact through its maintained fresh/adopt/reuse validator;
+    # never reconstruct a fresh task or fabricate fresh phases for reused science.
     outcomes = {outcome['unit_id']: outcome for outcome in stage['outcomes']}
     units, seen = [], set()
     for unit in stage['unit_inputs']:
@@ -123,16 +121,30 @@ def prepare(reference, request):
         require(key in desired and key not in seen, 'Native units differ from explicit MEA bindings')
         seen.add(key)
         outcome = outcomes[unit['unit_id']]
+        original = unit['metadata']['original_source']
+        source = verify_source(store, unit, original, source_state_for_unit(unit))
+        proof = _modular(store, dict(kind='modular', envelope=envelope_ref, stage_id=stage_ref['id']),
+                         unit, original, source, root, stage['settings']['effective'])
+        require(proof['projection_equal'] and proof['effective_equal']
+                and proof.get('source_validation_complete', not source.get('requires_scientific_validation')),
+                'Native completion requires additional source/settings validation')
+        require(json_equal(proof['artifacts'], outcome['artifacts']), 'Native proof artifact coverage differs')
         report, _ = store.read_json(outcome['evidence']['uri'], expected=outcome['evidence'])
-        require(completed_phases(report, stage['settings']), 'Incomplete native scientific phases')
         artifacts = {a['kind']: a['object'] for a in outcome['artifacts']}
-        kinds = set(NAMES) if stage['settings']['effective']['create_linked_maxwell_companion'] else set(NAMES) - {'maxwell_companion'}
-        require(set(artifacts) == kinds, 'Missing or unexpected native dependency siblings')
+        require(set(artifacts) in (set(NAMES), set(NAMES) - {'maxwell_companion'}),
+                'Missing or unexpected native dependency siblings')
+        admission = dict(schema_version=1, document_type='mea_verified_native_completion',
+            basis=proof['basis'], native_artifacts=envelope_ref, native_stage=stage_ref,
+            evidence=outcome['evidence'], unit_id=unit['unit_id'], owner=stage['owner'],
+            settings=stage['settings'], artifacts=outcome['artifacts'],
+            source_current=source['current'], direct_origin=proof['direct_origin'])
+        admission['digest'] = digest(admission)
         meta = desired[key]
         destination = (wrapper['publication_root'] + 'units/' + meta['unit_id'] + '/')
         details = dict(schema_version=1, native_owner=copy.deepcopy(stage['owner']),
             wrapper_owner=copy.deepcopy(wrapper['owner']), native_unit=copy.deepcopy(unit),
             native_artifacts=envelope_ref, settings=copy.deepcopy(stage['settings']),
+            native_validation=admission,
             artifacts=copy.deepcopy(artifacts),
             native_evidence=copy.deepcopy(outcome['evidence']),
             dependencies={kind: NAMES[kind] for kind in artifacts},
@@ -149,7 +161,7 @@ def prepare(reference, request):
         requested = max(5 * GIB, ((2 * copied_bytes + GIB + 1048575) // 1048576) * 1048576)
         units.append(dict(unit_meta=meta, files=files, evidence=evidence, copied_bytes=copied_bytes,
             requested_bytes=requested, minimum_free_bytes=GIB, publication_root=destination,
-            native_task_digest=digest(prepared[unit['unit_id']])))
+            native_admission_digest=admission['digest']))
     require(seen == set(desired), 'Every explicit unit binding must be selected exactly once')
     result = dict(schema_version=1, document_type='mea_maxwell_bridge_plan',
         native_artifacts=envelope_ref, native_stage=stage_ref, wrapper=wrapper,

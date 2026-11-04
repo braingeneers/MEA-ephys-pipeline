@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "runtime_contracts": {
+    "braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce": "099b2161adbd8a8c7d383314d47a34cc12886cff7779908dc2cbcb580e845119",
+    "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+    "braingeneers/modular-maxwell-worker@sha256:3c7666864408c5fd918c911ba8399217cebaf7817d7c050214953ca052f77797": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+    "braingeneers/modular-maxwell-worker@sha256:70b31e10055a771a30d6679f3bdb1c5a1d86abb3aedb636fc0f15f2968c3867c": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+    "braingeneers/modular-maxwell-worker@sha256:1d973ab87d6a3c7fd040c6906175fcf26ef19ee6f27fed984b0ac6698bb69f7c": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+    "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+    "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619"
+  }
+}

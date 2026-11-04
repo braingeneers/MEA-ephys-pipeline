@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "source": "maxwell-to-nwb-conversion 0.1.21 scientific process defaults",
+  "max_forks": 4,
+  "minimum_free_gb": 20,
+  "error_strategy": "terminate",
+  "processes": {
+    "VALIDATE_MAXONE": {"cpus": 1, "memory": "1 GB", "disk": "5 GB", "time": "15m"},
+    "CONVERT_MAXONE_TO_NWB": {"cpus": "available_processors", "memory": "16 GB", "disk": "80 GB", "time": "24h"},
+    "REPACK_NWB_CHANNEL_MAJOR": {"cpus": 1, "memory": "8 GB", "disk": "80 GB", "time": "24h"},
+    "CREATE_LEGACY_MAXWELL_COMPANION": {"cpus": 1, "memory": "8 GB", "disk": "80 GB", "time": "24h"},
+    "GENERATE_LINDI_METADATA": {"cpus": 1, "memory": "4 GB", "disk": "20 GB", "time": "4h"}
+  }
+}

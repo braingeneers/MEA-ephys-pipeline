@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "contract": "braingeneers.maxwell-reuse-decision/v1",
+  "modular_owner": "braingeneers-modular-maxwell-to-nwb",
+  "modular_contracts": [
+    {
+      "versions": [
+        "0.1.7",
+        "0.1.8",
+        "0.1.9",
+        "0.1.10",
+        "0.1.11",
+        "0.1.12",
+        "0.1.13"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:90f49d416ff0bb5efc4c0a9e4fb8960ece997a485f9f5efc6de6b91d6d0de070"
+    },
+    {
+      "versions": [
+        "0.1.14",
+        "0.1.15"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:02caefd62dbc9d9eab2c0491268a1f64a753aee6c82ea7d9402417066f3e504b"
+    },
+    {
+      "versions": [
+        "0.1.16",
+        "0.1.17",
+        "0.1.18",
+        "0.1.19"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:c3c204b9338470f5dba010f2214dc96c71e97841bcc36ebac4f950547f8f9eed"
+    },
+    {
+      "versions": [
+        "0.1.21",
+        "0.1.22",
+        "0.1.23",
+        "0.1.25",
+        "0.1.26"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce"
+    },
+    {
+      "versions": [
+        "0.1.27",
+        "0.1.28",
+        "0.1.29",
+        "0.1.30",
+        "0.1.31",
+        "0.1.32",
+        "0.1.33",
+        "0.1.34",
+        "0.1.35",
+        "0.1.36",
+        "0.1.37",
+        "0.1.38"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d"
+    },
+    {
+      "versions": [
+        "0.1.39"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:3c7666864408c5fd918c911ba8399217cebaf7817d7c050214953ca052f77797"
+    },
+    {
+      "versions": [
+        "0.1.40"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:70b31e10055a771a30d6679f3bdb1c5a1d86abb3aedb636fc0f15f2968c3867c"
+    },
+    {
+      "versions": [
+        "0.1.41",
+        "0.1.42"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:1d973ab87d6a3c7fd040c6906175fcf26ef19ee6f27fed984b0ac6698bb69f7c"
+    },
+    {
+      "versions": [
+        "0.1.43"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    }
+  ],
+  "public_evidence_contracts": [
+    {
+      "versions": [
+        "0.1.41",
+        "0.1.42"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:1d973ab87d6a3c7fd040c6906175fcf26ef19ee6f27fed984b0ac6698bb69f7c"
+    },
+    {
+      "versions": [
+        "0.1.22",
+        "0.1.23",
+        "0.1.25",
+        "0.1.26"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce"
+    },
+    {
+      "versions": [
+        "0.1.27",
+        "0.1.28",
+        "0.1.29",
+        "0.1.30",
+        "0.1.31",
+        "0.1.32",
+        "0.1.33",
+        "0.1.34",
+        "0.1.35",
+        "0.1.36",
+        "0.1.37",
+        "0.1.38"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d"
+    },
+    {
+      "versions": [
+        "0.1.39"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:3c7666864408c5fd918c911ba8399217cebaf7817d7c050214953ca052f77797"
+    },
+    {
+      "versions": [
+        "0.1.40"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:70b31e10055a771a30d6679f3bdb1c5a1d86abb3aedb636fc0f15f2968c3867c"
+    },
+    {
+      "versions": [
+        "0.1.43"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    }
+  ],
+  "public_bridge_contracts": [
+    {
+      "versions": [
+        "0.1.41",
+        "0.1.42"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:1d973ab87d6a3c7fd040c6906175fcf26ef19ee6f27fed984b0ac6698bb69f7c"
+    },
+    {
+      "versions": [
+        "0.1.23",
+        "0.1.25",
+        "0.1.26"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:cd573dead65220ca87469e61e1dcf40ebe999fff6d48c9b9f0d504c86feb34ce"
+    },
+    {
+      "versions": [
+        "0.1.27",
+        "0.1.28",
+        "0.1.29",
+        "0.1.30",
+        "0.1.31",
+        "0.1.32",
+        "0.1.33",
+        "0.1.34",
+        "0.1.35",
+        "0.1.36",
+        "0.1.37",
+        "0.1.38"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d"
+    },
+    {
+      "versions": [
+        "0.1.39"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:3c7666864408c5fd918c911ba8399217cebaf7817d7c050214953ca052f77797"
+    },
+    {
+      "versions": [
+        "0.1.40"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:70b31e10055a771a30d6679f3bdb1c5a1d86abb3aedb636fc0f15f2968c3867c"
+    },
+    {
+      "versions": [
+        "0.1.43"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    }
+  ],
+  "legacy_source_commit": "66c5d82c3812b985b0ddc1cccc069f54e2e5297a",
+  "legacy_component_contract": "0.1.21",
+  "legacy_image_references": [
+    "davidparks21/maxwell-to-nwb:20261013-ndx1.0.0-v2",
+    "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf"
+  ],
+  "legacy_metadata_contract_version": 1,
+  "legacy_ndx_cell_culture_version": "1.0.0",
+  "legacy_candidates_require_scientific_validation": true,
+  "fresh_source_contracts": [
+    {
+      "versions": [
+        "0.1.41",
+        "0.1.42"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:1d973ab87d6a3c7fd040c6906175fcf26ef19ee6f27fed984b0ac6698bb69f7c"
+    },
+    {
+      "versions": [
+        "0.1.28",
+        "0.1.29",
+        "0.1.30",
+        "0.1.31",
+        "0.1.32",
+        "0.1.33",
+        "0.1.34",
+        "0.1.35",
+        "0.1.36",
+        "0.1.37",
+        "0.1.38"
+      ],
+      "image": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d"
+    },
+    {
+      "versions": [
+        "0.1.39"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:3c7666864408c5fd918c911ba8399217cebaf7817d7c050214953ca052f77797"
+    },
+    {
+      "versions": [
+        "0.1.40"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:70b31e10055a771a30d6679f3bdb1c5a1d86abb3aedb636fc0f15f2968c3867c"
+    },
+    {
+      "versions": [
+        "0.1.43"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    }
+  ]
+}

@@ -1,5 +1,23 @@
 # Generated Maxwell converter source
 
+The conversion bridge now selects the separately generated
+`pipeline/components/maxwell-native` mixed entry, owner `0.1.43-reuse.1`, exported
+from Workflows commit `00ae8b7aee82f924ea0eb6492a6c5ec9bf7dcc72` with the same
+explicit common revision. Its manifest records each committed blob, generator,
+image and content digest. Regenerate this tree using the maintained
+`export_native_component.py` with both full revisions; do not edit generated files.
+Native Python controllers remain installed in the immutable control image
+`sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099`.
+The control image retains the scientific 0.1.6 base, tools and defaults used by the
+fresh component. Staged runtime JSON supplies explicit proof policies, while the
+separately pinned common tree supplies contract and reference discovery helpers.
+The bridge validates native fresh/adoption/reuse completion through that owner,
+and keeps the original scientific producer identity.
+
+The fresh-only export below remains independently generated and supported. MEA
+stages retain its lightweight graph guard and common contracts; switching the
+conversion entry does not upgrade the scientific image or stage runtime version.
+
 [`pipeline/components/maxwell`](../pipeline/components/maxwell/README.md) contains
 the complete maintained fresh converter, generated from Workflows commit
 `0f3a980cab85192ad8e444be06be531fb3b7f2d9`. The exporter was introduced at `e7d1813`.
