@@ -43,7 +43,7 @@ def main():
     parser.add_argument('--bindings', type=Path, required=True, help='Original submitted bindings JSON, never the generated request')
     parser.add_argument('--recordings', type=Path, required=True, help='Original submitted recordings JSON')
     parser.add_argument('--settings', type=Path, help='Original submitted settings JSON; omitted means {}')
-    parser.add_argument('--owner-root', type=Path, default=Path(__file__).resolve().parents[2]/'pipeline/components/maxwell',
+    parser.add_argument('--owner-root', type=Path, default=Path(__file__).resolve().parents[2]/'pipeline/components/maxwell-native',
                         help='Reviewed exported owner; select the matching historical export explicitly for old fixtures')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
@@ -55,7 +55,12 @@ def main():
     distribution = json.loads((args.owner_root/'export-manifest.json').read_text())
     image = json.loads((args.owner_root/'image.json').read_text())
     version = re.search(r"(?m)^\s*version\s*=\s*['\"]([^'\"]+)['\"]", (args.owner_root/'nextflow.config').read_text()).group(1)
-    if version != distribution['owner_version'] or image != distribution['scientific_image']:
+    if distribution.get('entry_scope') == 'native-mixed':
+        if hashlib.sha256((args.owner_root/'nextflow.config').read_bytes()).hexdigest() != distribution['files']['nextflow.config']['sha256']:
+            raise ValueError('Reviewed native owner configuration changed')
+    elif version != distribution['owner_version']:
+        raise ValueError('Reviewed owner version disagrees with its export')
+    if image != distribution['scientific_image']:
         raise ValueError('Reviewed owner manifest/config/image disagree')
     expected_metadata = {row['metadata']['unit_id']: row['metadata'] for row in bindings}
     if len(expected_metadata) != len(bindings):

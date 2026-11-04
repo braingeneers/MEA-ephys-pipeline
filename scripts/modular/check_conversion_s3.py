@@ -19,7 +19,8 @@ from urllib.request import Request, urlopen
 SOURCE = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SOURCE / 'pipeline/helpers'))
 import maxwell_bridge as bridge
-from conversion_worker import execute_unit
+from conversion_worker import execute_unit, commit_conversion
+from task_preparation import prepare_conversion
 from raw_selection import publish_raw_selection
 
 
@@ -61,7 +62,7 @@ def main():
             store.upload_file(projection['uri'], path)
     for binding in bindings:
         binding['input_uri'] = translations[binding['input_uri']]
-    owner_root = SOURCE / 'pipeline/components/maxwell'
+    owner_root = SOURCE / 'pipeline/components/maxwell-native'
     image = bridge.read_json(owner_root / 'image.json')['pinned_reference']
     native_version = re.search(r"(?m)^\s*version\s*=\s*['\"]([^'\"]+)",
                                (owner_root / 'nextflow.config').read_text())[1]
@@ -82,13 +83,13 @@ def main():
     else:
         raw = publish_raw_selection(store, records, context | dict(
             step_id='convert-raw', collection_uri=root + 'derived/nwb/'), owner)
-        native_plan = bridge.prepare_conversion(store, raw, settings, context, owner)
+        native_plan = prepare_conversion(store, raw, settings, context, owner)
         outcomes = []
         for task in native_plan['tasks']:
             print('Converting ' + task['unit']['unit_id'], flush=True)
             outcomes.append(execute_unit(store, native_plan, task['unit']['unit_id'],
                 args.output / ('native-' + task['unit']['unit_id']), public_endpoint=args.endpoint))
-        native = bridge.commit_conversion(store, native_plan, outcomes)
+        native = commit_conversion(store, native_plan, outcomes)
     distribution = bridge.read_json(owner_root / 'export-manifest.json')
     local_root = args.output.as_uri() + '/'
     request = dict(native=dict(context=context, owner=owner,
