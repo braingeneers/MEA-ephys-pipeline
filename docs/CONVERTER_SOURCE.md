@@ -2,17 +2,19 @@
 
 The conversion bridge now selects the separately generated
 `pipeline/components/maxwell-native` mixed entry, owner `0.1.43-reuse.1`, exported
-from Workflows commit `00ae8b7aee82f924ea0eb6492a6c5ec9bf7dcc72` with the same
-explicit common revision. Its manifest records each committed blob, generator,
+from Workflows commit `41dcf9b4324f752abfaad4cf7f74a845649ee2a5` with common revision
+`00ae8b7aee82f924ea0eb6492a6c5ec9bf7dcc72`. Its manifest records each committed blob, generator,
 image and content digest. Regenerate this tree using the maintained
 `export_native_component.py` with both full revisions; do not edit generated files.
 Native Python controllers remain installed in the immutable control image
-`sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099`.
+`sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9`.
 The control image retains the scientific 0.1.6 base, tools and defaults used by the
 fresh component. Staged runtime JSON supplies explicit proof policies, while the
 separately pinned common tree supplies contract and reference discovery helpers.
 The bridge validates native fresh/adoption/reuse completion through that owner,
-and keeps the original scientific producer identity.
+and keeps the original scientific producer identity. Completed native coordination
+outputs are readable by the unprivileged driver; transfer and operation directories
+retain their private permissions.
 
 The fresh-only export below remains independently generated and supported. MEA
 stages retain its lightweight graph guard and common contracts; switching the

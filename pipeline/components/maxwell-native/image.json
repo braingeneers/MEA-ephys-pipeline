@@ -1,16 +1,16 @@
 {
-  "version": "0.1.3.1",
+  "version": "0.1.3.2",
   "status": "published_owned_worker_runtime",
-  "local_reference": "braingeneers/modular-maxwell-worker:0.1.3.1-63db991f",
-  "local_image_id": "sha256:ab448b2568667ff924f61dda07ccff1eb630924131ff12b7cf8cac90be9cc3d2",
-  "source_revision_label": "63db991fa6d8b9adbe97b5272fed8bda0bf4cd2f",
+  "local_reference": "braingeneers/modular-maxwell-worker:0.1.3.2-2ce704f0",
+  "local_image_id": "sha256:deb4b86c53d0df3a4fdebcaa97979372f948076bdcbace7838a480ae380eee63",
+  "source_revision_label": "2ce704f043a00e7c744b81c16d1712b40841c25c",
   "base_image": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
   "scientific_runtime_reference": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
   "scientific_runtime_version": "0.1.6",
   "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
   "original_scientific_base_image": "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf",
-  "registry_digest": "sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099",
-  "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099",
+  "registry_digest": "sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9",
+  "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9",
   "published": true,
   "parent_03a_complete": true,
   "runtime_path": "/opt/ephys-modular/maxwell-worker/runtime",
@@ -19,7 +19,7 @@
     "owner-runtime-policy.json",
     "split-source-policy.json"
   ],
-  "note": "Source-reference discovery backport over unchanged scientific1.6. Scientific fingerprint and tool source remain exact. Native/KS4 acceptance is pending.",
+  "note": "Source-reference discovery and readable coordination outputs over unchanged scientific1.6. Scientific fingerprint and tool source remain exact. Native/KS4 acceptance is pending.",
   "previous_releases": [
     {
       "version": "0.1.0",
@@ -41,53 +41,33 @@
       "local_image_id": "sha256:ccd01834db398b3f346cbe8c31fffbdc0beea6e62c9961fdc7c45837bb7205f4",
       "source_revision_label": "63a8ff3220580a1be5b6e4c982da8a91b6d1e49e",
       "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619"
+    },
+    {
+      "version": "0.1.3",
+      "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547",
+      "local_image_id": "sha256:a0bba1f7b7bf18e0c31a2674e7f2b8312fb9a0fbf26f6b55da6d0aec01f82606",
+      "source_revision_label": "bdde1a449aef1e0f1b7e0265041655502bd7531c",
+      "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+      "scientific_runtime_reference": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d"
+    },
+    {
+      "version": "0.1.3.1",
+      "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099",
+      "local_image_id": "sha256:ab448b2568667ff924f61dda07ccff1eb630924131ff12b7cf8cac90be9cc3d2",
+      "source_revision_label": "63db991fa6d8b9adbe97b5272fed8bda0bf4cd2f",
+      "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
+      "scientific_runtime_reference": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
+      "owning_workflow_version": "0.1.43-reuse.1"
     }
   ],
   "owning_workflow_version": "0.1.43-reuse.1",
   "previous_release": {
-    "version": "0.1.3",
-    "status": "published_owned_worker_runtime",
-    "local_reference": "braingeneers/modular-maxwell-worker:0.1.3",
-    "local_image_id": "sha256:a0bba1f7b7bf18e0c31a2674e7f2b8312fb9a0fbf26f6b55da6d0aec01f82606",
-    "source_revision_label": "bdde1a449aef1e0f1b7e0265041655502bd7531c",
-    "base_image": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
-    "scientific_runtime_reference": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
-    "scientific_runtime_version": "0.1.6",
+    "version": "0.1.3.1",
+    "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099",
+    "local_image_id": "sha256:ab448b2568667ff924f61dda07ccff1eb630924131ff12b7cf8cac90be9cc3d2",
+    "source_revision_label": "63db991fa6d8b9adbe97b5272fed8bda0bf4cd2f",
     "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619",
-    "original_scientific_base_image": "davidparks21/maxwell-to-nwb@sha256:8486ce5336d922dd81a7f95a40803eb64514a68e37a03d998183284aba11cdaf",
-    "registry_digest": "sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547",
-    "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:5c30b533dc3507126c609931bb61202a7f331284a536a5a1e808c7c8e338e547",
-    "published": true,
-    "parent_03a_complete": true,
-    "runtime_path": "/opt/ephys-modular/maxwell-worker/runtime",
-    "staged_policies": [
-      "reuse-policy.json",
-      "owner-runtime-policy.json",
-      "split-source-policy.json"
-    ],
-    "note": "Owned worker0.1.3 scopes repeated full input verification inside read-only metadata operations. SCI1.6 remains byte-identical;workflow43 retains all historical owner/proof approvals. Installed metadata and full B3 acceptance are verified separately.",
-    "previous_releases": [
-      {
-        "version": "0.1.0",
-        "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:3c7666864408c5fd918c911ba8399217cebaf7817d7c050214953ca052f77797",
-        "local_image_id": "sha256:a7afadf69013395cce24509c8e3d7ad0c33278b226420dcea89088cd908a06da",
-        "source_revision_label": "1a4580197b2f6c0b8908284c90de4d819f76b68d",
-        "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619"
-      },
-      {
-        "version": "0.1.1",
-        "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:70b31e10055a771a30d6679f3bdb1c5a1d86abb3aedb636fc0f15f2968c3867c",
-        "local_image_id": "sha256:e35e4429e25236fe8f3f974630a03e00ac0cc37413710a6a04efa226f4bd2070",
-        "source_revision_label": "5c300c9622db788e64097e84cf92c475d8540042",
-        "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619"
-      },
-      {
-        "version": "0.1.2",
-        "pinned_reference": "braingeneers/modular-maxwell-worker@sha256:1d973ab87d6a3c7fd040c6906175fcf26ef19ee6f27fed984b0ac6698bb69f7c",
-        "local_image_id": "sha256:ccd01834db398b3f346cbe8c31fffbdc0beea6e62c9961fdc7c45837bb7205f4",
-        "source_revision_label": "63a8ff3220580a1be5b6e4c982da8a91b6d1e49e",
-        "scientific_runtime_fingerprint": "e5d2ed625fd1916e38838ff061d3180399aae4afe32865cec0d3c2f88a3ce619"
-      }
-    ]
+    "scientific_runtime_reference": "braingeneers/modular-maxwell-to-nwb@sha256:46871688f9a47e4ba5dc292c2b4fdd428890f19c96778e8ee9857aa31e803e0d",
+    "owning_workflow_version": "0.1.43-reuse.1"
   }
 }

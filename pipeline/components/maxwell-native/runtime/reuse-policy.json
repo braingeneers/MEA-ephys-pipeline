@@ -88,6 +88,12 @@
         "0.1.43-reuse.1"
       ],
       "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9"
     }
   ],
   "public_evidence_contracts": [
@@ -147,6 +153,12 @@
         "0.1.43-reuse.1"
       ],
       "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9"
     }
   ],
   "public_bridge_contracts": [
@@ -205,6 +217,12 @@
         "0.1.43-reuse.1"
       ],
       "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9"
     }
   ],
   "legacy_source_commit": "66c5d82c3812b985b0ddc1cccc069f54e2e5297a",
@@ -263,6 +281,12 @@
         "0.1.43-reuse.1"
       ],
       "image": "braingeneers/modular-maxwell-worker@sha256:d8058ea4859f7ce063ae332ad0b438c8f0e507127f4fd2e11b2a94768a89a099"
+    },
+    {
+      "versions": [
+        "0.1.43-reuse.1"
+      ],
+      "image": "braingeneers/modular-maxwell-worker@sha256:5ee0936b09242356cc1980f5a1a741a7a070e739cfb289f7add46212fef49cd9"
     }
   ]
 }
