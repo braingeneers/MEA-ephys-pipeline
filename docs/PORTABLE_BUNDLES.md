@@ -65,6 +65,22 @@ Assembly creates a new directory and never overwrites an existing bundle. Failur
 leaves an incomplete directory without a completion manifest. The caller can retain
 it for diagnosis or remove it through its ordinary task-cleanup policy.
 
+Library assembly and verification accept a positive integer `workers` keyword,
+defaulting to one. The stage and bundle CLIs use the existing `CO_CPUS` task budget
+(one when absent), bounded by the number of declared recording views. More than
+one view can be checked in spawned processes; each process loads its own scientific
+objects and uses one numerical-library thread. Task memory must cover the concurrent
+working sets as well as shared file cache. CPU allocation alone does not supply RAM.
+
+Dependency/provenance preflight and serialization rewrites remain sequential:
+different views can point into the same JSON, pickle or analyzer. Only after all
+rewrites finish do workers compare complete source/portable fingerprints. Receipts
+retain the declared descriptor order regardless of completion order; every check
+must pass before the completion manifest is written. Verification uses the same
+ordered workers for its complete scientific checks. Worker failure stops the batch
+and reaps its children. Scientific algorithms, fixed read boundaries, all-value
+hashes, clocks and receipt formats remain unchanged.
+
 The specification has these fields:
 
 | Field | Meaning |

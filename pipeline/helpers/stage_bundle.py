@@ -305,7 +305,7 @@ def verify_invocation_metadata(record, unit_meta):
             "Stage invocation dropped or changed predecessor unit metadata")
 
 
-def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None):
+def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None, *, workers=1):
     record = portable.verify_manifest(root)
     require(record["stage"] == expected and record["unit_id"] == unit_id, "Bundle kind or unit identity differs from the requested input")
     if unit_meta is not None:
@@ -318,11 +318,12 @@ def verify(root, expected, unit_id, no_spikes, unit_meta=None, common_code=None)
         reported_science.verify(root / "data", record)
     if record["metadata"]["phase"] == "exported":
         exported_science.verify(root / "data", record)
-    portable.verify_science(root, record)
+    portable.verify_science(root, record, workers=workers)
     return record
 
 
-def build(request, paths, output, no_spikes, common_code=None):
+def build(request, paths, output, no_spikes, common_code=None, *, workers=1):
+    portable.validation_workers(workers)
     require(type(request.get("schema_version")) is int and request["schema_version"] == 1
             and request.get("phase") in ORDER, "Unsupported stage assembly request")
     require(len(paths) == request.get("input_count"), "Declared input count does not match staged paths")
@@ -334,7 +335,7 @@ def build(request, paths, output, no_spikes, common_code=None):
     if phase != "dispatch":
         previous = paths[request["previous"]]
         prior = verify(previous, PREVIOUS[phase], request["unit_id"], no_spikes,
-                       unit_meta=metadata["unit_meta"], common_code=common_code)
+                       unit_meta=metadata["unit_meta"], common_code=common_code, workers=workers)
         require(prior["metadata"]["completed_stages"] == ORDER[:ORDER.index(phase)], "Predecessor history is incomplete")
         metadata['stage_provenance'] = deepcopy(prior['metadata']['stage_provenance'])
         if phase == "exported":
@@ -401,7 +402,7 @@ def build(request, paths, output, no_spikes, common_code=None):
     spec = {"schema_version": 1, "unit_id": request["unit_id"], "stage": "nwb" if phase == "dispatch" else phase,
             "recording_ids": ids, "payloads": payloads, "serializations": descriptors, "metadata": metadata,
             "dependency_aliases":aliases}
-    record = portable.pack(spec, output)
+    record = portable.pack(spec, output, workers=workers)
     outcomes = scientific_policy(output, record, no_spikes, common_code)
     record["metadata"]["outcomes"] = outcomes
     if phase == "reported":
@@ -412,7 +413,7 @@ def build(request, paths, output, no_spikes, common_code=None):
     import hashlib
     record["content_sha256"] = hashlib.sha256(portable.encoded(record)).hexdigest()
     portable.write_manifest(output / "bundle.json", record)
-    verify(output, record["stage"], record["unit_id"], no_spikes, common_code=common_code)
+    verify(output, record["stage"], record["unit_id"], no_spikes, common_code=common_code, workers=workers)
     return record
 
 
@@ -435,17 +436,18 @@ def main():
     args = parser.parse_args()
     no_spikes = classifier(args.outcomes_code)
     try:
+        workers = portable.task_validation_workers()
         if args.command == "build":
             paths = [path.resolve() for path in sorted(args.inputs.glob("item*"))]
             record = build(json.loads(args.request.read_text()), paths, args.output, no_spikes,
-                           common_code=args.common_code)
+                           common_code=args.common_code, workers=workers)
         else:
             unit_meta = None
             if args.unit_meta is not None:
                 unit_meta = json.loads(args.unit_meta.read_text())
                 require(isinstance(unit_meta, dict), "Stage invocation unit metadata must be an object")
             record = verify(args.bundle.resolve(), args.kind, args.unit_id, no_spikes,
-                            unit_meta=unit_meta, common_code=args.common_code)
+                            unit_meta=unit_meta, common_code=args.common_code, workers=workers)
     except (portable.BundleError, FileNotFoundError, json.JSONDecodeError) as error:
         parser.exit(1, f"Scientific stage boundary error: {error}\n")
     print(json.dumps({"unit_id": record["unit_id"], "kind": record["stage"], "bytes": record["bytes"], "verified": True}))

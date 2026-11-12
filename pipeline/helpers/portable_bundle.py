@@ -16,6 +16,7 @@ from pathlib import Path, PurePosixPath
 import pickle
 import re
 import shutil
+import sys
 import uuid
 
 
@@ -32,6 +33,92 @@ FILE_KEYS = {"file_path", "file_paths", "folder_path", "folder_metadata"}
 
 class BundleError(ValueError):
     pass
+
+
+def validation_workers(workers):
+    if type(workers) is not int or workers < 1:
+        raise BundleError("Validation workers must be a positive integer")
+    return workers
+
+
+def task_validation_workers():
+    """Use the existing task CPU budget without adding scientific settings."""
+    value = os.environ.get("CO_CPUS", "1")
+    if re.fullmatch(r"[1-9][0-9]*", value) is None:
+        raise BundleError("CO_CPUS must be a positive integer for validation")
+    return int(value)
+
+
+_VALIDATION_THREAD_LIMIT = None
+
+
+def _limit_validation_threads():
+    """Keep each spawned validation worker within one numerical CPU thread."""
+    global _VALIDATION_THREAD_LIMIT
+    if _VALIDATION_THREAD_LIMIT is not None:
+        return
+    for name in ("CO_CPUS", "N_JOBS_EXT", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                 "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+                 "BLIS_NUM_THREADS"):
+        os.environ[name] = "1"
+    # A caller's main module may already have imported scientific libraries when
+    # spawn imports it. Limit those pools too; leave the parent's pools untouched.
+    if "numba" in sys.modules:
+        sys.modules["numba"].set_num_threads(1)
+    else:
+        os.environ["NUMBA_NUM_THREADS"] = "1"
+    from threadpoolctl import threadpool_limits
+    _VALIDATION_THREAD_LIMIT = threadpool_limits(limits=1)
+
+
+def _fingerprint_job(job):
+    index, descriptor, root, compare_source, parallel = job
+    root = Path(root)
+    if parallel:
+        # Configure inside the job so import/setup failures propagate normally.
+        _limit_validation_threads()
+    expected = fingerprint(descriptor, root, portable=not compare_source)
+    if compare_source:
+        portable_descriptor = {key: value for key, value in descriptor.items()
+                               if key not in {"source", "base", "producer_location"}}
+        if encoded(fingerprint(portable_descriptor, root, portable=True)) != encoded(expected):
+            raise BundleError(f"Scientific identity changed during packaging: {descriptor['path']}")
+    return index, expected
+
+
+def _fingerprints(descriptors, root, workers, *, compare_source=False):
+    """Check whole independent graphs, returning receipts in declared order."""
+    validation_workers(workers)
+    count = min(workers, len(descriptors))
+    jobs = [(index, item, str(root), compare_source, count > 1)
+            for index, item in enumerate(descriptors)]
+    if count <= 1:
+        return [_fingerprint_job(job)[1] for job in jobs]
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    from multiprocessing import get_context
+    identities = [None] * len(jobs)
+    # The executor detects abrupt native/OOM worker death rather than silently
+    # replacing it and losing an in-flight result. No SI/HDF5 objects cross a
+    # process boundary; indices retain the existing ordered receipt bytes.
+    pool = ProcessPoolExecutor(max_workers=count, mp_context=get_context("spawn"))
+    futures = []
+    try:
+        futures = [pool.submit(_fingerprint_job, job) for job in jobs]
+        for future in as_completed(futures):
+            index, identity = future.result()
+            identities[index] = identity
+    except BaseException as error:
+        for future in futures:
+            future.cancel()
+        print(f"Scientific validation failed ({type(error).__name__}): {str(error)[:1000]}; "
+              "reaping validation workers.",
+              file=sys.stderr, flush=True)
+        raise
+    finally:
+        # On an ordinary error already-running read-only checks drain before
+        # return. On abrupt death the executor terminates and reaps its pool.
+        pool.shutdown(wait=True, cancel_futures=True)
+    return identities
 
 
 def jsonable(value):
@@ -608,7 +695,8 @@ def check_recording_ids(record, data):
         raise BundleError("Declared recording identities do not match the dispatch inventory")
 
 
-def pack(spec, output):
+def pack(spec, output, *, workers=1):
+    validation_workers(workers)
     if type(spec.get("schema_version")) is not int or spec["schema_version"] != 1 or spec.get("stage") not in STAGES:
         raise BundleError("Unsupported bundle assembly schema or stage")
     unit = spec.get("unit_id")
@@ -634,7 +722,7 @@ def pack(spec, output):
     descriptors = spec.get("serializations", [])
     check_recording_ids(spec, output / "data")
     check_catalogue(descriptors, output / "data")
-    science, original_serializations = [], []
+    original_serializations = []
     for descriptor in descriptors:
         if descriptor.get("format") not in FORMATS:
             raise BundleError("Unknown executable serialization format")
@@ -654,7 +742,6 @@ def pack(spec, output):
             value = source_group["recording"][0]
             replacement = rebase_extractor(value, Path(descriptor["base"]), destination, mappings, output,
                                            producer_location=provenance)
-            expected = fingerprint(descriptor, output)
             group["recording"][0] = replacement
             zarr.consolidate_metadata(group.store)
         else:
@@ -664,22 +751,20 @@ def pack(spec, output):
             replacement = rebase_extractor(extractor, Path(descriptor["base"]),
                                            within(output, descriptor.get("relative_to", "data")), mappings, output,
                                            producer_location=provenance)
-            expected = fingerprint(descriptor, output)
             if pointer:
                 at_pointer(value, pointer[:-1])[pointer[-1]] = replacement
             else:
                 value = replacement
             write_serialization(destination, value)
-        portable_descriptor = {key: value for key, value in descriptor.items() if key not in {"source", "base", "producer_location"}}
-        if encoded(fingerprint(portable_descriptor, output, portable=True)) != encoded(expected):
-            raise BundleError(f"Scientific identity changed during packaging: {descriptor['path']}")
-        science.append(expected)
         original_serializations.append({"path": descriptor["path"], "pointer": descriptor.get("pointer", []),
                                         "sha256": sha256(original) if original.is_file() else None})
         if provenance is not None:
             original_serializations[-1]['producer_location'] = {
                 'path': str(mappings[Path(provenance['source']).resolve()].relative_to(output)),
                 'sha256': provenance['sha256'], 'record': provenance['record']}
+    # Complete all dependency preflight and shared-file rewrites before loading
+    # scientific objects. Different pointers can target the same serialization.
+    science = _fingerprints(descriptors, output, workers, compare_source=True)
     payload_inventory = inventory(output / "data")
     record = {"schema_version": BUNDLE_SCHEMA, "contract": CONTRACT, "unit_id": unit, "stage": spec["stage"],
               "recording_ids": spec["recording_ids"], "metadata": spec.get("metadata", {}),
@@ -736,7 +821,7 @@ def verify_manifest(root):
     return record
 
 
-def verify_science(root, record):
+def verify_science(root, record, *, workers=1):
     """Check immutable producer receipts after stage metadata/policy preflight."""
     root = Path(root).resolve()
     for identity in record["scientific_fingerprints"]:
@@ -744,7 +829,7 @@ def verify_science(root, record):
                                       or "spike_trains" not in identity["sorting"]):
             raise BundleError("Legacy sorting fingerprint: audit with its frozen producer reader or "
                               "re-run the named stage producer for exact event/train receipts")
-    identities = [fingerprint(item, root, portable=True) for item in record["serializations"]]
+    identities = _fingerprints(record["serializations"], root, workers)
     if encoded(identities) != encoded(record["scientific_fingerprints"]):
         raise BundleError("Bundle scientific fingerprint mismatch")
     bindings = [executable_binding(item, root) for item in record["serializations"]]
@@ -754,11 +839,11 @@ def verify_science(root, record):
             "files": len(record["files"]), "serializations": len(identities), "content_sha256": record["content_sha256"]}
 
 
-def verify(root):
+def verify(root, *, workers=1):
     """Contents-only API; stage consumers also enforce invocation/native/work policy."""
     record = verify_manifest(root)
     verify_executables(root, record)
-    return verify_science(root, record)
+    return verify_science(root, record, workers=workers)
 
 
 def main():
@@ -771,7 +856,9 @@ def main():
     check.add_argument("--bundle", type=Path, required=True)
     args = parser.parse_args()
     try:
-        result = pack(json.loads(args.spec.read_text()), args.output) if args.command == "pack" else verify(args.bundle)
+        workers = task_validation_workers()
+        result = (pack(json.loads(args.spec.read_text()), args.output, workers=workers)
+                  if args.command == "pack" else verify(args.bundle, workers=workers))
     except (BundleError, FileNotFoundError) as error:
         parser.exit(1, f"Scientific bundle error: {error}\n")
     print(json.dumps({key: result[key] for key in ("unit_id", "stage", "bytes", "content_sha256")}, indent=2))
