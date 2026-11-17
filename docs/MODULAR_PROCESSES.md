@@ -159,6 +159,25 @@ therefore retain direct runtime overrides. Each KS4 task's effective CLI/JSON de
 controls GPU admission, independently of other aliases' global launch parameters.
 Keep shared thread exports, image pins, retry policy and NERSC separation intact.
 
+Local Docker profiles set each task's shared-memory ceiling (`--shm-size`) to its
+resolved RAM budget, including explicit per-process memory overrides. This avoids
+a separate fixed IPC limit for SpikeInterface's shared arrays. The ceiling does
+not reserve that memory: shared arrays and the rest of the task still count
+against the same RAM budget. Existing CPU/RAM defaults, Docker user/cache options
+and GPU requests retain their behavior. The full-workflow profile applies this
+policy only to MEA processes; native conversion keeps its independent policy.
+The Docker memory and shared-memory flags use the same whole-MiB rounding.
+
+`python3 scripts/modular/check_docker_shared_memory.py --output <fresh-directory>`
+checks the actual Nextflow 26 Docker command rendering for defaults, RAM overrides and
+preserved GPU/user/cache options across the three local profiles. Its fixture
+preflight deliberately exits before Docker launch; it does not execute science.
+The original pinned Nextflow 26 stage/full render retains the typed accelerator
+request but emits no Docker `--gpus` flag. This resource change preserves that
+behavior; local Docker GPU admission needs separate validation and follow-up.
+The legacy profile's explicit `--gpus all` remains intact. NRP GPU execution is a
+separate qualification and does not establish local Docker GPU admission.
+
 ## Images and backend behavior
 
 Both callers use [`pipeline/container_images.json`](../pipeline/container_images.json)
